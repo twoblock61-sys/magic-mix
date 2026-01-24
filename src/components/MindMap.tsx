@@ -702,7 +702,7 @@ const MindMap = ({ nodes, connections, onChange, title = "Mind Map", onTitleChan
             </motion.button>
           ) : (
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Hover nodes for tools • Double-click to edit
+              Drag canvas to pan • Hover nodes for tools
             </span>
           )}
         </div>
@@ -744,34 +744,35 @@ const MindMap = ({ nodes, connections, onChange, title = "Mind Map", onTitleChan
         ref={containerRef} 
         onMouseDown={handleContainerMouseDown}
         className={`mindmap-canvas relative flex-1 rounded-xl border border-border overflow-hidden ${
-          isPanning ? 'cursor-grabbing' : 'cursor-grab'
+          isPanning ? 'cursor-grabbing' : draggingNode ? 'cursor-move' : 'cursor-grab'
         } ${connectingFrom ? 'cursor-crosshair' : ''}`}
         style={{ 
           background: "hsl(var(--card))",
           minHeight: "500px",
+          touchAction: 'none',
         }}
       >
-        {/* Dot grid pattern */}
+        {/* Infinite dot grid pattern - follows pan position */}
         <div 
-          className="absolute pointer-events-none" 
+          className="absolute inset-0 pointer-events-none" 
           style={{
-            width: '200%',
-            height: '200%',
-            left: '-50%',
-            top: '-50%',
-            backgroundImage: `radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(circle, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px)`,
             backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
-            backgroundPosition: `${pan.x}px ${pan.y}px`,
+            backgroundPosition: `${pan.x % (24 * zoom)}px ${pan.y % (24 * zoom)}px`,
           }} 
         />
+        
+        {/* Coordinate indicator */}
+        <div className="absolute bottom-2 left-2 text-[10px] text-muted-foreground/50 font-mono pointer-events-none select-none">
+          {Math.round(-pan.x / zoom)}, {Math.round(-pan.y / zoom)}
+        </div>
 
+        {/* Transform container for nodes - no fixed size for infinite feel */}
         <div 
-          className="absolute" 
+          className="absolute origin-top-left"
           style={{ 
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, 
-            transformOrigin: '0 0',
-            width: '10000px',
-            height: '10000px',
+            willChange: 'transform',
           }}
         >
           <svg 
