@@ -776,11 +776,13 @@ const MindMap = ({ nodes, connections, onChange, title = "Mind Map", onTitleChan
           }}
         >
           <svg 
-            className="absolute" 
+            className="absolute"
+            width="20000"
+            height="20000"
             style={{ 
               overflow: 'visible',
-              width: '100%',
-              height: '100%',
+              left: '-10000px',
+              top: '-10000px',
               pointerEvents: 'none',
             }}
           >
