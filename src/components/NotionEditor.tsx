@@ -330,24 +330,30 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       bt.description.toLowerCase().includes(menuFilter.toLowerCase())
   );
 
-  // Render editable content with formatting preserved
+  // Track content refs to avoid re-renders resetting cursor
+  const initializedRefs = useRef<Set<string>>(new Set());
+
+  // Render editable content with formatting preserved - NO children to avoid cursor reset
   const renderEditableContent = (block: NoteBlock) => {
     return (
       <div
         ref={(el) => {
           if (el) {
             contentRefs.current.set(block.id, el);
-            // Only set initial content if element is empty and block has content
-            if (el.textContent === "" && block.content) {
-              el.textContent = block.content;
+            // Only set content on first mount to avoid cursor reset
+            if (!initializedRefs.current.has(block.id)) {
+              el.textContent = block.content || "";
+              initializedRefs.current.add(block.id);
             }
           }
         }}
         contentEditable
         suppressContentEditableWarning
-        onInput={(e) => {
+        onBlur={(e) => {
           const text = e.currentTarget.textContent || "";
-          updateBlock(block.id, { content: text });
+          if (text !== block.content) {
+            updateBlock(block.id, { content: text });
+          }
         }}
         onKeyDown={(e) => handleKeyDown(e, block)}
         className={`outline-none py-1 transition-all ${getBlockStyle(block.type)} empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40`}
@@ -361,9 +367,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           block.type === "equation" ? "E = mc²" :
           "Type '/' for commands, or start writing..."
         }
-      >
-        {block.content}
-      </div>
+      />
     );
   };
 
@@ -395,20 +399,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               ref={(el) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
-                  if (el.textContent === "" && block.content) {
-                    el.textContent = block.content;
+                  if (!initializedRefs.current.has(block.id)) {
+                    el.textContent = block.content || "";
+                    initializedRefs.current.add(block.id);
                   }
                 }
               }}
               contentEditable
               suppressContentEditableWarning
-              onInput={(e) => handleContentInput(block, e.currentTarget)}
+              onBlur={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onKeyDown={(e) => handleKeyDown(e, block)}
               className={`flex-1 outline-none transition-all ${block.checked ? 'line-through text-muted-foreground/50' : ''}`}
               data-placeholder="To-do"
-            >
-              {block.content}
-            </div>
+            />
           </div>
         );
 
@@ -420,20 +428,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               ref={(el) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
-                  if (el.textContent === "" && block.content) {
-                    el.textContent = block.content;
+                  if (!initializedRefs.current.has(block.id)) {
+                    el.textContent = block.content || "";
+                    initializedRefs.current.add(block.id);
                   }
                 }
               }}
               contentEditable
               suppressContentEditableWarning
-              onInput={(e) => handleContentInput(block, e.currentTarget)}
+              onBlur={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onKeyDown={(e) => handleKeyDown(e, block)}
               className="flex-1 outline-none"
               data-placeholder="List item"
-            >
-              {block.content}
-            </div>
+            />
           </div>
         );
 
@@ -447,20 +459,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               ref={(el) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
-                  if (el.textContent === "" && block.content) {
-                    el.textContent = block.content;
+                  if (!initializedRefs.current.has(block.id)) {
+                    el.textContent = block.content || "";
+                    initializedRefs.current.add(block.id);
                   }
                 }
               }}
               contentEditable
               suppressContentEditableWarning
-              onInput={(e) => handleContentInput(block, e.currentTarget)}
+              onBlur={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onKeyDown={(e) => handleKeyDown(e, block)}
               className="flex-1 outline-none"
               data-placeholder="List item"
-            >
-              {block.content}
-            </div>
+            />
           </div>
         );
 
@@ -479,20 +495,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 ref={(el) => {
                   if (el) {
                     contentRefs.current.set(block.id, el);
-                    if (el.textContent === "" && block.content) {
-                      el.textContent = block.content;
+                    if (!initializedRefs.current.has(block.id)) {
+                      el.textContent = block.content || "";
+                      initializedRefs.current.add(block.id);
                     }
                   }
                 }}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={(e) => handleContentInput(block, e.currentTarget)}
+                onBlur={(e) => {
+                  const text = e.currentTarget.textContent || "";
+                  if (text !== block.content) {
+                    updateBlock(block.id, { content: text });
+                  }
+                }}
                 onKeyDown={(e) => handleKeyDown(e, block)}
                 className="flex-1 outline-none font-medium"
                 data-placeholder="Toggle heading"
-              >
-                {block.content}
-              </div>
+              />
             </div>
             <AnimatePresence>
               {block.isExpanded && (
@@ -503,13 +523,25 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                   className="ml-7 mt-2 pl-4 border-l-2 border-muted"
                 >
                   <div
+                    ref={(el) => {
+                      if (el) {
+                        const toggleKey = `${block.id}-toggle`;
+                        if (!initializedRefs.current.has(toggleKey)) {
+                          el.textContent = block.toggleContent || "";
+                          initializedRefs.current.add(toggleKey);
+                        }
+                      }
+                    }}
                     contentEditable
                     suppressContentEditableWarning
-                    onInput={(e) => updateBlock(block.id, { toggleContent: e.currentTarget.textContent || "" })}
-                    onBlur={(e) => updateBlock(block.id, { toggleContent: e.currentTarget.textContent || "" })}
+                    onBlur={(e) => {
+                      const text = e.currentTarget.textContent || "";
+                      if (text !== block.toggleContent) {
+                        updateBlock(block.id, { toggleContent: text });
+                      }
+                    }}
                     className="outline-none text-sm min-h-[40px] py-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
                     data-placeholder="Add content inside this toggle..."
-                    dangerouslySetInnerHTML={{ __html: block.toggleContent || "" }}
                   />
                 </motion.div>
               )}
@@ -525,20 +557,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 ref={(el) => {
                   if (el) {
                     contentRefs.current.set(block.id, el);
-                    if (el.textContent === "" && block.content) {
-                      el.textContent = block.content;
+                    if (!initializedRefs.current.has(block.id)) {
+                      el.textContent = block.content || "";
+                      initializedRefs.current.add(block.id);
                     }
                   }
                 }}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={(e) => handleContentInput(block, e.currentTarget)}
+                onBlur={(e) => {
+                  const text = e.currentTarget.textContent || "";
+                  if (text !== block.content) {
+                    updateBlock(block.id, { content: text });
+                  }
+                }}
                 onKeyDown={(e) => handleKeyDown(e, block)}
                 className="outline-none min-h-[60px]"
                 data-placeholder="// Write your code here..."
-              >
-                {block.content}
-              </div>
+              />
             </div>
             <motion.button
               onClick={() => copyCodeToClipboard(block.id, block.content)}
