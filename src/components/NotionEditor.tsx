@@ -332,6 +332,16 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
   // Track content refs to avoid re-renders resetting cursor
   const initializedRefs = useRef<Set<string>>(new Set());
+  const currentBlockIds = useRef<string>("");
+
+  // Clear initialized refs when blocks change (switching notes)
+  useEffect(() => {
+    const blockIds = blocks.map(b => b.id).join(",");
+    if (currentBlockIds.current !== blockIds) {
+      initializedRefs.current.clear();
+      currentBlockIds.current = blockIds;
+    }
+  }, [blocks]);
 
   // Render editable content with formatting preserved - NO children to avoid cursor reset
   const renderEditableContent = (block: NoteBlock) => {
