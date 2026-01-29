@@ -398,7 +398,7 @@ const FlashcardsPage = () => {
                           value={card.content}
                           onChange={(e) => updateCard(deck.id, card.id, e.target.value)}
                           placeholder="Add note..."
-                          className="w-full h-full bg-transparent outline-none text-sm text-foreground resize-none placeholder:text-muted-foreground"
+                          className="w-full h-full bg-transparent outline-none text-sm resize-none placeholder:text-muted-foreground/50"
                         />
                         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                           <button
