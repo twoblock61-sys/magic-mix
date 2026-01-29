@@ -45,18 +45,37 @@ const FlashcardsPage = () => {
   const [newDeckName, setNewDeckName] = useState("");
   const [showNewDeck, setShowNewDeck] = useState(false);
 
-  // Collect all flashcards from notes
-  const allNoteFlashcards = useMemo(() => {
-    const cards: FlashcardItem[] = [];
+  // Group flashcards by notes
+  interface NoteWithFlashcards {
+    id: string;
+    title: string;
+    cards: FlashcardItem[];
+  }
+
+  const notesWithFlashcards = useMemo(() => {
+    const grouped: NoteWithFlashcards[] = [];
     notes.forEach(note => {
+      const noteCards: FlashcardItem[] = [];
       note.blocks.forEach(block => {
         if (block.type === "flashcard" && block.flashcards) {
-          cards.push(...block.flashcards);
+          noteCards.push(...block.flashcards);
         }
       });
+      if (noteCards.length > 0) {
+        grouped.push({
+          id: note.id,
+          title: note.title || "Untitled",
+          cards: noteCards,
+        });
+      }
     });
-    return cards;
+    return grouped;
   }, [notes]);
+
+  // Collect all flashcards from notes (for study all and count)
+  const allNoteFlashcards = useMemo(() => {
+    return notesWithFlashcards.flatMap(n => n.cards);
+  }, [notesWithFlashcards]);
 
   // Get all flashcards (from notes + independent decks)
   const allFlashcards = useMemo(() => {
