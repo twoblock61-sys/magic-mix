@@ -336,23 +336,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
   // Helper function to extract text from contentEditable while preserving line breaks
   const extractContentFromEditable = (el: HTMLElement): string => {
-    let text = "";
-    for (let node of el.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        text += node.textContent || "";
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        if (element.tagName === "BR") {
-          text += "\n";
-        } else {
-          text += element.textContent || "";
-          if (element.tagName === "DIV" || element.tagName === "P") {
-            text += "\n";
-          }
-        }
-      }
-    }
-    return text.trimEnd(); // Remove trailing whitespace/newlines
+    // Use innerText which respects visual line breaks, then clean up
+    return (el.innerText || el.textContent || "").trimEnd();
   };
 
   const handleContentInput = (block: NoteBlock, el: HTMLDivElement) => {
