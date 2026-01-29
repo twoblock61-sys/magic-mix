@@ -207,7 +207,7 @@ const FlashcardsPage = () => {
 
           {/* Notes Flashcards Section */}
           {allNoteFlashcards.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-muted-foreground" />
@@ -221,24 +221,47 @@ const FlashcardsPage = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Play className="w-4 h-4" />
-                  Study
+                  Study All
                 </motion.button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {allNoteFlashcards.slice(0, 8).map((card) => (
+
+              {/* Notes Grid */}
+              <div className="space-y-5">
+                {notesWithFlashcards.map((noteGroup) => (
                   <motion.div
-                    key={card.id}
-                    className={`p-3 rounded-xl border-2 ${getCardStyle(card.color)} min-h-[80px] flex items-center justify-center`}
-                    whileHover={{ scale: 1.02 }}
+                    key={noteGroup.id}
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                   >
-                    <p className="text-sm text-center text-foreground line-clamp-3">{card.content || "Empty card"}</p>
+                    {/* Note Title and Study Button */}
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-foreground text-base">{noteGroup.title}</h3>
+                      <motion.button
+                        onClick={() => setStudyMode({ cards: noteGroup.cards, title: noteGroup.title })}
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 text-xs"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Play className="w-3 h-3" />
+                        Study ({noteGroup.cards.length})
+                      </motion.button>
+                    </div>
+
+                    {/* Cards Grid for this Note */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {noteGroup.cards.map((card) => (
+                        <motion.div
+                          key={card.id}
+                          className={`p-3 rounded-xl border-2 ${getCardStyle(card.color)} min-h-[80px] flex items-center justify-center`}
+                          whileHover={{ scale: 1.02 }}
+                        >
+                          <p className="text-sm text-center text-foreground line-clamp-3">{card.content || "Empty card"}</p>
+                        </motion.div>
+                      ))}
+                    </div>
                   </motion.div>
                 ))}
-                {allNoteFlashcards.length > 8 && (
-                  <div className="p-3 rounded-xl border-2 border-dashed border-border flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">+{allNoteFlashcards.length - 8} more</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
