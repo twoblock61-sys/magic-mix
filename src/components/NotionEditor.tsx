@@ -840,18 +840,18 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           <div className="py-2">
             <div className="border border-border rounded-lg overflow-hidden">
               {/* Column headers with delete buttons */}
-              <div className="bg-muted/50 border-b border-border overflow-x-auto">
-                <div className="flex inline-flex min-w-full">
+              <div className="bg-muted/50 border-b border-border">
+                <div className="flex">
                   {block.tableData?.[0]?.map((_, colIndex) => (
                     <div
                       key={colIndex}
-                      className="flex-auto min-w-fit px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
+                      className="flex-1 px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
                     >
                       <input
                         type="text"
                         value={block.tableData?.[0]?.[colIndex] || ""}
                         onChange={(e) => updateTableCell(block.id, 0, colIndex, e.target.value)}
-                        className="flex-auto text-sm font-semibold outline-none bg-transparent min-w-0"
+                        className="flex-1 text-sm font-semibold outline-none bg-transparent break-words"
                         placeholder="Header"
                       />
                       {(block.tableData?.[0]?.length || 0) > 1 && (
@@ -869,19 +869,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               </div>
 
               {/* Data rows */}
-              <div className="divide-y divide-border overflow-x-auto">
+              <div className="divide-y divide-border">
                 {block.tableData?.slice(1).map((row, rowIndex) => (
-                  <div key={rowIndex + 1} className="flex inline-flex min-w-full group/row">
+                  <div key={rowIndex + 1} className="flex group/row">
                     {row.map((cell, colIndex) => (
                       <div
                         key={colIndex}
-                        className="flex-auto min-w-fit border-r border-border last:border-r-0"
+                        className="flex-1 border-r border-border last:border-r-0"
                       >
                         <input
                           type="text"
                           value={cell}
                           onChange={(e) => updateTableCell(block.id, rowIndex + 1, colIndex, e.target.value)}
-                          className="w-full px-3 py-2 text-sm outline-none bg-transparent"
+                          className="w-full px-3 py-2 text-sm outline-none bg-transparent break-words"
                           placeholder="Cell"
                         />
                       </div>
