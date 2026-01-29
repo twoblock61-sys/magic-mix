@@ -167,7 +167,7 @@ const FlashcardsPage = () => {
 
   const getCardStyle = (colorName: string) => {
     const color = cardColors.find(c => c.name === colorName) || cardColors[0];
-    return `${color.bg} ${color.border}`;
+    return `${color.bg} ${color.border} ${color.text}`;
   };
 
   return (
