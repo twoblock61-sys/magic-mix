@@ -259,19 +259,66 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     // Don't prevent formatting shortcuts
     const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
     const modKey = isMac ? e.metaKey : e.ctrlKey;
-    
+
     if (modKey && ['b', 'i', 'u', 'e', 'k', 's', '\\'].includes(e.key.toLowerCase())) {
       return; // Let the formatting hook handle it
     }
 
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      addBlockAfter(block.id, block.type === "bullet" || block.type === "numbered" || block.type === "todo" ? block.type : "text");
-    }
-    
     const contentEl = contentRefs.current.get(block.id);
     const isEmpty = contentEl ? (contentEl.textContent || "").trim() === "" : block.content === "";
-    
+
+    // Handle Enter key
+    if (e.key === "Enter" && !e.shiftKey) {
+      // For code blocks: allow new lines (Shift+Enter to exit)
+      if (block.type === "code") {
+        return; // Allow native Enter behavior for new lines
+      }
+
+      // For lists, todos, bullets: exit on empty second press
+      if (block.type === "bullet" || block.type === "numbered" || block.type === "todo") {
+        if (isEmpty) {
+          // Empty list item: delete it and create a new text block
+          e.preventDefault();
+          const index = blocks.findIndex((b) => b.id === block.id);
+          const newBlocks = blocks.filter((b) => b.id !== block.id);
+
+          // Add a new text block at the same position
+          const newBlock: NoteBlock = {
+            id: crypto.randomUUID(),
+            type: "text",
+            content: "",
+          };
+          newBlocks.splice(index, 0, newBlock);
+          onChange(newBlocks);
+
+          // Focus the new text block
+          setTimeout(() => {
+            const el = blockRefs.current.get(newBlock.id);
+            if (el) {
+              const input = el.querySelector('[contenteditable], input');
+              if (input) (input as HTMLElement).focus();
+            }
+          }, 10);
+        } else {
+          // Non-empty: create new list item
+          e.preventDefault();
+          addBlockAfter(block.id, block.type);
+        }
+        return;
+      }
+
+      // For other blocks: normal behavior
+      e.preventDefault();
+      addBlockAfter(block.id, "text");
+    }
+
+    // Handle Shift+Enter: exit code blocks or create new line in other blocks
+    if (e.key === "Enter" && e.shiftKey && block.type === "code") {
+      e.preventDefault();
+      addBlockAfter(block.id, "text");
+      return;
+    }
+
     if (e.key === "Backspace" && isEmpty && blocks.length > 1) {
       e.preventDefault();
       deleteBlock(block.id);
@@ -285,6 +332,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       setShowMenu(null);
       setMenuFilter("");
     }
+  };
+
+  // Helper function to extract text from contentEditable while preserving line breaks
+  const extractContentFromEditable = (el: HTMLElement): string => {
+    // Use innerText which respects visual line breaks, then clean up
+    return (el.innerText || el.textContent || "").trimEnd();
   };
 
   const handleContentInput = (block: NoteBlock, el: HTMLDivElement) => {
@@ -594,7 +647,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 contentEditable
                 suppressContentEditableWarning
                 onBlur={(e) => {
-                  const text = e.currentTarget.textContent || "";
+                  const text = extractContentFromEditable(e.currentTarget);
                   if (text !== block.content) {
                     updateBlock(block.id, { content: text });
                   }
@@ -843,15 +896,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               <div className="bg-muted/50 border-b border-border">
                 <div className="flex">
                   {block.tableData?.[0]?.map((_, colIndex) => (
-                    <div 
-                      key={colIndex} 
-                      className="flex-1 min-w-[120px] px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
+                    <div
+                      key={colIndex}
+                      className="flex-1 px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
                     >
                       <input
                         type="text"
                         value={block.tableData?.[0]?.[colIndex] || ""}
                         onChange={(e) => updateTableCell(block.id, 0, colIndex, e.target.value)}
-                        className="flex-1 text-sm font-semibold outline-none bg-transparent min-w-0"
+                        className="flex-1 text-sm font-semibold outline-none bg-transparent break-words"
                         placeholder="Header"
                       />
                       {(block.tableData?.[0]?.length || 0) > 1 && (
@@ -867,26 +920,26 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Data rows */}
               <div className="divide-y divide-border">
                 {block.tableData?.slice(1).map((row, rowIndex) => (
                   <div key={rowIndex + 1} className="flex group/row">
                     {row.map((cell, colIndex) => (
-                      <div 
-                        key={colIndex} 
-                        className="flex-1 min-w-[120px] border-r border-border last:border-r-0"
+                      <div
+                        key={colIndex}
+                        className="flex-1 border-r border-border last:border-r-0"
                       >
                         <input
                           type="text"
                           value={cell}
                           onChange={(e) => updateTableCell(block.id, rowIndex + 1, colIndex, e.target.value)}
-                          className="w-full px-3 py-2 text-sm outline-none bg-transparent"
+                          className="w-full px-3 py-2 text-sm outline-none bg-transparent break-words"
                           placeholder="Cell"
                         />
                       </div>
                     ))}
-                    <div className="w-8 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    <div className="w-8 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0">
                       <button
                         onClick={() => deleteTableRow(block.id, rowIndex + 1)}
                         className="p-1 rounded hover:bg-destructive/10 transition-colors"
@@ -1093,7 +1146,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           <div className="py-3">
             <div className="flex gap-3 overflow-x-auto pb-2">
               {(block.kanbanColumns || []).map((column, colIndex) => (
-                <div key={column.id} className="min-w-[200px] bg-muted/30 rounded-lg p-3 border border-border">
+                <div key={column.id} className="min-w-[200px] bg-muted/30 rounded-lg p-3 border border-border group/column">
                   <div className="flex items-center justify-between mb-3">
                     <input
                       type="text"
@@ -1103,11 +1156,25 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                         newColumns[colIndex] = { ...column, title: e.target.value };
                         updateBlock(block.id, { kanbanColumns: newColumns });
                       }}
-                      className="font-medium text-sm bg-transparent outline-none"
+                      className="font-medium text-sm bg-transparent outline-none flex-1"
                     />
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                      {column.cards.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {column.cards.length}
+                      </span>
+                      {(block.kanbanColumns || []).length > 1 && (
+                        <button
+                          onClick={() => {
+                            const newColumns = (block.kanbanColumns || []).filter((_, i) => i !== colIndex);
+                            updateBlock(block.id, { kanbanColumns: newColumns });
+                          }}
+                          className="opacity-0 group-hover/column:opacity-100 p-1 rounded hover:bg-destructive/10 transition-all flex-shrink-0"
+                          title="Delete stage"
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {column.cards.map((card, cardIndex) => (

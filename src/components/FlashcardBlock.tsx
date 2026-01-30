@@ -113,15 +113,25 @@ const FlashcardBlock = ({ flashcards, title, onChange, onTitleChange, onOpenStud
               exit={{ opacity: 0, scale: 0.8 }}
               className={`relative group p-4 rounded-xl border-2 min-h-[100px] ${getCardStyle(card.color)} shadow-sm hover:shadow-md transition-shadow`}
             >
-              {/* Delete button */}
-              <button
-                onClick={() => deleteFlashcard(card.id)}
-                className="absolute top-2 right-2 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-              >
-                <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
-              </button>
+              {/* Action buttons - Color and Delete */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <button
+                  onClick={() => cycleColor(card.id)}
+                  className="p-1 rounded-full bg-background/80 hover:bg-background transition-colors"
+                  title="Change color"
+                >
+                  <div className={`w-3 h-3 rounded-full ${cardColors.find(c => c.name === card.color)?.bg || 'bg-yellow-200'}`} />
+                </button>
+                <button
+                  onClick={() => deleteFlashcard(card.id)}
+                  className="p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+                  title="Delete card"
+                >
+                  <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                </button>
+              </div>
 
-              {/* Color cycle on double-click */}
+              {/* Content - Click to edit */}
               {editingId === card.id ? (
                 <textarea
                   value={editContent}
@@ -140,9 +150,8 @@ const FlashcardBlock = ({ flashcards, title, onChange, onTitleChange, onOpenStud
                   className="w-full h-full min-h-[60px] bg-transparent border-none outline-none resize-none text-sm font-medium"
                 />
               ) : (
-                <div 
+                <div
                   onClick={() => startEditing(card)}
-                  onDoubleClick={() => cycleColor(card.id)}
                   className="text-sm font-medium cursor-pointer select-none"
                 >
                   {card.content}
@@ -186,7 +195,7 @@ const FlashcardBlock = ({ flashcards, title, onChange, onTitleChange, onOpenStud
 
       {/* Hint */}
       <p className="text-xs text-muted-foreground text-center">
-        Click to edit • Double-click to change color • Enter to add new card
+        Click to edit • Hover to change color • Enter to add new card
       </p>
     </div>
   );
