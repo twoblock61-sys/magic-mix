@@ -1720,20 +1720,17 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               >
                 <Plus className="w-4 h-4 text-muted-foreground group-hover/btn:text-primary transition-colors" />
               </motion.button>
-              <motion.div
+              <motion.button
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
-                drag="y"
-                dragElastic={0.15}
-                dragMomentum={false}
-                dragTransition={{ power: 0.2, restDelta: 0.001 }}
-                initial={{ y: 0 }}
-                animate={{ y: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 40 }}
-                onPointerDown={(e) => handleBlockDragStart(block.id, e.clientY)}
-                onDragEnd={() => handleBlockDragEnd(block.id)}
+                whileHover={{ scale: 1.1 }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  handleBlockDragStart(block.id, e.clientY);
+                }}
+                onPointerUp={() => handleBlockDragEnd(block.id)}
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
-              </motion.div>
+              </motion.button>
             </motion.div>
 
             {/* Block Content */}
