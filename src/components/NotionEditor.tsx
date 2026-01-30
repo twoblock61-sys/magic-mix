@@ -471,6 +471,16 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     }
   }, [blocks]);
 
+  // Add pointer move listener for drag detection
+  useEffect(() => {
+    if (!draggedBlockId) return;
+
+    window.addEventListener("pointermove", handlePointerMove as EventListener);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove as EventListener);
+    };
+  }, [draggedBlockId, blocks, dragOverBlockId]);
+
   // Render editable content with formatting preserved - NO children to avoid cursor reset
   const renderEditableContent = (block: NoteBlock) => {
     return (
