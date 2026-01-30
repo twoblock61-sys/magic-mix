@@ -1666,6 +1666,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         {blocks.map((block) => (
           <motion.div
             key={block.id}
+            layout
             ref={(el) => el && blockRefs.current.set(block.id, el)}
             initial={{ opacity: 0, y: -5 }}
             animate={{
@@ -1673,7 +1674,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               y: 0,
               scale: draggedBlockId === block.id ? 0.98 : 1,
             }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15, type: "spring", stiffness: 300, damping: 30 }}
             className={`group relative flex items-start gap-1 rounded-lg transition-all ${
               draggedBlockId === block.id
                 ? 'bg-primary/5 shadow-lg shadow-primary/20'
