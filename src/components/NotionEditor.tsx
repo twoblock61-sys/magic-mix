@@ -1683,9 +1683,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               >
                 <Plus className="w-4 h-4 text-muted-foreground group-hover/btn:text-primary transition-colors" />
               </motion.button>
-              <motion.button
+              <motion.div
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
-                whileHover={{ scale: 1.1 }}
                 drag="y"
                 dragElastic={0.15}
                 dragMomentum={false}
@@ -1699,7 +1698,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 }}
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
-              </motion.button>
+              </motion.div>
             </motion.div>
 
             {/* Block Content */}
