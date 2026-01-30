@@ -422,6 +422,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     if (!draggedBlockId) return;
 
     // Find which block the pointer is over
+    let foundBlock = false;
     blocks.forEach((block) => {
       const element = blockRefs.current.get(block.id);
       if (!element) return;
@@ -432,10 +433,16 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         e.clientY <= rect.bottom &&
         block.id !== draggedBlockId;
 
-      if (isOver) {
+      if (isOver && !foundBlock) {
         setDragOverBlockId(block.id);
+        foundBlock = true;
       }
     });
+
+    // Clear dragOverBlockId if not over any block
+    if (!foundBlock) {
+      setDragOverBlockId(null);
+    }
   };
 
   const reorderBlocks = (draggedId: string, targetId: string) => {
