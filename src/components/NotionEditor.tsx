@@ -478,13 +478,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     }
   }, [blocks]);
 
-  // Add pointer move listener for drag detection
+  // Add pointer move and up listeners for drag detection
   useEffect(() => {
     if (!draggedBlockId) return;
 
+    const handlePointerUp = () => {
+      handleBlockDragEnd(draggedBlockId);
+    };
+
     window.addEventListener("pointermove", handlePointerMove as EventListener);
+    window.addEventListener("pointerup", handlePointerUp);
     return () => {
       window.removeEventListener("pointermove", handlePointerMove as EventListener);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [draggedBlockId, blocks, dragOverBlockId]);
 
