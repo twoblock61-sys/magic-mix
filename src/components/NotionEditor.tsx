@@ -1693,6 +1693,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             onMouseLeave={() => {
               if (draggedBlockId !== block.id) {
                 setActiveBlockId(null);
+                if (dragOverBlockId === block.id) {
+                  setDragOverBlockId(null);
+                }
               }
             }}
           >
