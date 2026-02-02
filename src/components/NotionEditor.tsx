@@ -953,15 +953,39 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                       newTitles[colIndex] = e.target.value;
                       updateBlock(block.id, { columnTitles: newTitles });
                     }}
-                    className="text-xs text-muted-foreground mb-2 bg-transparent outline-none focus:text-foreground transition-colors w-full font-medium"
+                    className="text-sm font-semibold mb-3 bg-muted/40 outline-none focus:bg-muted focus:text-foreground transition-colors w-full px-2 py-1 rounded border border-transparent focus:border-primary/30 text-foreground"
                     placeholder={`Column ${colIndex + 1}`}
                   />
-                  <div
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="outline-none text-sm min-h-[60px] empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
-                    data-placeholder="Type here..."
-                  />
+                  <div className="space-y-2">
+                    {(column || []).map((nestedBlock, blockIndex) => (
+                      <div key={nestedBlock.id || blockIndex} className="relative group/nested">
+                        {renderBlock(nestedBlock)}
+                        <div className="absolute top-0 right-0 opacity-0 group-hover/nested:opacity-100 transition-opacity flex gap-1">
+                          <button
+                            onClick={() => {
+                              const newColumns = [...(block.columns || [])];
+                              newColumns[colIndex] = newColumns[colIndex].filter((_, idx) => idx !== blockIndex);
+                              updateBlock(block.id, { columns: newColumns });
+                            }}
+                            className="p-1 rounded hover:bg-destructive/10"
+                            title="Delete"
+                          >
+                            <X className="w-3 h-3 text-destructive" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newColumns = [...(block.columns || [])];
+                      newColumns[colIndex].push({ id: crypto.randomUUID(), type: "text", content: "" });
+                      updateBlock(block.id, { columns: newColumns });
+                    }}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
+                  >
+                    + Add content
+                  </button>
                 </div>
               ))}
             </div>
