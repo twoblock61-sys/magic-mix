@@ -149,14 +149,14 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
                   return (
                     <td
                       key={colIndex}
-                      className={`px-3 py-2 border-r border-border last:border-r-0 relative min-w-[150px] ${
+                      className={`px-4 py-2 border-r border-border last:border-r-0 relative ${
                         isSelected ? "bg-primary/10 ring-2 ring-primary" : ""
                       }`}
                       onClick={(e) => {
                         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                         setToolbarPosition({
                           top: rect.top - 60,
-                          left: rect.left,
+                          left: rect.left + rect.width / 2,
                         });
                         setSelectedCell({ row: rowIndex + 1, col: colIndex });
                       }}
@@ -166,7 +166,7 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
                         value={cell}
                         onChange={(e) => updateCell(rowIndex + 1, colIndex, e.target.value)}
                         style={getCellStyle(formatting)}
-                        className="w-full bg-transparent outline-none text-sm py-1 px-1 rounded"
+                        className="w-full bg-transparent outline-none text-sm py-1 px-1 rounded break-words whitespace-normal"
                         placeholder="..."
                       />
                     </td>
