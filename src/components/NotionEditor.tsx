@@ -1071,86 +1071,47 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "table":
         return (
-          <div className="py-2">
-            <div className="border border-border rounded-lg overflow-hidden">
-              {/* Column headers with delete buttons */}
-              <div className="bg-muted/50 border-b border-border">
-                <div className="flex">
-                  {block.tableData?.[0]?.map((_, colIndex) => (
-                    <div
-                      key={colIndex}
-                      className="flex-1 px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={block.tableData?.[0]?.[colIndex] || ""}
-                        onChange={(e) => updateTableCell(block.id, 0, colIndex, e.target.value)}
-                        className="flex-1 text-sm font-semibold outline-none bg-transparent break-words"
-                        placeholder="Header"
-                      />
-                      {(block.tableData?.[0]?.length || 0) > 1 && (
-                        <button
-                          onClick={() => deleteTableColumn(block.id, colIndex)}
-                          className="p-1 rounded hover:bg-destructive/10 transition-colors flex-shrink-0"
-                          title="Delete column"
-                        >
-                          <X className="w-3 h-3 text-destructive" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <DataTable
+            block={block}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+            onCreateChart={(tableId, columnNames) => {
+              // Add a new chart block after this table block
+              const index = blocks.findIndex((b) => b.id === block.id);
+              const tableData = block.tableData || [];
 
-              {/* Data rows */}
-              <div className="divide-y divide-border">
-                {block.tableData?.slice(1).map((row, rowIndex) => (
-                  <div key={rowIndex + 1} className="flex group/row">
-                    {row.map((cell, colIndex) => (
-                      <div
-                        key={colIndex}
-                        className="flex-1 border-r border-border last:border-r-0"
-                      >
-                        <input
-                          type="text"
-                          value={cell}
-                          onChange={(e) => updateTableCell(block.id, rowIndex + 1, colIndex, e.target.value)}
-                          className="w-full px-3 py-2 text-sm outline-none bg-transparent break-words"
-                          placeholder="Cell"
-                        />
-                      </div>
-                    ))}
-                    <div className="w-8 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0">
-                      <button
-                        onClick={() => deleteTableRow(block.id, rowIndex + 1)}
-                        className="p-1 rounded hover:bg-destructive/10 transition-colors"
-                        title="Delete row"
-                      >
-                        <X className="w-3 h-3 text-destructive" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => addTableRow(block.id)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <PlusCircle className="w-3 h-3" />
-                Add row
-              </button>
-              <button
-                onClick={() => addTableColumn(block.id)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <PlusCircle className="w-3 h-3" />
-                Add column
-              </button>
-            </div>
-          </div>
+              // Convert table data to chart format
+              const chartRows = tableData.slice(1).map((row) => ({
+                id: crypto.randomUUID(),
+                cells: row.reduce((acc, cell, idx) => ({
+                  ...acc,
+                  [tableData[0][idx] || `col${idx}`]: isNaN(Number(cell)) ? cell : Number(cell),
+                }), {}),
+              }));
+
+              const chartColumns = tableData[0].map((name, idx) => ({
+                id: `col${idx}`,
+                key: name || `col${idx}`,
+                type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text",
+              }));
+
+              const chartBlock: NoteBlock = {
+                id: crypto.randomUUID(),
+                type: "chart",
+                content: "Chart from Table",
+                chartType: "bar",
+                chartTitle: "My Chart",
+                chartColumns,
+                chartRows,
+                chartXAxisKey: chartColumns[0]?.id,
+                chartSelectedSeries: chartColumns.filter(c => c.type === "number").map(c => c.id),
+                chartSeriesColors: {},
+                linkedTableId: tableId, // Link back to source table
+              };
+              const newBlocks = [...blocks];
+              newBlocks.splice(index + 1, 0, chartBlock);
+              onChange(newBlocks);
+            }}
+          />
         );
 
       case "file":
