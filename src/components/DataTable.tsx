@@ -186,28 +186,22 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
         </table>
       </div>
 
-      {/* Cell Formatting Toolbar */}
+      {/* Floating Cell Formatting Toolbar */}
       <AnimatePresence>
-        {selectedCell && (
+        {selectedCell && toolbarPosition && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-muted/50 rounded-lg p-3 space-y-2"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            style={{
+              position: "fixed",
+              top: `${toolbarPosition.top}px`,
+              left: `${toolbarPosition.left}px`,
+              zIndex: 50,
+            }}
+            className="bg-background border border-border rounded-lg shadow-xl p-2"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground">
-                Cell Formatting
-              </span>
-              <button
-                onClick={() => setSelectedCell(null)}
-                className="p-1 hover:bg-destructive/10 rounded"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2">
+            <div className="flex items-center gap-1">
               {/* Bold Button */}
               <button
                 onClick={() =>
@@ -217,13 +211,14 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
                     { bold: !getCellFormatting(selectedCell.row, selectedCell.col)?.bold }
                   )
                 }
-                className={`flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded transition-colors ${
+                title="Bold"
+                className={`flex items-center justify-center gap-1 p-2 text-xs rounded transition-colors ${
                   getCellFormatting(selectedCell.row, selectedCell.col)?.bold
                     ? "bg-primary text-primary-foreground"
-                    : "bg-background border border-border hover:bg-muted"
+                    : "bg-muted hover:bg-muted/80"
                 }`}
               >
-                <Bold className="w-3 h-3" />
+                <Bold className="w-4 h-4" />
               </button>
 
               {/* Italic Button */}
@@ -235,31 +230,38 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
                     { italic: !getCellFormatting(selectedCell.row, selectedCell.col)?.italic }
                   )
                 }
-                className={`flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded transition-colors ${
+                title="Italic"
+                className={`flex items-center justify-center gap-1 p-2 text-xs rounded transition-colors ${
                   getCellFormatting(selectedCell.row, selectedCell.col)?.italic
                     ? "bg-primary text-primary-foreground"
-                    : "bg-background border border-border hover:bg-muted"
+                    : "bg-muted hover:bg-muted/80"
                 }`}
               >
-                <Italic className="w-3 h-3" />
+                <Italic className="w-4 h-4" />
               </button>
+
+              {/* Divider */}
+              <div className="w-px h-6 bg-border" />
 
               {/* Text Color */}
               <div className="relative group">
-                <button className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-background border border-border hover:bg-muted transition-colors w-full">
-                  <Palette className="w-3 h-3" />
+                <button
+                  title="Text color"
+                  className="flex items-center justify-center p-2 text-xs rounded bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  <Palette className="w-4 h-4" />
                 </button>
-                <div className="absolute hidden group-hover:flex flex-col gap-1 bg-background border border-border rounded-lg shadow-lg p-2 z-10 top-full mt-1 right-0">
+                <div className="absolute hidden group-hover:flex flex-col gap-1 bg-background border border-border rounded-lg shadow-lg p-2 z-50 top-full mt-1 right-0">
                   {colorOptions.map((color) => (
                     <button
                       key={color.value}
                       onClick={() =>
                         updateCellFormatting(selectedCell.row, selectedCell.col, { color: color.value || undefined })
                       }
-                      className="flex items-center gap-2 px-2 py-1 text-xs hover:bg-muted rounded"
+                      className="flex items-center gap-2 px-2 py-1 text-xs hover:bg-muted rounded whitespace-nowrap"
                     >
                       <div
-                        className="w-4 h-4 rounded border border-border"
+                        className="w-3 h-3 rounded border border-border"
                         style={{ backgroundColor: color.value || "#999" }}
                       />
                       {color.name}
@@ -270,27 +272,38 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
 
               {/* Background Color */}
               <div className="relative group">
-                <button className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-background border border-border hover:bg-muted transition-colors w-full">
-                  <div className="w-3 h-3 bg-current opacity-50" />
+                <button
+                  title="Background color"
+                  className="flex items-center justify-center p-2 text-xs rounded bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  <div className="w-4 h-4 bg-current opacity-50" />
                 </button>
-                <div className="absolute hidden group-hover:flex flex-col gap-1 bg-background border border-border rounded-lg shadow-lg p-2 z-10 top-full mt-1 right-0">
+                <div className="absolute hidden group-hover:flex flex-col gap-1 bg-background border border-border rounded-lg shadow-lg p-2 z-50 top-full mt-1 right-0">
                   {colorOptions.map((color) => (
                     <button
                       key={`bg-${color.value}`}
                       onClick={() =>
                         updateCellFormatting(selectedCell.row, selectedCell.col, { bgColor: color.value || undefined })
                       }
-                      className="flex items-center gap-2 px-2 py-1 text-xs hover:bg-muted rounded"
+                      className="flex items-center gap-2 px-2 py-1 text-xs hover:bg-muted rounded whitespace-nowrap"
                     >
                       <div
-                        className="w-4 h-4 rounded border border-border"
+                        className="w-3 h-3 rounded border border-border"
                         style={{ backgroundColor: color.value || "#999" }}
                       />
-                      BG {color.name}
+                      BG
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedCell(null)}
+                className="ml-1 p-2 hover:bg-destructive/10 rounded"
+              >
+                <X className="w-4 h-4 text-destructive" />
+              </button>
             </div>
           </motion.div>
         )}
