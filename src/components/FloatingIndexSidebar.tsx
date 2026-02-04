@@ -7,14 +7,26 @@ interface FloatingIndexSidebarProps {
   index: HeadingIndex[];
   onHeadingClick: (headingId: string) => void;
   focusMode?: boolean;
+  isOpen?: boolean;
+  onToggle?: (isOpen: boolean) => void;
 }
 
-const FloatingIndexSidebar = ({ 
-  index, 
-  onHeadingClick, 
-  focusMode = false 
+const FloatingIndexSidebar = ({
+  index,
+  onHeadingClick,
+  focusMode = false,
+  isOpen: controlledIsOpen,
+  onToggle
 }: FloatingIndexSidebarProps) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [internalIsOpen, setInternalIsOpen] = useState(true);
+
+  // Use controlled state if provided, otherwise use internal state
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = (newState: boolean) => {
+    setInternalIsOpen(newState);
+    onToggle?.(newState);
+  };
 
   return (
     <>
