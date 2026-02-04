@@ -171,7 +171,7 @@ const FloatingIndexSidebar = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => handleToggle(true)}
             className="fixed left-8 top-24 z-40 p-3 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/50 text-primary shadow-lg transition-all"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
