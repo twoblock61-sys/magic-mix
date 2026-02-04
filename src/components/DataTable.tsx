@@ -162,7 +162,7 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
     }
   };
 
-  // Monitor scroll to hide/show toolbar
+  // Monitor scroll to hide/show toolbar and handle clicks outside
   useEffect(() => {
     if (!selectedCell) return;
 
@@ -170,11 +170,25 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
       checkToolbarVisibility(selectedCell.row, selectedCell.col);
     };
 
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if click is on the toolbar or a table cell
+      const isToolbarClick = toolbarRef.current?.contains(target);
+      const isTableClick = tableContainerRef.current?.contains(target);
+
+      // If clicked outside both toolbar and table, hide toolbar
+      if (!isToolbarClick && !isTableClick) {
+        setSelectedCell(null);
+        setToolbarVisible(false);
+      }
+    };
+
     const container = tableContainerRef.current;
     if (container) {
       container.addEventListener("scroll", handleScroll);
-      // Also listen to window scroll
       window.addEventListener("scroll", handleScroll);
+      document.addEventListener("click", handleClickOutside);
     }
 
     return () => {
@@ -182,6 +196,7 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
         container.removeEventListener("scroll", handleScroll);
       }
       window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [selectedCell]);
 
