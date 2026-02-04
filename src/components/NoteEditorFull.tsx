@@ -348,7 +348,10 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className={focusMode ? 'text-lg leading-relaxed' : ''}
+            className={focusMode
+              ? 'text-lg leading-relaxed prose prose-invert max-w-none [&_*]:transition-colors'
+              : ''
+            }
           >
             <NotionEditor blocks={note.blocks} onChange={handleBlocksChange} />
           </motion.div>
