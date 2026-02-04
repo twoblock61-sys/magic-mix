@@ -19,6 +19,7 @@ export const templates: Template[] = [
     description: "Perfect for writing engaging blog articles with rich formatting",
     icon: "📝",
     color: "from-blue-500/20 to-cyan-500/20",
+    category: "Personal & Learning",
     blocks: [
       {
         type: "heading1",
