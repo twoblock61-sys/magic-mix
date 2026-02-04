@@ -583,7 +583,7 @@ export const templates: Template[] = [
   {
     id: "daily-journal",
     name: "Daily Journal",
-    description: "Reflect on your day with gratitude, mood, and insights",
+    description: "Mindful daily reflection with gratitude, wins, and growth",
     icon: "📔",
     color: "from-pink-500/20 to-rose-500/20",
     blocks: [
@@ -593,7 +593,7 @@ export const templates: Template[] = [
       },
       {
         type: "text",
-        content: "Date: [MM/DD/YYYY] | Mood: 😊 | Energy Level: ⚡⚡⚡",
+        content: "📅 Date: [MM/DD/YYYY] | 😊 Mood: [Select] | ⚡ Energy: [1-10] | 🌤️ Weather: [Sunny/Rainy]",
       },
       {
         type: "divider",
@@ -601,55 +601,23 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "What I'm Grateful For",
-      },
-      {
-        type: "bullet",
-        content: "Something small",
-      },
-      {
-        type: "bullet",
-        content: "Something meaningful",
-      },
-      {
-        type: "bullet",
-        content: "Someone I appreciate",
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Highlights of Today",
-      },
-      {
-        type: "bullet",
-        content: "Achievement or positive moment",
-      },
-      {
-        type: "bullet",
-        content: "Moment of joy",
-      },
-      {
-        type: "bullet",
-        content: "Unexpected blessing",
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Challenges I Faced",
+        content: "🙏 Gratitude Check-in",
       },
       {
         type: "text",
-        content: "Describe any difficulties and how you handled them.",
+        content: "Start your reflection by acknowledging three things you're grateful for today.",
       },
       {
         type: "bullet",
-        content: "Challenge and how I'll overcome it",
+        content: "Something small but meaningful",
+      },
+      {
+        type: "bullet",
+        content: "Someone who made a positive impact",
+      },
+      {
+        type: "bullet",
+        content: "An opportunity or experience",
       },
       {
         type: "divider",
@@ -657,11 +625,23 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Personal Reflections",
+        content: "🌟 Today's Wins & Highlights",
       },
       {
         type: "text",
-        content: "Free-form thoughts about today, learnings, and insights.",
+        content: "Celebrate your achievements and positive moments, no matter how small.",
+      },
+      {
+        type: "numbered",
+        content: "Achievement or accomplishment",
+      },
+      {
+        type: "numbered",
+        content: "Moment of genuine joy or laughter",
+      },
+      {
+        type: "numbered",
+        content: "Unexpected blessing or kindness received",
       },
       {
         type: "divider",
@@ -669,21 +649,101 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Tomorrow's Focus",
+        content: "⚡ Energy & Wellness",
+      },
+      {
+        type: "text",
+        content: "How did you feel physically and mentally today?",
+      },
+      {
+        type: "bullet",
+        content: "Sleep quality: [Good/Fair/Poor]",
+      },
+      {
+        type: "bullet",
+        content: "Exercise/movement: [Activity done]",
+      },
+      {
+        type: "bullet",
+        content: "Mental state: [Peaceful/Stressed/Neutral]",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "🤔 Challenges & Growth",
+      },
+      {
+        type: "text",
+        content: "Reflect on difficulties and what you learned from them.",
+      },
+      {
+        type: "heading3",
+        content: "Challenge Encountered",
+      },
+      {
+        type: "text",
+        content: "Describe the situation and your emotional response.",
+      },
+      {
+        type: "heading3",
+        content: "My Response & Learning",
+      },
+      {
+        type: "bullet",
+        content: "How I handled it",
+      },
+      {
+        type: "bullet",
+        content: "What I learned",
+      },
+      {
+        type: "bullet",
+        content: "How I'll do better next time",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "💭 Personal Reflection",
+      },
+      {
+        type: "text",
+        content: "Free-form thoughts about today. What patterns do you notice? Any insights or realizations?",
+      },
+      {
+        type: "callout",
+        content: "✨ One key insight from today: [Your realization]",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "🚀 Tomorrow's Focus",
+      },
+      {
+        type: "text",
+        content: "Set clear intentions for tomorrow.",
       },
       {
         type: "todo",
-        content: "Priority 1 - Important task",
+        content: "🎯 Priority 1 - Most important action",
         checked: false,
       },
       {
         type: "todo",
-        content: "Priority 2 - Goal to work towards",
+        content: "💪 Priority 2 - Personal growth goal",
         checked: false,
       },
       {
         type: "todo",
-        content: "Priority 3 - Something to look forward to",
+        content: "😊 Priority 3 - Something to look forward to",
         checked: false,
       },
     ],
