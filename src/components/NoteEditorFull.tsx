@@ -188,6 +188,13 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         </div>
       </motion.div>
 
+      {/* Templates Modal */}
+      <TemplatesModal
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={handleApplyTemplate}
+      />
+
       {/* Index Dropdown Menu */}
       <AnimatePresence>
         {showIndex && (
