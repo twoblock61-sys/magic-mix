@@ -52,6 +52,9 @@ import MindMap from "./MindMap";
 import FlashcardBlock from "./FlashcardBlock";
 import FlashcardStudyMode from "./FlashcardStudyMode";
 import ChartBlock from "./ChartBlock";
+import EquationBlock from "./EquationBlock";
+import DatabaseBlock from "./DatabaseBlock";
+import DataTable from "./DataTable";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -111,14 +114,36 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [lightboxImages, setLightboxImages] = useState<{ url: string; caption?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [studyModeBlock, setStudyModeBlock] = useState<NoteBlock | null>(null);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const dragYRef = useRef(0);
 
   const updateBlock = (id: string, updates: Partial<NoteBlock>) => {
     onChange(
       blocks.map((block) =>
         block.id === id ? { ...block, ...updates } : block
       )
+    );
+  };
+
+  const updateNestedBlock = (parentBlockId: string, columnIndex: number, nestedBlockId: string, updates: Partial<NoteBlock>) => {
+    onChange(
+      blocks.map((block) => {
+        if (block.id === parentBlockId && block.columns) {
+          const newColumns = block.columns.map((column, colIdx) => {
+            if (colIdx === columnIndex) {
+              return column.map((nestedBlock) =>
+                nestedBlock.id === nestedBlockId ? { ...nestedBlock, ...updates } : nestedBlock
+              );
+            }
+            return column;
+          });
+          return { ...block, columns: newColumns };
+        }
+        return block;
+      })
     );
   };
 
@@ -401,6 +426,67 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       bt.description.toLowerCase().includes(menuFilter.toLowerCase())
   );
 
+  const handleBlockDragStart = (blockId: string, clientY: number) => {
+    setDraggedBlockId(blockId);
+    setShowMenu(null);
+    dragYRef.current = clientY;
+  };
+
+  const handleBlockDragEnd = (draggedId: string) => {
+    if (dragOverBlockId && dragOverBlockId !== draggedId) {
+      reorderBlocks(draggedId, dragOverBlockId);
+    }
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    if (!draggedBlockId) return;
+
+    // Find which block the pointer is over
+    let foundBlock = false;
+    blocks.forEach((block) => {
+      const element = blockRefs.current.get(block.id);
+      if (!element) return;
+
+      const rect = element.getBoundingClientRect();
+      const isOver =
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom &&
+        block.id !== draggedBlockId;
+
+      if (isOver && !foundBlock) {
+        setDragOverBlockId(block.id);
+        foundBlock = true;
+      }
+    });
+
+    // Clear dragOverBlockId if not over any block
+    if (!foundBlock) {
+      setDragOverBlockId(null);
+    }
+  };
+
+  const reorderBlocks = (draggedId: string, targetId: string) => {
+    const draggedIndex = blocks.findIndex(b => b.id === draggedId);
+    const targetIndex = blocks.findIndex(b => b.id === targetId);
+
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+      return;
+    }
+
+    const newBlocks = [...blocks];
+    const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
+
+    if (draggedIndex < targetIndex) {
+      newBlocks.splice(targetIndex - 1, 0, draggedBlock);
+    } else {
+      newBlocks.splice(targetIndex, 0, draggedBlock);
+    }
+
+    onChange(newBlocks);
+  };
+
   // Track content refs to avoid re-renders resetting cursor
   const initializedRefs = useRef<Set<string>>(new Set());
   const currentBlockIds = useRef<string>("");
@@ -413,6 +499,22 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       currentBlockIds.current = blockIds;
     }
   }, [blocks]);
+
+  // Add pointer move and up listeners for drag detection
+  useEffect(() => {
+    if (!draggedBlockId) return;
+
+    const handlePointerUp = () => {
+      handleBlockDragEnd(draggedBlockId);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove as EventListener);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove as EventListener);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [draggedBlockId, blocks, dragOverBlockId]);
 
   // Render editable content with formatting preserved - NO children to avoid cursor reset
   const renderEditableContent = (block: NoteBlock) => {
@@ -834,28 +936,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "equation":
         return (
-          <div className="py-2">
-            <div className={getBlockStyle("equation")}>
-              <div
-                ref={(el) => {
-                  if (el) {
-                    contentRefs.current.set(block.id, el);
-                    if (el.textContent === "" && block.content) {
-                      el.textContent = block.content;
-                    }
-                  }
-                }}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={(e) => handleContentInput(block, e.currentTarget)}
-                onKeyDown={(e) => handleKeyDown(e, block)}
-                className="outline-none"
-                data-placeholder="∑ (x² + y²) = z²"
-              >
-                {block.content}
-              </div>
-            </div>
-          </div>
+          <EquationBlock
+            content={block.content}
+            onChange={(content) => updateBlock(block.id, { content })}
+          />
         );
 
       case "columns":
@@ -873,15 +957,112 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                       newTitles[colIndex] = e.target.value;
                       updateBlock(block.id, { columnTitles: newTitles });
                     }}
-                    className="text-xs text-muted-foreground mb-2 bg-transparent outline-none focus:text-foreground transition-colors w-full font-medium"
+                    className="text-sm font-semibold mb-3 bg-muted/40 outline-none focus:bg-muted focus:text-foreground transition-colors w-full px-2 py-1 rounded border border-transparent focus:border-primary/30 text-foreground"
                     placeholder={`Column ${colIndex + 1}`}
                   />
-                  <div
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="outline-none text-sm min-h-[60px] empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
-                    data-placeholder="Type here..."
-                  />
+                  <div className="space-y-2">
+                    {(column || []).map((nestedBlock, blockIndex) => (
+                      <div key={nestedBlock.id || blockIndex} className="relative group/nested">
+                        {/* Render nested text blocks with proper update handlers */}
+                        {nestedBlock.type === "text" && (
+                          <div
+                            ref={(el) => {
+                              if (el) {
+                                contentRefs.current.set(nestedBlock.id, el);
+                                if (!initializedRefs.current.has(nestedBlock.id)) {
+                                  el.textContent = nestedBlock.content || "";
+                                  initializedRefs.current.add(nestedBlock.id);
+                                }
+                              }
+                            }}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const text = e.currentTarget.textContent || "";
+                              if (text !== nestedBlock.content) {
+                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                              }
+                            }}
+                            onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
+                            className="outline-none py-1 text-sm empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
+                            data-placeholder="Type here..."
+                          />
+                        )}
+                        {nestedBlock.type === "bullet" && (
+                          <div className="flex items-start gap-3 py-1">
+                            <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/60 flex-shrink-0" />
+                            <div
+                              ref={(el) => {
+                                if (el) {
+                                  contentRefs.current.set(nestedBlock.id, el);
+                                  if (!initializedRefs.current.has(nestedBlock.id)) {
+                                    el.textContent = nestedBlock.content || "";
+                                    initializedRefs.current.add(nestedBlock.id);
+                                  }
+                                }
+                              }}
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => {
+                                const text = e.currentTarget.textContent || "";
+                                if (text !== nestedBlock.content) {
+                                  updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                                }
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
+                              className="flex-1 outline-none text-sm"
+                              data-placeholder="List item"
+                            />
+                          </div>
+                        )}
+                        {nestedBlock.type === "heading1" && (
+                          <div
+                            ref={(el) => {
+                              if (el) {
+                                contentRefs.current.set(nestedBlock.id, el);
+                                if (!initializedRefs.current.has(nestedBlock.id)) {
+                                  el.textContent = nestedBlock.content || "";
+                                  initializedRefs.current.add(nestedBlock.id);
+                                }
+                              }
+                            }}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const text = e.currentTarget.textContent || "";
+                              if (text !== nestedBlock.content) {
+                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                              }
+                            }}
+                            onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
+                            className="outline-none text-2xl font-bold empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
+                            data-placeholder="Heading 1"
+                          />
+                        )}
+                        <button
+                          onClick={() => {
+                            const newColumns = [...(block.columns || [])];
+                            newColumns[colIndex] = newColumns[colIndex].filter((_, idx) => idx !== blockIndex);
+                            updateBlock(block.id, { columns: newColumns });
+                          }}
+                          className="absolute top-0 right-0 opacity-0 group-hover/nested:opacity-100 p-1 rounded hover:bg-destructive/10 transition-opacity"
+                          title="Delete"
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newColumns = [...(block.columns || [])];
+                      newColumns[colIndex].push({ id: crypto.randomUUID(), type: "text", content: "" });
+                      updateBlock(block.id, { columns: newColumns });
+                    }}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
+                  >
+                    + Add content
+                  </button>
                 </div>
               ))}
             </div>
@@ -890,86 +1071,47 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "table":
         return (
-          <div className="py-2">
-            <div className="border border-border rounded-lg overflow-hidden">
-              {/* Column headers with delete buttons */}
-              <div className="bg-muted/50 border-b border-border">
-                <div className="flex">
-                  {block.tableData?.[0]?.map((_, colIndex) => (
-                    <div
-                      key={colIndex}
-                      className="flex-1 px-3 py-2 border-r border-border last:border-r-0 flex items-center justify-between gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={block.tableData?.[0]?.[colIndex] || ""}
-                        onChange={(e) => updateTableCell(block.id, 0, colIndex, e.target.value)}
-                        className="flex-1 text-sm font-semibold outline-none bg-transparent break-words"
-                        placeholder="Header"
-                      />
-                      {(block.tableData?.[0]?.length || 0) > 1 && (
-                        <button
-                          onClick={() => deleteTableColumn(block.id, colIndex)}
-                          className="p-1 rounded hover:bg-destructive/10 transition-colors flex-shrink-0"
-                          title="Delete column"
-                        >
-                          <X className="w-3 h-3 text-destructive" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <DataTable
+            block={block}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+            onCreateChart={(tableId, columnNames) => {
+              // Add a new chart block after this table block
+              const index = blocks.findIndex((b) => b.id === block.id);
+              const tableData = block.tableData || [];
 
-              {/* Data rows */}
-              <div className="divide-y divide-border">
-                {block.tableData?.slice(1).map((row, rowIndex) => (
-                  <div key={rowIndex + 1} className="flex group/row">
-                    {row.map((cell, colIndex) => (
-                      <div
-                        key={colIndex}
-                        className="flex-1 border-r border-border last:border-r-0"
-                      >
-                        <input
-                          type="text"
-                          value={cell}
-                          onChange={(e) => updateTableCell(block.id, rowIndex + 1, colIndex, e.target.value)}
-                          className="w-full px-3 py-2 text-sm outline-none bg-transparent break-words"
-                          placeholder="Cell"
-                        />
-                      </div>
-                    ))}
-                    <div className="w-8 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0">
-                      <button
-                        onClick={() => deleteTableRow(block.id, rowIndex + 1)}
-                        className="p-1 rounded hover:bg-destructive/10 transition-colors"
-                        title="Delete row"
-                      >
-                        <X className="w-3 h-3 text-destructive" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => addTableRow(block.id)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <PlusCircle className="w-3 h-3" />
-                Add row
-              </button>
-              <button
-                onClick={() => addTableColumn(block.id)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <PlusCircle className="w-3 h-3" />
-                Add column
-              </button>
-            </div>
-          </div>
+              // Convert table data to chart format
+              const chartRows = tableData.slice(1).map((row) => ({
+                id: crypto.randomUUID(),
+                cells: row.reduce((acc, cell, idx) => ({
+                  ...acc,
+                  [tableData[0][idx] || `col${idx}`]: isNaN(Number(cell)) ? cell : Number(cell),
+                }), {}),
+              }));
+
+              const chartColumns = tableData[0].map((name, idx) => ({
+                id: `col${idx}`,
+                key: name || `col${idx}`,
+                type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text",
+              }));
+
+              const chartBlock: NoteBlock = {
+                id: crypto.randomUUID(),
+                type: "chart",
+                content: "Chart from Table",
+                chartType: "bar",
+                chartTitle: "My Chart",
+                chartColumns,
+                chartRows,
+                chartXAxisKey: chartColumns[0]?.id,
+                chartSelectedSeries: chartColumns.filter(c => c.type === "number").map(c => c.id),
+                chartSeriesColors: {},
+                linkedTableId: tableId, // Link back to source table
+              };
+              const newBlocks = [...blocks];
+              newBlocks.splice(index + 1, 0, chartBlock);
+              onChange(newBlocks);
+            }}
+          />
         );
 
       case "file":
@@ -1391,99 +1533,47 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "database":
         return (
-          <div className="py-3">
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-muted/50">
-                    {(block.databaseColumns || []).map((col) => (
-                      <th key={col.id} className="px-3 py-2 text-left text-sm font-medium border-r border-border last:border-r-0">
-                        <div className="flex items-center gap-2">
-                          {col.type === "checkbox" ? <CheckSquare className="w-3 h-3" /> :
-                           col.type === "date" ? <Calendar className="w-3 h-3" /> :
-                           col.type === "number" ? <span className="text-xs">#</span> :
-                           <Type className="w-3 h-3" />}
-                          <span>{col.name}</span>
-                        </div>
-                      </th>
-                    ))}
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {(block.databaseRows || []).map((row, rowIndex) => (
-                    <tr key={row.id} className="border-t border-border group/dbrow">
-                      {(block.databaseColumns || []).map((col) => (
-                        <td key={col.id} className="px-3 py-2 border-r border-border last:border-r-0">
-                          {col.type === "checkbox" ? (
-                            <input
-                              type="checkbox"
-                              checked={row.cells[col.id] === "true"}
-                              onChange={(e) => {
-                                const newRows = [...(block.databaseRows || [])];
-                                newRows[rowIndex].cells[col.id] = e.target.checked.toString();
-                                updateBlock(block.id, { databaseRows: newRows });
-                              }}
-                              className="w-4 h-4"
-                            />
-                          ) : col.type === "date" ? (
-                            <input
-                              type="date"
-                              value={row.cells[col.id] || ""}
-                              onChange={(e) => {
-                                const newRows = [...(block.databaseRows || [])];
-                                newRows[rowIndex].cells[col.id] = e.target.value;
-                                updateBlock(block.id, { databaseRows: newRows });
-                              }}
-                              className="text-sm bg-transparent outline-none"
-                            />
-                          ) : (
-                            <input
-                              type={col.type === "number" ? "number" : "text"}
-                              value={row.cells[col.id] || ""}
-                              onChange={(e) => {
-                                const newRows = [...(block.databaseRows || [])];
-                                newRows[rowIndex].cells[col.id] = e.target.value;
-                                updateBlock(block.id, { databaseRows: newRows });
-                              }}
-                              className="w-full text-sm bg-transparent outline-none"
-                              placeholder="..."
-                            />
-                          )}
-                        </td>
-                      ))}
-                      <td className="opacity-0 group-hover/dbrow:opacity-100">
-                        <button
-                          onClick={() => {
-                            const newRows = (block.databaseRows || []).filter((_, i) => i !== rowIndex);
-                            updateBlock(block.id, { databaseRows: newRows });
-                          }}
-                          className="p-1 hover:bg-destructive/10 rounded"
-                        >
-                          <X className="w-3 h-3 text-destructive" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => {
-                  const newRow = {
-                    id: crypto.randomUUID(),
-                    cells: (block.databaseColumns || []).reduce((acc, col) => ({ ...acc, [col.id]: "" }), {})
-                  };
-                  updateBlock(block.id, { databaseRows: [...(block.databaseRows || []), newRow] });
-                }}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-              >
-                <PlusCircle className="w-3 h-3" />
-                Add row
-              </button>
-            </div>
-          </div>
+          <DataTable
+            block={block}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+            onCreateChart={(tableId, columnNames) => {
+              // Add a new chart block after this database block
+              const index = blocks.findIndex((b) => b.id === block.id);
+              const tableData = block.tableData || [];
+
+              // Convert table data to chart format
+              const chartRows = tableData.slice(1).map((row) => ({
+                id: crypto.randomUUID(),
+                cells: row.reduce((acc, cell, idx) => ({
+                  ...acc,
+                  [tableData[0][idx] || `col${idx}`]: isNaN(Number(cell)) ? cell : Number(cell),
+                }), {}),
+              }));
+
+              const chartColumns = tableData[0].map((name, idx) => ({
+                id: `col${idx}`,
+                key: name || `col${idx}`,
+                type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text",
+              }));
+
+              const chartBlock: NoteBlock = {
+                id: crypto.randomUUID(),
+                type: "chart",
+                content: "Chart from Table",
+                chartType: "bar",
+                chartTitle: `Chart from ${block.content || "Table"}`,
+                chartColumns,
+                chartRows,
+                chartXAxisKey: chartColumns[0]?.id,
+                chartSelectedSeries: chartColumns.filter(c => c.type === "number").map(c => c.id),
+                chartSeriesColors: {},
+                linkedTableId: tableId, // Link back to source table for live updates
+              };
+              const newBlocks = [...blocks];
+              newBlocks.splice(index + 1, 0, chartBlock);
+              onChange(newBlocks);
+            }}
+          />
         );
 
       case "mindmap":
@@ -1582,6 +1672,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               chartXAxisKey={block.chartXAxisKey}
               chartSelectedSeries={block.chartSelectedSeries}
               chartSeriesColors={block.chartSeriesColors}
+              linkedTableId={block.linkedTableId}
+              blocks={blocks}
               chartData={block.chartData}
               onUpdate={(updates) => updateBlock(block.id, updates)}
             />
@@ -1599,12 +1691,38 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         {blocks.map((block) => (
           <motion.div
             key={block.id}
+            layout
             ref={(el) => el && blockRefs.current.set(block.id, el)}
             initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="group relative flex items-start gap-1"
-            onMouseEnter={() => setActiveBlockId(block.id)}
-            onMouseLeave={() => setActiveBlockId(null)}
+            animate={{
+              opacity: draggedBlockId === block.id ? 0.5 : 1,
+              y: 0,
+              scale: draggedBlockId === block.id ? 0.98 : 1,
+            }}
+            transition={{ duration: 0.15, type: "spring", stiffness: 300, damping: 30 }}
+            className={`group relative flex items-start gap-1 rounded-lg transition-all ${
+              draggedBlockId === block.id
+                ? 'bg-primary/5 shadow-lg shadow-primary/20'
+                : ''
+            } ${
+              dragOverBlockId === block.id && draggedBlockId !== block.id
+                ? 'border-t-2 border-primary/50 pt-1'
+                : ''
+            }`}
+            onMouseEnter={() => {
+              setActiveBlockId(block.id);
+              if (draggedBlockId && draggedBlockId !== block.id) {
+                setDragOverBlockId(block.id);
+              }
+            }}
+            onMouseLeave={() => {
+              if (draggedBlockId !== block.id) {
+                setActiveBlockId(null);
+                if (dragOverBlockId === block.id) {
+                  setDragOverBlockId(null);
+                }
+              }
+            }}
           >
             {/* Block Controls */}
             <motion.div 
@@ -1620,9 +1738,13 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               >
                 <Plus className="w-4 h-4 text-muted-foreground group-hover/btn:text-primary transition-colors" />
               </motion.button>
-              <motion.button 
+              <motion.button
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
                 whileHover={{ scale: 1.1 }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  handleBlockDragStart(block.id, e.clientY);
+                }}
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
               </motion.button>
