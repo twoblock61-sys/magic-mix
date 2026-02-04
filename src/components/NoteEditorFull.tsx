@@ -30,6 +30,9 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [showTagInput, setShowTagInput] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Index functionality
+  const { index, scrollToHeading } = useHeadingIndex(note.blocks);
+
   const handleAddTag = () => {
     if (newTagInput.trim()) {
       const randomColor = tagColors[Math.floor(Math.random() * tagColors.length)];
