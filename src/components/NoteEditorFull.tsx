@@ -117,6 +117,31 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           >
             {focusMode ? <Minimize2 className="w-4 h-4" /> : <Focus className="w-4 h-4" />}
           </motion.button>
+
+          {/* Index Toggle */}
+          <motion.button
+            onClick={() => setShowIndex(!showIndex)}
+            className={`p-2 rounded-lg transition-colors relative ${
+              showIndex
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted text-muted-foreground'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Toggle document index"
+          >
+            <BookOpen className="w-4 h-4" />
+            {index.length > 0 && (
+              <motion.span
+                className="absolute top-0 right-0 w-4 h-4 text-[10px] font-bold bg-primary text-primary-foreground rounded-full flex items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+              >
+                {index.length}
+              </motion.span>
+            )}
+          </motion.button>
+
           <motion.button
             onClick={() => setIsFavorite(!isFavorite)}
             className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-500' : 'hover:bg-muted text-muted-foreground'}`}
