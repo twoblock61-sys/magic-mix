@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
+import TemplatesModal from "./TemplatesModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
+import { Template } from "@/data/templates";
 import { format } from "date-fns";
 
 interface NoteEditorFullProps {
