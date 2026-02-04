@@ -132,7 +132,7 @@ export const templates: Template[] = [
   {
     id: "meeting-notes",
     name: "Meeting Notes",
-    description: "Capture meeting details, attendees, and action items efficiently",
+    description: "Professional meeting capture with agenda, decisions, and tracking",
     icon: "📅",
     color: "from-purple-500/20 to-pink-500/20",
     blocks: [
@@ -143,8 +143,8 @@ export const templates: Template[] = [
       {
         type: "table",
         tableData: [
-          ["Date", "Time", "Location"],
-          ["MM/DD/YYYY", "HH:MM", "Zoom / In-person"],
+          ["📅 Date", "🕐 Time", "📍 Location"],
+          ["MM/DD/YYYY", "HH:MM - HH:MM", "Zoom / Conference Room"],
         ],
       },
       {
@@ -153,19 +153,19 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Attendees",
+        content: "👥 Attendees",
       },
       {
         type: "bullet",
-        content: "Person 1",
+        content: "Lead: [Primary organizer]",
       },
       {
         type: "bullet",
-        content: "Person 2",
+        content: "Team: [Other participants]",
       },
       {
         type: "bullet",
-        content: "Person 3",
+        content: "Guest: [External attendees]",
       },
       {
         type: "divider",
@@ -173,19 +173,23 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Agenda",
+        content: "📋 Agenda",
       },
       {
         type: "numbered",
-        content: "Topic 1 - Discussion points",
+        content: "Welcome & Agenda Review (5 min)",
       },
       {
         type: "numbered",
-        content: "Topic 2 - Key decisions",
+        content: "Main Topic Discussion (20 min)",
       },
       {
         type: "numbered",
-        content: "Topic 3 - Next steps",
+        content: "Key Decisions & Next Steps (10 min)",
+      },
+      {
+        type: "numbered",
+        content: "Q&A and Closing (5 min)",
       },
       {
         type: "divider",
@@ -193,46 +197,76 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Discussion & Decisions",
+        content: "💬 Key Discussion Points",
+      },
+      {
+        type: "heading3",
+        content: "Topic 1",
       },
       {
         type: "text",
-        content: "Summarize the main discussion points and decisions made.",
+        content: "Summary of discussion and main points covered",
       },
       {
-        type: "divider",
-        content: "---",
+        type: "bullet",
+        content: "Supporting detail or insight",
       },
       {
-        type: "heading2",
-        content: "Action Items",
-      },
-      {
-        type: "todo",
-        content: "Action item 1 - Owner: [Name]",
-        checked: false,
-      },
-      {
-        type: "todo",
-        content: "Action item 2 - Owner: [Name]",
-        checked: false,
-      },
-      {
-        type: "todo",
-        content: "Action item 3 - Owner: [Name]",
-        checked: false,
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Next Meeting",
+        type: "heading3",
+        content: "Topic 2",
       },
       {
         type: "text",
-        content: "Date: [MM/DD/YYYY] | Time: [HH:MM] | Location: [Details]",
+        content: "Additional discussion summary",
+      },
+      {
+        type: "bullet",
+        content: "Key point from conversation",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "✅ Decisions Made",
+      },
+      {
+        type: "callout",
+        content: "🎯 Decision 1: Clear action or outcome decided",
+      },
+      {
+        type: "callout",
+        content: "🎯 Decision 2: Another important decision",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "📌 Action Items",
+      },
+      {
+        type: "table",
+        tableData: [
+          ["Action", "Owner", "Due Date", "Priority"],
+          ["Action item 1", "Name", "MM/DD/YYYY", "High"],
+          ["Action item 2", "Name", "MM/DD/YYYY", "Medium"],
+          ["Action item 3", "Name", "MM/DD/YYYY", "Low"],
+        ],
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "📅 Next Meeting",
+      },
+      {
+        type: "text",
+        content: "Scheduled: [Date & Time] | Location: [Details] | Attendees: [Confirm participants]",
       },
     ],
   },
