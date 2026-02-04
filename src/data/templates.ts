@@ -751,21 +751,69 @@ export const templates: Template[] = [
   {
     id: "research-notes",
     name: "Research Notes",
-    description: "Organize research findings with sources, analysis, and conclusions",
+    description: "Organize research with sources, data analysis, and conclusions",
     icon: "🔬",
     color: "from-indigo-500/20 to-violet-500/20",
     blocks: [
       {
         type: "heading1",
-        content: "Research Notes",
+        content: "Research Notes: [Topic]",
+      },
+      {
+        type: "callout",
+        content: "🔍 Research Focus: What are you trying to understand or discover?",
+      },
+      {
+        type: "divider",
+        content: "---",
       },
       {
         type: "heading2",
-        content: "Research Question",
+        content: "❓ Research Questions",
+      },
+      {
+        type: "numbered",
+        content: "Primary question being investigated",
+      },
+      {
+        type: "numbered",
+        content: "Secondary questions or sub-topics",
+      },
+      {
+        type: "numbered",
+        content: "Related areas to explore",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "💡 Key Findings",
+      },
+      {
+        type: "heading3",
+        content: "Finding 1",
       },
       {
         type: "text",
-        content: "What are you trying to understand or discover?",
+        content: "Description with supporting evidence and data",
+      },
+      {
+        type: "heading3",
+        content: "Finding 2",
+      },
+      {
+        type: "text",
+        content: "Detailed explanation with source references",
+      },
+      {
+        type: "heading3",
+        content: "Finding 3",
+      },
+      {
+        type: "text",
+        content: "Research outcome with implications",
       },
       {
         type: "divider",
@@ -773,34 +821,15 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Key Findings",
-      },
-      {
-        type: "bullet",
-        content: "Finding 1 with supporting evidence",
-      },
-      {
-        type: "bullet",
-        content: "Finding 2 with data or reference",
-      },
-      {
-        type: "bullet",
-        content: "Finding 3 with source attribution",
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Sources & References",
+        content: "📚 Sources & References",
       },
       {
         type: "table",
         tableData: [
-          ["Source", "Type", "Link/Citation"],
-          ["Source Title", "Article/Book/Study", "URL or citation"],
-          ["Another Source", "Report/Paper", "Details"],
+          ["📖 Source Title", "📑 Type", "🔗 Link/Citation", "✅ Credibility"],
+          ["Source 1", "Journal Article", "URL or DOI", "High"],
+          ["Source 2", "Research Paper", "Citation format", "High"],
+          ["Source 3", "Book/Report", "ISBN or link", "Medium"],
         ],
       },
       {
@@ -809,15 +838,15 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Data & Statistics",
+        content: "📊 Data & Statistics",
       },
       {
         type: "text",
-        content: "Relevant statistics, numbers, and data points from your research.",
+        content: "Key data points and statistics from your research.",
       },
       {
         type: "code",
-        content: "// Example data or code snippet\ndata = {\n  sample_size: 1000,\n  success_rate: 0.85,\n  confidence: 0.95\n}",
+        content: "// Research data summary\nresearch_data = {\n  sample_size: 1000,\n  accuracy: 0.95,\n  confidence_interval: 0.99,\n  time_period: \"2023-2024\",\n  methodology: \"Quantitative analysis\"\n}",
       },
       {
         type: "divider",
@@ -825,19 +854,35 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Analysis & Interpretation",
+        content: "🔬 Analysis & Interpretation",
       },
       {
         type: "text",
-        content: "Your analysis of the findings and what they mean.",
+        content: "Your detailed analysis of what the findings mean and implications.",
+      },
+      {
+        type: "heading3",
+        content: "Pattern 1",
       },
       {
         type: "bullet",
-        content: "Interpretation 1",
+        content: "What pattern emerged from the data",
       },
       {
         type: "bullet",
-        content: "Interpretation 2",
+        content: "Why this pattern is significant",
+      },
+      {
+        type: "heading3",
+        content: "Pattern 2",
+      },
+      {
+        type: "bullet",
+        content: "Additional insight or trend",
+      },
+      {
+        type: "bullet",
+        content: "Real-world applications",
       },
       {
         type: "divider",
@@ -845,15 +890,38 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Conclusions",
+        content: "🎯 Conclusions & Implications",
       },
       {
         type: "text",
-        content: "Final conclusions and implications of your research.",
+        content: "Summary of main findings and their broader significance.",
       },
       {
         type: "callout",
-        content: "Key insight: Your main takeaway from this research",
+        content: "🔑 Primary Insight: The most important takeaway from your research",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "📌 Next Steps",
+      },
+      {
+        type: "todo",
+        content: "Conduct additional research on [Topic]",
+        checked: false,
+      },
+      {
+        type: "todo",
+        content: "Verify findings with peer review",
+        checked: false,
+      },
+      {
+        type: "todo",
+        content: "Prepare presentation/paper",
+        checked: false,
       },
     ],
   },
