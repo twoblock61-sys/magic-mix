@@ -164,6 +164,57 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         </div>
       </motion.div>
 
+      {/* Inline Index Popover - appears below top bar */}
+      <AnimatePresence>
+        {showIndexPopover && !focusMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            className="border-b border-border bg-card/50 backdrop-blur-sm overflow-hidden"
+          >
+            <div className="px-6 py-4 max-w-4xl mx-auto">
+              {index.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center">No headings yet</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Jump to section</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {index.map((heading) => (
+                      <motion.button
+                        key={heading.id}
+                        onClick={() => {
+                          scrollToHeading(heading.id);
+                          setShowIndexPopover(false);
+                        }}
+                        className="text-left px-3 py-2 rounded-lg hover:bg-muted/60 transition-all group"
+                        style={{
+                          paddingLeft: `${12 + heading.indent * 12}px`,
+                        }}
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span
+                          className={`block text-sm transition-colors ${
+                            heading.level === 1
+                              ? 'font-semibold text-foreground'
+                              : heading.level === 2
+                              ? 'font-medium text-foreground/90'
+                              : 'text-foreground/75 text-xs'
+                          }`}
+                        >
+                          {heading.text || `Untitled ${heading.level === 1 ? "Heading" : "Subheading"}`}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
         {/* Main Content Wrapper with Index Panel */}
         <div className="flex flex-1 overflow-hidden">
           {/* Index Panel - only in focus mode */}
