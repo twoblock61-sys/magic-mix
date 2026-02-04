@@ -277,7 +277,7 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
             exit={{ opacity: 0, scale: 0.8, y: 5 }}
             transition={{ duration: 0.15 }}
             style={{
-              position: "absolute",
+              position: "fixed",
               top: `${Math.max(10, toolbarPosition.top)}px`,
               left: `${toolbarPosition.left}px`,
               zIndex: 50,
