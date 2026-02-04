@@ -435,7 +435,7 @@ export const templates: Template[] = [
   {
     id: "book-summary",
     name: "Book Summary",
-    description: "Capture key insights and takeaways from books you read",
+    description: "Comprehensive book notes with quotes, takeaways, and ratings",
     icon: "📚",
     color: "from-orange-500/20 to-red-500/20",
     blocks: [
@@ -446,8 +446,8 @@ export const templates: Template[] = [
       {
         type: "table",
         tableData: [
-          ["Book Title", "Author", "Year"],
-          ["Book name", "Author name", "2024"],
+          ["📖 Book Title", "✍️ Author", "📅 Year", "📊 Pages"],
+          ["Title here", "Author name", "2024", "300"],
         ],
       },
       {
@@ -456,11 +456,28 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Overview",
+        content: "⭐ Book Rating",
+      },
+      {
+        type: "rating",
+        ratingValue: 5,
+        ratingMax: 5,
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "📝 Overview",
       },
       {
         type: "text",
-        content: "Brief summary of what the book is about and its main themes.",
+        content: "Write a 2-3 sentence summary of the book's main themes and what it's fundamentally about.",
+      },
+      {
+        type: "callout",
+        content: "🎯 Main Theme: What is the core message or central argument?",
       },
       {
         type: "divider",
@@ -468,19 +485,19 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Key Concepts",
+        content: "💡 Key Concepts & Ideas",
       },
       {
-        type: "bullet",
-        content: "Core idea 1",
+        type: "numbered",
+        content: "Core idea 1 - Why it matters",
       },
       {
-        type: "bullet",
-        content: "Core idea 2",
+        type: "numbered",
+        content: "Core idea 2 - How it applies",
       },
       {
-        type: "bullet",
-        content: "Core idea 3",
+        type: "numbered",
+        content: "Core idea 3 - Real-world impact",
       },
       {
         type: "divider",
@@ -488,47 +505,78 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Memorable Quotes",
+        content: "✍️ Memorable Quotes",
       },
       {
         type: "quote",
-        content: "Add an impactful quote from the book",
-      },
-      {
-        type: "quote",
-        content: "Another important passage",
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Main Takeaways",
-      },
-      {
-        type: "numbered",
-        content: "What you learned",
-      },
-      {
-        type: "numbered",
-        content: "How you'll apply it",
-      },
-      {
-        type: "numbered",
-        content: "Future reading recommendations",
-      },
-      {
-        type: "divider",
-        content: "---",
-      },
-      {
-        type: "heading2",
-        content: "Personal Reflection",
+        content: "Insert a powerful quote that resonated with you",
       },
       {
         type: "text",
-        content: "Your thoughts on the book, how it resonated with you, and any connections to your life.",
+        content: "Why this quote matters and how it connects to the book's message.",
+      },
+      {
+        type: "quote",
+        content: "Another impactful passage or revelation from the book",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "🚀 Main Takeaways",
+      },
+      {
+        type: "bullet",
+        content: "Lesson 1 - What I learned",
+      },
+      {
+        type: "bullet",
+        content: "Lesson 2 - How I'll apply it",
+      },
+      {
+        type: "bullet",
+        content: "Lesson 3 - Long-term impact",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "🤔 Personal Reflection",
+      },
+      {
+        type: "text",
+        content: "How did this book resonate with you? What connections can you make to your life? Any contradictions or points of disagreement?",
+      },
+      {
+        type: "callout",
+        content: "💭 Personal Insight: Your biggest realization or perspective shift from reading this book",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "📚 Recommendations",
+      },
+      {
+        type: "todo",
+        content: "Apply key insight #1 to my life",
+        checked: false,
+      },
+      {
+        type: "todo",
+        content: "Read related book: [Title]",
+        checked: false,
+      },
+      {
+        type: "todo",
+        content: "Share key takeaway with [Person]",
+        checked: false,
       },
     ],
   },
