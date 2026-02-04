@@ -273,21 +273,34 @@ export const templates: Template[] = [
   {
     id: "project-plan",
     name: "Project Plan",
-    description: "Comprehensive project planning with timeline, goals, and milestones",
+    description: "Track project progress with goals, timeline, and team responsibilities",
     icon: "🚀",
     color: "from-green-500/20 to-emerald-500/20",
     blocks: [
       {
         type: "heading1",
-        content: "Project Plan",
+        content: "Project Plan: [Project Name]",
+      },
+      {
+        type: "callout",
+        content: "🎯 Project Goal: What we're building and why it matters",
+      },
+      {
+        type: "divider",
+        content: "---",
       },
       {
         type: "heading2",
-        content: "Project Overview",
+        content: "📊 Project Overview",
       },
       {
         type: "text",
-        content: "Provide a clear description of the project, its objectives, and expected outcomes.",
+        content: "Clear description of objectives, expected outcomes, and business impact.",
+      },
+      {
+        type: "progress",
+        progressValue: 0,
+        progressColor: "bg-blue-500",
       },
       {
         type: "divider",
@@ -295,19 +308,19 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Goals & Objectives",
+        content: "🎯 Goals & Success Metrics",
       },
       {
-        type: "bullet",
-        content: "Primary goal - What success looks like",
+        type: "numbered",
+        content: "Primary goal - Measurable outcome",
       },
       {
-        type: "bullet",
-        content: "Secondary objective - Additional value",
+        type: "numbered",
+        content: "Secondary objective - Additional value delivery",
       },
       {
-        type: "bullet",
-        content: "Key metrics - How we measure success",
+        type: "numbered",
+        content: "Success metric - How we measure achievement",
       },
       {
         type: "divider",
@@ -315,31 +328,31 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Scope",
+        content: "📋 Scope & Deliverables",
       },
       {
         type: "heading3",
-        content: "In Scope",
+        content: "✅ In Scope",
       },
       {
         type: "bullet",
-        content: "Feature/deliverable 1",
+        content: "Core feature/deliverable",
       },
       {
         type: "bullet",
-        content: "Feature/deliverable 2",
+        content: "Essential component",
       },
       {
         type: "heading3",
-        content: "Out of Scope",
+        content: "❌ Out of Scope",
       },
       {
         type: "bullet",
-        content: "Item that won't be included",
+        content: "Future enhancement (Phase 2)",
       },
       {
         type: "bullet",
-        content: "Future enhancement idea",
+        content: "Potential nice-to-have",
       },
       {
         type: "divider",
@@ -347,16 +360,16 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Timeline & Milestones",
+        content: "⏰ Timeline & Milestones",
       },
       {
         type: "table",
         tableData: [
-          ["Phase", "Duration", "Deliverables"],
-          ["Phase 1: Planning", "Week 1-2", "Requirements, Design"],
-          ["Phase 2: Development", "Week 3-6", "Core features"],
-          ["Phase 3: Testing", "Week 7", "QA, Bug fixes"],
-          ["Phase 4: Launch", "Week 8", "Release, Documentation"],
+          ["🏁 Milestone", "⏱️ Timeline", "📦 Deliverables", "👤 Owner"],
+          ["Planning & Design", "Week 1-2", "Requirements, Wireframes", "PM"],
+          ["Development Phase 1", "Week 3-5", "Core features", "Dev Lead"],
+          ["Testing & QA", "Week 6-7", "Bug fixes, Optimization", "QA Lead"],
+          ["Launch & Deploy", "Week 8", "Release, Docs, Training", "DevOps"],
         ],
       },
       {
@@ -365,19 +378,17 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Team & Resources",
+        content: "👥 Team & Roles",
       },
       {
-        type: "bullet",
-        content: "Project Manager: [Name]",
-      },
-      {
-        type: "bullet",
-        content: "Development Lead: [Name]",
-      },
-      {
-        type: "bullet",
-        content: "Designer: [Name]",
+        type: "table",
+        tableData: [
+          ["Role", "Owner", "Key Responsibilities"],
+          ["Project Manager", "[Name]", "Timeline, Communication, Risk"],
+          ["Development Lead", "[Name]", "Architecture, Code Quality"],
+          ["Designer", "[Name]", "UX/UI, Visual Design"],
+          ["QA Lead", "[Name]", "Testing, Quality Assurance"],
+        ],
       },
       {
         type: "divider",
@@ -385,19 +396,39 @@ export const templates: Template[] = [
       },
       {
         type: "heading2",
-        content: "Risks & Mitigation",
+        content: "⚠️ Risks & Mitigation",
       },
       {
-        type: "text",
-        content: "Identify potential risks and how they will be addressed.",
-      },
-      {
-        type: "bullet",
-        content: "Risk: Technical complexity - Mitigation: Spike analysis",
+        type: "heading3",
+        content: "High Priority Risks",
       },
       {
         type: "bullet",
-        content: "Risk: Resource availability - Mitigation: Cross-training",
+        content: "Risk: [Issue] → Mitigation: [Solution]",
+      },
+      {
+        type: "bullet",
+        content: "Risk: [Issue] → Mitigation: [Solution]",
+      },
+      {
+        type: "divider",
+        content: "---",
+      },
+      {
+        type: "heading2",
+        content: "✨ Key Assumptions",
+      },
+      {
+        type: "bullet",
+        content: "Assumption 1 - Resource availability",
+      },
+      {
+        type: "bullet",
+        content: "Assumption 2 - Technology stack",
+      },
+      {
+        type: "bullet",
+        content: "Assumption 3 - Stakeholder availability",
       },
     ],
   },
