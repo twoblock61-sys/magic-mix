@@ -63,9 +63,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
 
   return (
     <>
-      {/* Index Popover - only in normal mode */}
-      {!focusMode && <IndexPopover index={index} onHeadingClick={scrollToHeading} />}
-
       <motion.div
         className={`flex-1 h-full bg-card flex flex-col overflow-hidden transition-all duration-300 ${
           focusMode ? 'fixed inset-0 z-50 bg-background' : ''
