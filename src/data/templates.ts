@@ -6,6 +6,7 @@ export interface Template {
   description: string;
   icon: string;
   color: string;
+  category: string;
   blocks: Omit<NoteBlock, "id">[];
 }
 
