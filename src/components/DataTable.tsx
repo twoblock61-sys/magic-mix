@@ -120,16 +120,23 @@ const DataTable = ({ block, onUpdate, onCreateChart }: DataTableProps) => {
 
   // Handle cell selection and show toolbar
   const handleCellClick = (e: React.MouseEvent<HTMLTableCellElement>, rowIndex: number, colIndex: number) => {
+    // If clicking the same cell again, deselect it
+    if (selectedCell?.row === rowIndex && selectedCell?.col === colIndex) {
+      setSelectedCell(null);
+      setToolbarVisible(false);
+      return;
+    }
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 
     setToolbarPosition({
       top: rect.top - 60,
       left: rect.left + rect.width / 2,
     });
-    
+
     setSelectedCell({ row: rowIndex, col: colIndex });
     setOpenColorMenu(null);
-    
+
     // Check visibility immediately
     checkToolbarVisibility(rowIndex, colIndex);
   };
