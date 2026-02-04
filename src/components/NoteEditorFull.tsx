@@ -367,12 +367,12 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={onToggleFocusMode}
-            className="fixed bottom-6 right-6 p-3 rounded-full bg-card border border-border shadow-lg hover:bg-muted transition-colors z-50"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            title="Exit focus mode"
+            className="fixed bottom-6 right-6 p-3 rounded-full bg-primary/10 border border-primary/30 shadow-lg hover:bg-primary/20 hover:border-primary/50 text-primary transition-all z-50"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            title="Exit focus mode (Esc)"
           >
-            <Minimize2 className="w-5 h-5 text-muted-foreground" />
+            <Minimize2 className="w-5 h-5" />
           </motion.button>
         )}
       </AnimatePresence>
