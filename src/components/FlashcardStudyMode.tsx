@@ -10,17 +10,17 @@ interface FlashcardStudyModeProps {
 }
 
 const cardColors = [
-  { name: "yellow", bg: "bg-yellow-100 dark:bg-yellow-900/30", border: "border-yellow-400 dark:border-yellow-600" },
-  { name: "green", bg: "bg-emerald-100 dark:bg-emerald-900/30", border: "border-emerald-400 dark:border-emerald-600" },
-  { name: "blue", bg: "bg-blue-100 dark:bg-blue-900/30", border: "border-blue-400 dark:border-blue-600" },
-  { name: "purple", bg: "bg-purple-100 dark:bg-purple-900/30", border: "border-purple-400 dark:border-purple-600" },
-  { name: "pink", bg: "bg-pink-100 dark:bg-pink-900/30", border: "border-pink-400 dark:border-pink-600" },
-  { name: "orange", bg: "bg-orange-100 dark:bg-orange-900/30", border: "border-orange-400 dark:border-orange-600" },
+  { name: "yellow", bg: "bg-yellow-100 dark:bg-yellow-900/30", border: "border-yellow-400 dark:border-yellow-600", text: "text-yellow-900 dark:text-yellow-100" },
+  { name: "green", bg: "bg-emerald-100 dark:bg-emerald-900/30", border: "border-emerald-400 dark:border-emerald-600", text: "text-emerald-900 dark:text-emerald-100" },
+  { name: "blue", bg: "bg-blue-100 dark:bg-blue-900/30", border: "border-blue-400 dark:border-blue-600", text: "text-blue-900 dark:text-blue-100" },
+  { name: "purple", bg: "bg-purple-100 dark:bg-purple-900/30", border: "border-purple-400 dark:border-purple-600", text: "text-purple-900 dark:text-purple-100" },
+  { name: "pink", bg: "bg-pink-100 dark:bg-pink-900/30", border: "border-pink-400 dark:border-pink-600", text: "text-pink-900 dark:text-pink-100" },
+  { name: "orange", bg: "bg-orange-100 dark:bg-orange-900/30", border: "border-orange-400 dark:border-orange-600", text: "text-orange-900 dark:text-orange-100" },
 ];
 
 const getCardStyle = (colorName: string) => {
   const color = cardColors.find(c => c.name === colorName) || cardColors[0];
-  return `${color.bg} ${color.border}`;
+  return `${color.bg} ${color.border} ${color.text}`;
 };
 
 const FlashcardStudyMode = ({ flashcards, title, onClose }: FlashcardStudyModeProps) => {
@@ -186,7 +186,7 @@ const FlashcardStudyMode = ({ flashcards, title, onClose }: FlashcardStudyModePr
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className={`w-full min-h-[300px] p-8 rounded-2xl border-4 shadow-xl flex items-center justify-center ${getCardStyle(currentCard.color)}`}
             >
-              <p className="text-2xl md:text-3xl font-medium text-center text-foreground leading-relaxed">
+              <p className="text-2xl md:text-3xl font-medium text-center leading-relaxed">
                 {currentCard.content}
               </p>
               {reviewed.has(currentCard.id) && (

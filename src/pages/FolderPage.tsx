@@ -150,25 +150,42 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
                 </motion.button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {folderNotes.map((note, index) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => onNavigate("ideas", note.id)}
-                    className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-foreground">Notes</h3>
+                  <motion.button
+                    onClick={() => {
+                      const note = createNote(selectedFolder.id);
+                      onNavigate("ideas", note.id);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <h3 className="font-medium text-foreground truncate mb-2">
-                      {note.title || "Untitled"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {note.blocks.find((b) => b.content)?.content || "No content"}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
+                    <Plus className="w-4 h-4" />
+                    New Note
+                  </motion.button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {folderNotes.map((note, index) => (
+                    <motion.div
+                      key={note.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => onNavigate("ideas", note.id)}
+                      className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+                    >
+                      <h3 className="font-medium text-foreground truncate mb-2">
+                        {note.title || "Untitled"}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {note.blocks.find((b) => b.content)?.content || "No content"}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
             )}
           </>
         ) : (

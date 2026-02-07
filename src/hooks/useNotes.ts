@@ -22,6 +22,7 @@ export interface NoteBlock {
   content: string;
   checked?: boolean;
   tableData?: string[][];
+  cellFormattingMap?: Record<string, { bold?: boolean; italic?: boolean; color?: string; bgColor?: string }>;
   isExpanded?: boolean; // for toggle blocks
   toggleContent?: string; // editable content inside toggle
   imageUrl?: string; // for image blocks
@@ -73,6 +74,7 @@ export interface NoteBlock {
   chartXAxisKey?: string;
   chartSelectedSeries?: string[];
   chartSeriesColors?: { [key: string]: string };
+  linkedTableId?: string; // For charts linked to table data
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }

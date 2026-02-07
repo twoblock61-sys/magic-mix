@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2 } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
+import TemplatesModal from "./TemplatesModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
+import { useHeadingIndex } from "@/hooks/useHeadingIndex";
+import { Template } from "@/data/templates";
 import { format } from "date-fns";
 
 interface NoteEditorFullProps {
@@ -26,6 +29,19 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [newTagInput, setNewTagInput] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showIndex, setShowIndex] = useState(true);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  // Index functionality
+  const { index, scrollToHeading } = useHeadingIndex(note.blocks);
+
+  const handleApplyTemplate = (template: Template) => {
+    const newBlocks = template.blocks.map((block) => ({
+      ...block,
+      id: crypto.randomUUID(),
+    }));
+    onUpdate({ blocks: newBlocks });
+  };
 
   const handleAddTag = () => {
     if (newTagInput.trim()) {
@@ -55,28 +71,29 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   };
 
   return (
-    <motion.div 
-      className={`flex-1 h-full bg-card flex flex-col overflow-hidden transition-all duration-300 ${
-        focusMode ? 'fixed inset-0 z-50 bg-background' : ''
-      }`}
-      layout
-    >
-      {/* Floating Toolbar - appears on text selection */}
-      <FloatingToolbar />
+    <>
+      <motion.div
+        className={`flex-1 h-full bg-card flex flex-col overflow-hidden transition-all duration-300 ${
+          focusMode ? 'fixed inset-0 z-50 bg-background' : ''
+        }`}
+        layout
+      >
+        {/* Floating Toolbar - appears on text selection */}
+        <FloatingToolbar />
 
-      {/* Focus mode backdrop */}
-      <AnimatePresence>
-        {focusMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background -z-10"
-          />
-        )}
-      </AnimatePresence>
+        {/* Focus mode backdrop */}
+        <AnimatePresence>
+          {focusMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background -z-10"
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Top Bar */}
+        {/* Top Bar */}
       <motion.div 
         className={`flex items-center justify-between px-6 py-3 border-b border-border transition-all duration-300 ${
           focusMode 
@@ -96,12 +113,23 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {/* Templates Button */}
+          <motion.button
+            onClick={() => setShowTemplates(true)}
+            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Use a template"
+          >
+            <Sparkles className="w-4 h-4" />
+          </motion.button>
+
           {/* Focus Mode Toggle */}
           <motion.button
             onClick={onToggleFocusMode}
             className={`p-2 rounded-lg transition-colors ${
-              focusMode 
-                ? 'bg-primary/10 text-primary' 
+              focusMode
+                ? 'bg-primary/10 text-primary'
                 : 'hover:bg-muted text-muted-foreground'
             }`}
             whileHover={{ scale: 1.1 }}
@@ -110,6 +138,31 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           >
             {focusMode ? <Minimize2 className="w-4 h-4" /> : <Focus className="w-4 h-4" />}
           </motion.button>
+
+          {/* Index Toggle */}
+          <motion.button
+            onClick={() => setShowIndex(!showIndex)}
+            className={`p-2 rounded-lg transition-colors relative ${
+              showIndex
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted text-muted-foreground'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Toggle document index"
+          >
+            <BookOpen className="w-4 h-4" />
+            {index.length > 0 && (
+              <motion.span
+                className="absolute top-0 right-0 w-4 h-4 text-[10px] font-bold bg-primary text-primary-foreground rounded-full flex items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+              >
+                {index.length}
+              </motion.span>
+            )}
+          </motion.button>
+
           <motion.button
             onClick={() => setIsFavorite(!isFavorite)}
             className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-500' : 'hover:bg-muted text-muted-foreground'}`}
@@ -135,13 +188,101 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         </div>
       </motion.div>
 
-      {/* Content Area */}
-      <div className={`flex-1 overflow-y-auto scrollbar-thin ${focusMode ? 'pt-8' : ''}`}>
-        <motion.div 
-          className={`mx-auto p-6 md:p-10 transition-all duration-300 ${
-            focusMode 
-              ? 'max-w-3xl pt-16' 
-              : 'max-w-4xl'
+      {/* Templates Modal */}
+      <TemplatesModal
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={handleApplyTemplate}
+      />
+
+      {/* Index Dropdown Menu */}
+      <AnimatePresence>
+        {showIndex && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="fixed right-6 top-16 z-50 w-72 max-h-96 bg-card border border-border rounded-lg shadow-lg overflow-hidden flex flex-col"
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border/50 bg-muted/30">
+              <h3 className="text-sm font-semibold text-foreground">Document Sections</h3>
+            </div>
+
+            {/* Content */}
+            {index.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center py-8">
+                <p className="text-sm text-muted-foreground text-center px-4">
+                  No headings yet. Add headings to your note to create an index.
+                </p>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                <div className="py-2 px-1">
+                  {index.map((heading) => (
+                    <motion.button
+                      key={heading.id}
+                      onClick={() => {
+                        scrollToHeading(heading.id);
+                        setShowIndex(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-muted/60 transition-colors group text-sm"
+                      style={{
+                        paddingLeft: `${16 + heading.indent * 16}px`,
+                      }}
+                      whileHover={{ x: 2 }}
+                    >
+                      <span
+                        className={`block truncate transition-colors ${
+                          heading.level === 1
+                            ? 'font-medium text-foreground'
+                            : heading.level === 2
+                            ? 'font-normal text-foreground/85'
+                            : 'text-foreground/70 text-xs'
+                        }`}
+                      >
+                        {heading.text || `Untitled ${heading.level === 1 ? "Heading" : "Subheading"}`}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            {index.length > 0 && (
+              <div className="px-4 py-2 border-t border-border/50 bg-muted/20 text-xs text-muted-foreground">
+                {index.length} section{index.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+        {/* Main Content Wrapper */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Content Area */}
+          <div className={`flex-1 overflow-y-auto scrollbar-thin transition-all duration-300 ${
+            focusMode
+              ? 'bg-gradient-to-br from-background via-background to-primary/5 pt-8'
+              : ''
+          }`}>
+            {/* Focus mode decorative elements */}
+            {focusMode && (
+              <>
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+                  <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+                </div>
+              </>
+            )}
+
+            <motion.div
+          className={`mx-auto transition-all duration-300 relative z-10 ${
+            focusMode
+              ? 'max-w-3xl pt-16 px-4 md:px-6 py-6'
+              : 'max-w-4xl p-6 md:p-10'
           }`}
           layout
         >
@@ -152,10 +293,10 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="text-center mb-8"
+                className="text-center mb-12"
               >
-                <span className="text-xs text-muted-foreground/50 bg-muted/50 px-3 py-1.5 rounded-full">
-                  Focus mode • Press <kbd className="px-1.5 py-0.5 bg-background rounded text-[10px] font-mono">Esc</kbd> to exit
+                <span className="text-xs text-muted-foreground bg-primary/10 px-4 py-2 rounded-full border border-primary/20 inline-block">
+                  ✨ Focus mode • Press <kbd className="px-2 py-1 bg-primary/20 rounded text-[10px] font-mono ml-1">Esc</kbd> to exit
                 </span>
               </motion.div>
             )}
@@ -165,15 +306,15 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
+            className={`${focusMode ? 'mb-8' : 'mb-6'}`}
           >
             <input
               type="text"
               value={note.title}
               onChange={(e) => onUpdate({ title: e.target.value })}
               className={`w-full font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/30 tracking-tight transition-all duration-300 ${
-                focusMode 
-                  ? 'text-5xl md:text-6xl text-center' 
+                focusMode
+                  ? 'text-6xl md:text-7xl text-center bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent'
                   : 'text-4xl md:text-5xl'
               }`}
               placeholder="Untitled"
@@ -249,14 +390,18 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className={focusMode ? 'text-lg leading-relaxed' : ''}
+            className={focusMode
+              ? 'text-lg leading-relaxed prose prose-invert max-w-none [&_*]:transition-colors'
+              : ''
+            }
           >
             <NotionEditor blocks={note.blocks} onChange={handleBlocksChange} />
           </motion.div>
-        </motion.div>
-      </div>
+            </motion.div>
+          </div>
+        </div>
 
-      {/* Focus mode floating exit button */}
+        {/* Focus mode floating exit button */}
       <AnimatePresence>
         {focusMode && (
           <motion.button
@@ -264,16 +409,17 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={onToggleFocusMode}
-            className="fixed bottom-6 right-6 p-3 rounded-full bg-card border border-border shadow-lg hover:bg-muted transition-colors z-50"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            title="Exit focus mode"
+            className="fixed bottom-6 right-6 p-3 rounded-full bg-primary/10 border border-primary/30 shadow-lg hover:bg-primary/20 hover:border-primary/50 text-primary transition-all z-50"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            title="Exit focus mode (Esc)"
           >
-            <Minimize2 className="w-5 h-5 text-muted-foreground" />
+            <Minimize2 className="w-5 h-5" />
           </motion.button>
         )}
       </AnimatePresence>
-    </motion.div>
+      </motion.div>
+    </>
   );
 };
 

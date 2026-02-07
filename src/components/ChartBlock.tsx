@@ -40,6 +40,7 @@ import {
   Radar as RadarIcon,
   Maximize2,
   Minimize2,
+  RefreshCw,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +48,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { NoteBlock } from "@/contexts/NotesContext";
 
 interface ChartColumn {
   id: string;
@@ -69,6 +71,8 @@ interface ChartBlockProps {
   chartXAxisKey?: string;
   chartSelectedSeries?: string[];
   chartSeriesColors?: { [key: string]: string };
+  linkedTableId?: string; // For syncing data from a linked table
+  blocks?: NoteBlock[]; // All blocks to find the linked table
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
   onUpdate: (updates: {
@@ -109,6 +113,8 @@ const ChartBlock = ({
   chartXAxisKey,
   chartSelectedSeries,
   chartSeriesColors,
+  linkedTableId,
+  blocks,
   chartData,
   onUpdate,
 }: ChartBlockProps) => {
@@ -171,6 +177,55 @@ const ChartBlock = ({
   // Get numeric columns for series selection
   const numericColumns = columns.filter((c) => c.type === "number");
   const textColumns = columns.filter((c) => c.type === "text");
+
+  // Sync data from linked table
+  const handleSyncFromTable = () => {
+    if (!linkedTableId || !blocks) return;
+
+    // Find the linked table block
+    const tableBlock = blocks.find((b) => b.id === linkedTableId && b.type === "table");
+    if (!tableBlock || !tableBlock.tableData) return;
+
+    const tableData = tableBlock.tableData;
+
+    // Convert table data to chart format (same logic as in NotionEditor)
+    const newChartRows = tableData.slice(1).map((row) => ({
+      id: crypto.randomUUID(),
+      cells: row.reduce((acc, cell, idx) => ({
+        ...acc,
+        [tableData[0][idx] || `col${idx}`]: isNaN(Number(cell)) ? cell : Number(cell),
+      }), {}),
+    }));
+
+    const newChartColumns = tableData[0].map((name, idx) => ({
+      id: `col${idx}`,
+      key: name || `col${idx}`,
+      type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" as const : "text" as const,
+    }));
+
+    // Update the chart
+    setColumns(newChartColumns);
+    setRows(newChartRows);
+
+    // Update series colors for new columns
+    const newColors: { [key: string]: string } = {};
+    newChartColumns.filter((c) => c.type === "number").forEach((col, idx) => {
+      newColors[col.key] = defaultColors[idx % defaultColors.length];
+    });
+    setSeriesColors(newColors);
+
+    // Update selected series
+    const newSelectedSeries = newChartColumns.filter((c) => c.type === "number").map((c) => c.key);
+    setSelectedSeries(newSelectedSeries);
+
+    // Save the changes
+    onUpdate({
+      chartColumns: newChartColumns,
+      chartRows: newChartRows,
+      chartSeriesColors: newColors,
+      chartSelectedSeries: newSelectedSeries,
+    });
+  };
 
   const handleAddColumn = () => {
     const newKey = `col${columns.length + 1}`;
@@ -654,19 +709,30 @@ const ChartBlock = ({
             </>
           ) : (
             <>
-              <motion.button 
-                onClick={() => setIsEnlarged(true)} 
-                className="p-2 rounded-lg hover:bg-muted transition-colors" 
-                whileHover={{ scale: 1.05 }} 
+              {linkedTableId && blocks && (
+                <motion.button
+                  onClick={handleSyncFromTable}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Sync data from linked table"
+                >
+                  <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                </motion.button>
+              )}
+              <motion.button
+                onClick={() => setIsEnlarged(true)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 title="Enlarge chart"
               >
                 <Maximize2 className="w-4 h-4 text-muted-foreground" />
               </motion.button>
-              <motion.button 
-                onClick={() => setIsEditing(true)} 
-                className="p-2 rounded-lg hover:bg-muted transition-colors" 
-                whileHover={{ scale: 1.05 }} 
+              <motion.button
+                onClick={() => setIsEditing(true)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 title="Edit chart"
               >
