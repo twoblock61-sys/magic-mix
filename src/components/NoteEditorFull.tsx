@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2 } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
 import TemplatesModal from "./TemplatesModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { Template } from "@/data/templates";
 import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NoteEditorFullProps {
   note: Note;
@@ -34,12 +36,68 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
 
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
+  
+  // Undo/Redo functionality
+  const { pushState, undo, redo, canUndo, canRedo, resetHistory } = useUndoRedo(note.blocks, {
+    maxHistorySize: 100,
+    debounceMs: 300,
+  });
+  
+  // Reset history when switching notes
+  useEffect(() => {
+    resetHistory(note.blocks);
+  }, [note.id, resetHistory]);
+  
+  // Handle undo action
+  const handleUndo = useCallback(() => {
+    const previousBlocks = undo();
+    if (previousBlocks) {
+      onUpdate({ blocks: previousBlocks });
+    }
+  }, [undo, onUpdate]);
+  
+  // Handle redo action
+  const handleRedo = useCallback(() => {
+    const nextBlocks = redo();
+    if (nextBlocks) {
+      onUpdate({ blocks: nextBlocks });
+    }
+  }, [redo, onUpdate]);
+  
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+      
+      if (modKey && e.key.toLowerCase() === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRedo();
+        } else {
+          e.preventDefault();
+          handleUndo();
+        }
+      }
+      
+      // Windows-style redo with Ctrl+Y
+      if (!isMac && e.ctrlKey && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const handleApplyTemplate = (template: Template) => {
-    const newBlocks = template.blocks.map((block) => ({
+    const newBlocks: NoteBlock[] = template.blocks.map((block) => ({
       ...block,
+      content: block.content || "",
       id: crypto.randomUUID(),
     }));
+    pushState(newBlocks, true); // Immediate push for template application
     onUpdate({ blocks: newBlocks });
   };
 
@@ -62,6 +120,7 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   };
 
   const handleBlocksChange = (blocks: NoteBlock[]) => {
+    pushState(blocks); // Track state for undo/redo
     onUpdate({ blocks });
   };
 
@@ -113,6 +172,53 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {/* Undo/Redo Buttons */}
+          <TooltipProvider delayDuration={200}>
+            <div className="flex items-center gap-0.5 mr-2 border-r border-border pr-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    onClick={handleUndo}
+                    disabled={!canUndo}
+                    className={`p-2 rounded-lg transition-colors ${
+                      canUndo
+                        ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                        : 'text-muted-foreground/30 cursor-not-allowed'
+                    }`}
+                    whileHover={canUndo ? { scale: 1.1 } : {}}
+                    whileTap={canUndo ? { scale: 0.9 } : {}}
+                  >
+                    <Undo2 className="w-4 h-4" />
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Undo <kbd className="ml-1 px-1.5 py-0.5 text-[10px] bg-muted rounded font-mono">⌘Z</kbd></p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    onClick={handleRedo}
+                    disabled={!canRedo}
+                    className={`p-2 rounded-lg transition-colors ${
+                      canRedo
+                        ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                        : 'text-muted-foreground/30 cursor-not-allowed'
+                    }`}
+                    whileHover={canRedo ? { scale: 1.1 } : {}}
+                    whileTap={canRedo ? { scale: 0.9 } : {}}
+                  >
+                    <Redo2 className="w-4 h-4" />
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Redo <kbd className="ml-1 px-1.5 py-0.5 text-[10px] bg-muted rounded font-mono">⇧⌘Z</kbd></p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+          
           {/* Templates Button */}
           <motion.button
             onClick={() => setShowTemplates(true)}

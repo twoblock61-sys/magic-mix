@@ -1088,10 +1088,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 }), {}),
               }));
 
-              const chartColumns = tableData[0].map((name, idx) => ({
+              const chartColumns: { id: string; key: string; type: "text" | "number" }[] = tableData[0].map((name, idx) => ({
                 id: `col${idx}`,
                 key: name || `col${idx}`,
-                type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text",
+                type: (/^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text") as "text" | "number",
               }));
 
               const chartBlock: NoteBlock = {
@@ -1550,10 +1550,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 }), {}),
               }));
 
-              const chartColumns = tableData[0].map((name, idx) => ({
+              const chartColumns: { id: string; key: string; type: "text" | "number" }[] = tableData[0].map((name, idx) => ({
                 id: `col${idx}`,
                 key: name || `col${idx}`,
-                type: /^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text",
+                type: (/^\d+(\.\d+)?$/.test(tableData[1]?.[idx] || "") ? "number" : "text") as "text" | "number",
               }));
 
               const chartBlock: NoteBlock = {
