@@ -1,5 +1,8 @@
 import { NoteBlock } from "@/contexts/NotesContext";
 
+// Make content optional for templates since many block types don't need it
+type TemplateBlock = Partial<Omit<NoteBlock, "id">> & { type: NoteBlock["type"] };
+
 export interface Template {
   id: string;
   name: string;
@@ -7,7 +10,7 @@ export interface Template {
   icon: string;
   color: string;
   category: string;
-  blocks: Omit<NoteBlock, "id">[];
+  blocks: TemplateBlock[];
 }
 
 const generateBlockId = () => crypto.randomUUID();
@@ -1465,10 +1468,10 @@ export const templates: Template[] = [
       { type: "divider", content: "---" },
       { type: "heading2", content: "💪 Strengths & Weaknesses" },
       { type: "heading3", content: "Competitor 1" },
-      { type: "heading4", content: "Strengths" },
+      { type: "text", content: "**Strengths**" },
       { type: "bullet", content: "Strong brand recognition" },
       { type: "bullet", content: "Large customer base" },
-      { type: "heading4", content: "Weaknesses" },
+      { type: "text", content: "**Weaknesses**" },
       { type: "bullet", content: "High pricing" },
       { type: "bullet", content: "Limited features" },
       { type: "divider", content: "---" },
@@ -1556,13 +1559,13 @@ export const templates: Template[] = [
       { type: "numbered", content: "When customer inactive 30+ days: Flag for retention team" },
       { type: "divider", content: "---" },
       { type: "heading3", content: "Sales Playbooks & Process Steps" },
-      { type: "heading4", content: "New Business Sales Playbook" },
+      { type: "text", content: "**New Business Sales Playbook**" },
       { type: "bullet", content: "Step 1: Initial discovery call (15-30 min)" },
       { type: "bullet", content: "Step 2: Needs analysis and fit assessment (1 week)" },
       { type: "bullet", content: "Step 3: Custom proposal creation (1 week)" },
       { type: "bullet", content: "Step 4: Negotiation and refinement (1-2 weeks)" },
       { type: "bullet", content: "Step 5: Contract review and signature (3-5 days)" },
-      { type: "heading4", content: "Expansion Sales Playbook" },
+      { type: "text", content: "**Expansion Sales Playbook**" },
       { type: "bullet", content: "Step 1: Identify expansion opportunity in existing account" },
       { type: "bullet", content: "Step 2: Brief customer call to discuss new use case" },
       { type: "bullet", content: "Step 3: Create scope document and revised pricing" },
@@ -1762,11 +1765,11 @@ export const templates: Template[] = [
       { type: "heading2", content: "📋 Job Descriptions & Requirements" },
       { type: "heading3", content: "Senior Software Engineer" },
       { type: "text", content: "Build and scale our platform with modern technologies and best practices." },
-      { type: "heading4", content: "Key Responsibilities" },
+      { type: "text", content: "**Key Responsibilities**" },
       { type: "bullet", content: "Design and implement scalable backend systems" },
       { type: "bullet", content: "Mentor junior engineers and lead code reviews" },
       { type: "bullet", content: "Contribute to technical architecture decisions" },
-      { type: "heading4", content: "Requirements" },
+      { type: "text", content: "**Requirements**" },
       { type: "bullet", content: "5+ years of software development experience" },
       { type: "bullet", content: "Expertise in [Language/Framework]" },
       { type: "bullet", content: "Strong communication and leadership skills" },
@@ -2041,23 +2044,23 @@ export const templates: Template[] = [
       { type: "divider", content: "---" },
       { type: "heading2", content: "🔍 Detailed Option Analysis" },
       { type: "heading3", content: "Option A: [Option Name]" },
-      { type: "heading4", content: "Pros" },
+      { type: "text", content: "**Pros**" },
       { type: "bullet", content: "✅ [Significant advantage]" },
       { type: "bullet", content: "✅ [Strong benefit]" },
       { type: "bullet", content: "✅ [Key advantage]" },
-      { type: "heading4", content: "Cons" },
+      { type: "text", content: "**Cons**" },
       { type: "bullet", content: "❌ [Potential drawback]" },
       { type: "bullet", content: "❌ [Risk or limitation]" },
-      { type: "heading4", content: "Financial Impact" },
+      { type: "text", content: "**Financial Impact**" },
       { type: "text", content: "Upfront Cost: $50K | ROI Timeline: 12 months | Expected Value: $500K over 3 years" },
       { type: "divider", content: "---" },
       { type: "heading3", content: "Option B: [Option Name]" },
-      { type: "heading4", content: "Pros" },
+      { type: "text", content: "**Pros**" },
       { type: "bullet", content: "✅ [Advantage]" },
       { type: "bullet", content: "✅ [Benefit]" },
-      { type: "heading4", content: "Cons" },
+      { type: "text", content: "**Cons**" },
       { type: "bullet", content: "❌ [Drawback]" },
-      { type: "heading4", content: "Financial Impact" },
+      { type: "text", content: "**Financial Impact**" },
       { type: "text", content: "Upfront Cost: $200K | ROI Timeline: 6 months | Expected Value: $1M over 3 years" },
       { type: "divider", content: "---" },
       { type: "heading2", content: "⚠️ Risk Assessment" },

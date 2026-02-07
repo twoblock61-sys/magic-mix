@@ -167,14 +167,12 @@ const TemplatesModal = ({
                                       key={blockType}
                                       className="text-xs px-2 py-1 bg-muted/50 text-muted-foreground rounded-full"
                                     >
-                                      {blockType === "heading1"
+                                    {blockType === "heading1"
                                         ? "H1"
                                         : blockType === "heading2"
                                         ? "H2"
                                         : blockType === "heading3"
                                         ? "H3"
-                                        : blockType === "heading4"
-                                        ? "H4"
                                         : blockType.charAt(0).toUpperCase() +
                                           blockType.slice(1)}
                                     </span>
