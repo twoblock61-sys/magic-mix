@@ -532,7 +532,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         }}
         contentEditable
         suppressContentEditableWarning
+        onInput={(e) => {
+          // Capture content changes during typing for undo/redo
+          const text = e.currentTarget.textContent || "";
+          if (text !== block.content) {
+            updateBlock(block.id, { content: text });
+          }
+        }}
         onBlur={(e) => {
+          // Ensure final state is captured on blur
           const text = e.currentTarget.textContent || "";
           if (text !== block.content) {
             updateBlock(block.id, { content: text });
@@ -590,6 +598,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               }}
               contentEditable
               suppressContentEditableWarning
+              onInput={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onBlur={(e) => {
                 const text = e.currentTarget.textContent || "";
                 if (text !== block.content) {
@@ -619,6 +633,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               }}
               contentEditable
               suppressContentEditableWarning
+              onInput={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onBlur={(e) => {
                 const text = e.currentTarget.textContent || "";
                 if (text !== block.content) {
@@ -650,6 +670,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               }}
               contentEditable
               suppressContentEditableWarning
+              onInput={(e) => {
+                const text = e.currentTarget.textContent || "";
+                if (text !== block.content) {
+                  updateBlock(block.id, { content: text });
+                }
+              }}
               onBlur={(e) => {
                 const text = e.currentTarget.textContent || "";
                 if (text !== block.content) {
@@ -686,6 +712,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 }}
                 contentEditable
                 suppressContentEditableWarning
+                onInput={(e) => {
+                  const text = e.currentTarget.textContent || "";
+                  if (text !== block.content) {
+                    updateBlock(block.id, { content: text });
+                  }
+                }}
                 onBlur={(e) => {
                   const text = e.currentTarget.textContent || "";
                   if (text !== block.content) {
@@ -717,6 +749,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                     }}
                     contentEditable
                     suppressContentEditableWarning
+                    onInput={(e) => {
+                      const text = e.currentTarget.textContent || "";
+                      if (text !== block.toggleContent) {
+                        updateBlock(block.id, { toggleContent: text });
+                      }
+                    }}
                     onBlur={(e) => {
                       const text = e.currentTarget.textContent || "";
                       if (text !== block.toggleContent) {
@@ -748,6 +786,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 }}
                 contentEditable
                 suppressContentEditableWarning
+                onInput={(e) => {
+                  const text = extractContentFromEditable(e.currentTarget);
+                  if (text !== block.content) {
+                    updateBlock(block.id, { content: text });
+                  }
+                }}
                 onBlur={(e) => {
                   const text = extractContentFromEditable(e.currentTarget);
                   if (text !== block.content) {
