@@ -1,12 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Search, Download, Smile } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2 } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
 import TemplatesModal from "./TemplatesModal";
-import FindReplace from "./FindReplace";
-import ExportModal from "./ExportModal";
-import EmojiPicker from "./EmojiPicker";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -36,9 +33,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [isFavorite, setIsFavorite] = useState(false);
   const [showIndex, setShowIndex] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showFindReplace, setShowFindReplace] = useState(false);
-  const [showExport, setShowExport] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
 
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
@@ -70,7 +64,7 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
     }
   }, [redo, onUpdate]);
   
-  // Keyboard shortcuts for undo/redo and find
+  // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -91,31 +85,11 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         e.preventDefault();
         handleRedo();
       }
-      
-      // Find & Replace with Cmd/Ctrl+F
-      if (modKey && e.key.toLowerCase() === "f") {
-        e.preventDefault();
-        setShowFindReplace(true);
-      }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleUndo, handleRedo]);
-
-  // Handle emoji insertion
-  const handleEmojiSelect = useCallback((emoji: string) => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const textNode = document.createTextNode(emoji);
-      range.insertNode(textNode);
-      range.setStartAfter(textNode);
-      range.setEndAfter(textNode);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-  }, []);
 
   const handleApplyTemplate = (template: Template) => {
     const newBlocks: NoteBlock[] = template.blocks.map((block) => ({
@@ -245,55 +219,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             </div>
           </TooltipProvider>
           
-          {/* Find & Replace Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <motion.button
-                onClick={() => setShowFindReplace(true)}
-                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Search className="w-4 h-4" />
-              </motion.button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Find & Replace <kbd className="ml-1 px-1.5 py-0.5 text-[10px] bg-muted rounded font-mono">⌘F</kbd></p>
-            </TooltipContent>
-          </Tooltip>
-
-          {/* Emoji Picker */}
-          <EmojiPicker
-            onSelect={handleEmojiSelect}
-            trigger={
-              <motion.button
-                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                title="Insert Emoji"
-              >
-                <Smile className="w-4 h-4" />
-              </motion.button>
-            }
-          />
-
-          {/* Export Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <motion.button
-                onClick={() => setShowExport(true)}
-                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Download className="w-4 h-4" />
-              </motion.button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Export Note</p>
-            </TooltipContent>
-          </Tooltip>
-          
           {/* Templates Button */}
           <motion.button
             onClick={() => setShowTemplates(true)}
@@ -344,8 +269,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             )}
           </motion.button>
 
-          <div className="w-px h-5 bg-border mx-1" />
-
           <motion.button
             onClick={() => setIsFavorite(!isFavorite)}
             className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-500' : 'hover:bg-muted text-muted-foreground'}`}
@@ -370,20 +293,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           </motion.button>
         </div>
       </motion.div>
-
-      {/* Find & Replace */}
-      <FindReplace
-        isOpen={showFindReplace}
-        onClose={() => setShowFindReplace(false)}
-        contentRef={editorRef}
-      />
-
-      {/* Export Modal */}
-      <ExportModal
-        isOpen={showExport}
-        onClose={() => setShowExport(false)}
-        note={note}
-      />
 
       {/* Templates Modal */}
       <TemplatesModal

@@ -6,8 +6,6 @@ export interface FormatState {
   underline: boolean;
   strikethrough: boolean;
   code: boolean;
-  subscript: boolean;
-  superscript: boolean;
 }
 
 export const useRichTextFormat = () => {
@@ -17,8 +15,6 @@ export const useRichTextFormat = () => {
     underline: false,
     strikethrough: false,
     code: false,
-    subscript: false,
-    superscript: false,
   });
 
   // Check current selection formatting state
@@ -29,8 +25,6 @@ export const useRichTextFormat = () => {
       underline: document.queryCommandState("underline"),
       strikethrough: document.queryCommandState("strikeThrough"),
       code: false, // No native command for inline code
-      subscript: document.queryCommandState("subscript"),
-      superscript: document.queryCommandState("superscript"),
     });
   }, []);
 
@@ -51,12 +45,6 @@ export const useRichTextFormat = () => {
         break;
       case "strikethrough":
         document.execCommand("strikeThrough", false);
-        break;
-      case "subscript":
-        document.execCommand("subscript", false);
-        break;
-      case "superscript":
-        document.execCommand("superscript", false);
         break;
       case "code":
         // Wrap selection in <code> tag
@@ -171,14 +159,6 @@ export const useRichTextFormat = () => {
       case "\\":
         e.preventDefault();
         applyFormat("removeFormat");
-        break;
-      case ",":
-        e.preventDefault();
-        applyFormat("subscript");
-        break;
-      case ".":
-        e.preventDefault();
-        applyFormat("superscript");
         break;
     }
   }, [applyFormat]);
