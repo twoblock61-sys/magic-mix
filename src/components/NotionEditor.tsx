@@ -370,6 +370,67 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     updateBlock(block.id, { content: text });
   };
 
+  // Enhanced paste handler - cleans pasted content
+  const handlePaste = (e: React.ClipboardEvent, block: NoteBlock) => {
+    e.preventDefault();
+    
+    // Get clipboard data
+    const clipboardData = e.clipboardData;
+    const html = clipboardData.getData('text/html');
+    const text = clipboardData.getData('text/plain');
+    
+    // For code blocks, always use plain text
+    if (block.type === 'code') {
+      document.execCommand('insertText', false, text);
+      return;
+    }
+    
+    // For other blocks, clean and paste HTML if available
+    if (html) {
+      // Create a temporary element to clean the HTML
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      
+      // Remove unwanted elements
+      const unwantedTags = ['script', 'style', 'meta', 'link', 'head'];
+      unwantedTags.forEach(tag => {
+        temp.querySelectorAll(tag).forEach(el => el.remove());
+      });
+      
+      // Clean inline styles except for basic formatting
+      temp.querySelectorAll('*').forEach(el => {
+        const element = el as HTMLElement;
+        // Keep only font-weight, font-style, text-decoration
+        const keepStyles: string[] = [];
+        const computedStyle = window.getComputedStyle(element);
+        if (computedStyle.fontWeight === 'bold' || computedStyle.fontWeight === '700') {
+          keepStyles.push('font-weight: bold');
+        }
+        if (computedStyle.fontStyle === 'italic') {
+          keepStyles.push('font-style: italic');
+        }
+        if (computedStyle.textDecoration.includes('underline')) {
+          keepStyles.push('text-decoration: underline');
+        }
+        if (computedStyle.textDecoration.includes('line-through')) {
+          keepStyles.push('text-decoration: line-through');
+        }
+        element.removeAttribute('style');
+        element.removeAttribute('class');
+        element.removeAttribute('id');
+        if (keepStyles.length > 0) {
+          element.style.cssText = keepStyles.join('; ');
+        }
+      });
+      
+      // Insert cleaned HTML
+      document.execCommand('insertHTML', false, temp.innerHTML);
+    } else {
+      // Fall back to plain text
+      document.execCommand('insertText', false, text);
+    }
+  };
+
   const copyCodeToClipboard = async (blockId: string, content: string) => {
     await navigator.clipboard.writeText(content);
     setCopiedCode(blockId);
@@ -532,6 +593,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         }}
         contentEditable
         suppressContentEditableWarning
+        onPaste={(e) => handlePaste(e, block)}
         onInput={(e) => {
           // Capture content changes during typing for undo/redo
           const text = e.currentTarget.textContent || "";

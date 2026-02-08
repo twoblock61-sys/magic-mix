@@ -8,11 +8,15 @@ import {
   Code,
   Highlighter,
   Link,
-  Type,
-  Heading1,
-  Heading2,
   Palette,
   ChevronDown,
+  Subscript,
+  Superscript,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  RemoveFormatting,
 } from "lucide-react";
 import { useRichTextFormat } from "@/hooks/useRichTextFormat";
 
@@ -45,6 +49,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [showAlignMenu, setShowAlignMenu] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const updateToolbarPosition = useCallback(() => {
@@ -54,6 +59,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
       setIsVisible(false);
       setShowColorPicker(false);
       setShowHighlightPicker(false);
+      setShowAlignMenu(false);
       return;
     }
 
@@ -78,7 +84,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
     const rect = range.getBoundingClientRect();
 
     // Calculate position relative to viewport
-    const toolbarWidth = 320; // Approximate toolbar width
+    const toolbarWidth = 420; // Approximate toolbar width
     let left = rect.left + rect.width / 2 - toolbarWidth / 2;
     
     // Keep toolbar within viewport
@@ -128,6 +134,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
         setShowColorPicker(false);
         setShowHighlightPicker(false);
+        setShowAlignMenu(false);
       }
     };
 
@@ -223,6 +230,78 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
 
           <div className="w-px h-5 bg-zinc-600 mx-1" />
 
+          {/* Subscript/Superscript */}
+          <ToolbarButton
+            icon={Subscript}
+            label="Subscript (⌘,)"
+            onClick={() => handleFormat("subscript")}
+            active={formatState.subscript}
+          />
+          <ToolbarButton
+            icon={Superscript}
+            label="Superscript (⌘.)"
+            onClick={() => handleFormat("superscript")}
+            active={formatState.superscript}
+          />
+
+          <div className="w-px h-5 bg-zinc-600 mx-1" />
+
+          {/* Text Alignment */}
+          <div className="relative">
+            <motion.button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowAlignMenu(!showAlignMenu);
+                setShowColorPicker(false);
+                setShowHighlightPicker(false);
+              }}
+              className="flex items-center gap-0.5 p-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Text Alignment"
+            >
+              <AlignLeft className="w-4 h-4" />
+              <ChevronDown className="w-3 h-3" />
+            </motion.button>
+            
+            <AnimatePresence>
+              {showAlignMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                  className="absolute top-full left-0 mt-2 p-1 bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 flex gap-1"
+                >
+                  {[
+                    { icon: AlignLeft, format: "alignLeft", label: "Left" },
+                    { icon: AlignCenter, format: "alignCenter", label: "Center" },
+                    { icon: AlignRight, format: "alignRight", label: "Right" },
+                    { icon: AlignJustify, format: "justify", label: "Justify" },
+                  ].map((item) => (
+                    <button
+                      key={item.format}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFormat(item.format);
+                        setShowAlignMenu(false);
+                      }}
+                      className="p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white transition-all"
+                      title={item.label}
+                    >
+                      <item.icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="w-px h-5 bg-zinc-600 mx-1" />
+
           {/* Text Color */}
           <div className="relative">
             <motion.button
@@ -232,6 +311,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
                 e.stopPropagation();
                 setShowColorPicker(!showColorPicker);
                 setShowHighlightPicker(false);
+                setShowAlignMenu(false);
               }}
               className="flex items-center gap-0.5 p-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-all"
               whileHover={{ scale: 1.05 }}
@@ -283,6 +363,7 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
                 e.stopPropagation();
                 setShowHighlightPicker(!showHighlightPicker);
                 setShowColorPicker(false);
+                setShowAlignMenu(false);
               }}
               className="flex items-center gap-0.5 p-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-all"
               whileHover={{ scale: 1.05 }}
@@ -332,6 +413,13 @@ const FloatingToolbar = ({ containerRef }: FloatingToolbarProps) => {
             icon={Link}
             label="Add Link (⌘K)"
             onClick={() => handleFormat("link")}
+          />
+
+          {/* Clear Formatting */}
+          <ToolbarButton
+            icon={RemoveFormatting}
+            label="Clear Formatting (⌘\\)"
+            onClick={() => handleFormat("removeFormat")}
           />
         </motion.div>
       )}
