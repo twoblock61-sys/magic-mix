@@ -55,6 +55,7 @@ import ChartBlock from "./ChartBlock";
 import EquationBlock from "./EquationBlock";
 import DatabaseBlock from "./DatabaseBlock";
 import DataTable from "./DataTable";
+import KanbanBlock from "./KanbanBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -694,7 +695,13 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           <div className="py-1">
             <div className="flex items-start gap-2">
               <motion.button
-                onClick={() => updateBlock(block.id, { isExpanded: !block.isExpanded })}
+                onClick={() => {
+                  // When collapsing, remove the toggle content key so it re-initializes on expand
+                  if (block.isExpanded) {
+                    initializedRefs.current.delete(`${block.id}-toggle`);
+                  }
+                  updateBlock(block.id, { isExpanded: !block.isExpanded });
+                }}
                 className="p-1 rounded hover:bg-muted transition-colors mt-0.5"
                 animate={{ rotate: block.isExpanded ? 90 : 0 }}
               >
@@ -1329,96 +1336,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "kanban":
         return (
-          <div className="py-3">
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {(block.kanbanColumns || []).map((column, colIndex) => (
-                <div key={column.id} className="min-w-[200px] bg-muted/30 rounded-lg p-3 border border-border group/column">
-                  <div className="flex items-center justify-between mb-3">
-                    <input
-                      type="text"
-                      value={column.title}
-                      onChange={(e) => {
-                        const newColumns = [...(block.kanbanColumns || [])];
-                        newColumns[colIndex] = { ...column, title: e.target.value };
-                        updateBlock(block.id, { kanbanColumns: newColumns });
-                      }}
-                      className="font-medium text-sm bg-transparent outline-none flex-1"
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        {column.cards.length}
-                      </span>
-                      {(block.kanbanColumns || []).length > 1 && (
-                        <button
-                          onClick={() => {
-                            const newColumns = (block.kanbanColumns || []).filter((_, i) => i !== colIndex);
-                            updateBlock(block.id, { kanbanColumns: newColumns });
-                          }}
-                          className="opacity-0 group-hover/column:opacity-100 p-1 rounded hover:bg-destructive/10 transition-all flex-shrink-0"
-                          title="Delete stage"
-                        >
-                          <X className="w-3 h-3 text-destructive" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {column.cards.map((card, cardIndex) => (
-                      <motion.div
-                        key={card.id}
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-background p-2.5 rounded-lg border border-border shadow-sm group/card"
-                      >
-                        <div className="flex items-start gap-2">
-                          <input
-                            type="text"
-                            value={card.content}
-                            onChange={(e) => {
-                              const newColumns = [...(block.kanbanColumns || [])];
-                              newColumns[colIndex].cards[cardIndex] = { ...card, content: e.target.value };
-                              updateBlock(block.id, { kanbanColumns: newColumns });
-                            }}
-                            className="flex-1 text-sm bg-transparent outline-none"
-                            placeholder="Task..."
-                          />
-                          <button
-                            onClick={() => {
-                              const newColumns = [...(block.kanbanColumns || [])];
-                              newColumns[colIndex].cards = column.cards.filter((_, i) => i !== cardIndex);
-                              updateBlock(block.id, { kanbanColumns: newColumns });
-                            }}
-                            className="opacity-0 group-hover/card:opacity-100 p-0.5 hover:bg-destructive/10 rounded transition-all"
-                          >
-                            <X className="w-3 h-3 text-destructive" />
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
-                    <button
-                      onClick={() => {
-                        const newColumns = [...(block.kanbanColumns || [])];
-                        newColumns[colIndex].cards.push({ id: crypto.randomUUID(), content: "" });
-                        updateBlock(block.id, { kanbanColumns: newColumns });
-                      }}
-                      className="w-full py-2 text-xs text-muted-foreground hover:bg-muted rounded-lg transition-colors"
-                    >
-                      + Add card
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                onClick={() => {
-                  const newColumn = { id: crypto.randomUUID(), title: "New Column", cards: [] };
-                  updateBlock(block.id, { kanbanColumns: [...(block.kanbanColumns || []), newColumn] });
-                }}
-                className="min-w-[150px] h-fit p-3 border-2 border-dashed border-muted-foreground/20 rounded-lg text-xs text-muted-foreground hover:border-primary/30 transition-colors"
-              >
-                + Add column
-              </button>
-            </div>
-          </div>
+          <KanbanBlock block={block} updateBlock={updateBlock} />
         );
 
       case "rating":

@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2 } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Download, FileText, FileCode, FileType } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
+import FindReplaceBar from "./FindReplaceBar";
 import TemplatesModal from "./TemplatesModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
+import { useNoteExport } from "@/hooks/useNoteExport";
 import { Template } from "@/data/templates";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,9 +35,10 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [isFavorite, setIsFavorite] = useState(false);
   const [showIndex, setShowIndex] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
-
+  const [showExportMenu, setShowExportMenu] = useState(false);
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
+  const { exportNote } = useNoteExport();
   
   // Undo/Redo functionality
   const { pushState, undo, redo, canUndo, canRedo, resetHistory } = useUndoRedo(note.blocks, {
@@ -128,6 +131,24 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
     const color = tagColors.find((c) => c.name === colorName) || tagColors[5];
     return `${color.bg} ${color.text} ${color.border}`;
   };
+
+  // Find & Replace handler
+  const handleFindReplace = useCallback((replacements: { blockId: string; field: "content" | "toggleContent"; oldText: string; newText: string }[]) => {
+    const newBlocks = note.blocks.map((block) => {
+      const blockReplacements = replacements.filter((r) => r.blockId === block.id);
+      if (blockReplacements.length === 0) return block;
+      const updated = { ...block };
+      blockReplacements.forEach((r) => {
+        const field = r.field;
+        const current = updated[field] || "";
+        const flags = "gi";
+        const regex = new RegExp(r.oldText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
+        (updated as any)[field] = current.replace(regex, r.newText);
+      });
+      return updated;
+    });
+    handleBlocksChange(newBlocks);
+  }, [note.blocks, handleBlocksChange]);
 
   return (
     <>
@@ -277,6 +298,48 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           >
             <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
           </motion.button>
+          {/* Export Button */}
+          <div className="relative">
+            <motion.button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              title="Export note"
+            >
+              <Download className="w-4 h-4" />
+            </motion.button>
+            <AnimatePresence>
+              {showExportMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                  className="absolute top-full right-0 mt-2 bg-card border border-border rounded-lg shadow-xl p-1 min-w-[160px] z-50"
+                >
+                  <button
+                    onClick={() => { exportNote(note, "markdown"); setShowExportMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <FileCode className="w-4 h-4" /> Markdown
+                  </button>
+                  <button
+                    onClick={() => { exportNote(note, "text"); setShowExportMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <FileText className="w-4 h-4" /> Plain Text
+                  </button>
+                  <button
+                    onClick={() => { exportNote(note, "html"); setShowExportMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <FileType className="w-4 h-4" /> HTML
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <motion.button
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             whileHover={{ scale: 1.1 }}
@@ -293,6 +356,12 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
           </motion.button>
         </div>
       </motion.div>
+
+      {/* Find & Replace Bar (Cmd+F) */}
+      <FindReplaceBar
+        blocks={note.blocks}
+        onReplace={handleFindReplace}
+      />
 
       {/* Templates Modal */}
       <TemplatesModal
