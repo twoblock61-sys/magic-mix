@@ -211,13 +211,20 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     setShowMenu(null);
     setMenuFilter("");
     
-    setTimeout(() => {
+    // Use a longer timeout to ensure React has rendered the new block
+    const focusNewBlock = () => {
       const el = blockRefs.current.get(newBlock.id);
       if (el) {
         const input = el.querySelector('[contenteditable], input');
-        if (input) (input as HTMLElement).focus();
+        if (input) {
+          (input as HTMLElement).focus();
+          return;
+        }
       }
-    }, 10);
+      // Retry if element not yet in DOM
+      setTimeout(focusNewBlock, 50);
+    };
+    setTimeout(focusNewBlock, 50);
   };
 
   const updateTableCell = (blockId: string, rowIndex: number, colIndex: number, value: string) => {
