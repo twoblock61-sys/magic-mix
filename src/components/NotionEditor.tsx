@@ -281,6 +281,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     }
   };
 
+  const isListType = (type: NoteBlock["type"]) => type === "bullet" || type === "numbered" || type === "todo";
+
   const handleKeyDown = (e: KeyboardEvent, block: NoteBlock) => {
     // Don't prevent formatting shortcuts
     const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -293,6 +295,24 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     const contentEl = contentRefs.current.get(block.id);
     const isEmpty = contentEl ? (contentEl.textContent || "").trim() === "" : block.content === "";
 
+    // Handle Tab / Shift+Tab for list indentation
+    if (e.key === "Tab" && isListType(block.type)) {
+      e.preventDefault();
+      const currentIndent = block.indentLevel || 0;
+      if (e.shiftKey) {
+        // Outdent
+        if (currentIndent > 0) {
+          updateBlock(block.id, { indentLevel: currentIndent - 1 });
+        }
+      } else {
+        // Indent (max 3 levels)
+        if (currentIndent < 3) {
+          updateBlock(block.id, { indentLevel: currentIndent + 1 });
+        }
+      }
+      return;
+    }
+
     // Handle Enter key
     if (e.key === "Enter" && !e.shiftKey) {
       // For code blocks: allow new lines (Shift+Enter to exit)
@@ -301,14 +321,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       }
 
       // For lists, todos, bullets: exit on empty second press
-      if (block.type === "bullet" || block.type === "numbered" || block.type === "todo") {
+      if (isListType(block.type)) {
         if (isEmpty) {
-          // Empty list item: delete it and create a new text block
+          // If indented, outdent first instead of exiting
+          if ((block.indentLevel || 0) > 0) {
+            e.preventDefault();
+            updateBlock(block.id, { indentLevel: (block.indentLevel || 0) - 1 });
+            return;
+          }
+          // Empty list item at root: delete it and create a new text block
           e.preventDefault();
           const index = blocks.findIndex((b) => b.id === block.id);
           const newBlocks = blocks.filter((b) => b.id !== block.id);
 
-          // Add a new text block at the same position
           const newBlock: NoteBlock = {
             id: crypto.randomUUID(),
             type: "text",
@@ -317,7 +342,6 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           newBlocks.splice(index, 0, newBlock);
           onChange(newBlocks);
 
-          // Focus the new text block
           setTimeout(() => {
             const el = blockRefs.current.get(newBlock.id);
             if (el) {
@@ -326,9 +350,28 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             }
           }, 10);
         } else {
-          // Non-empty: create new list item
+          // Non-empty: create new list item at same indent level
           e.preventDefault();
-          addBlockAfter(block.id, block.type);
+          const newBlock: NoteBlock = {
+            id: crypto.randomUUID(),
+            type: block.type,
+            content: "",
+            checked: block.type === "todo" ? false : undefined,
+            indentLevel: block.indentLevel || 0,
+          };
+          const index = blocks.findIndex((b) => b.id === block.id);
+          const newBlocks = [...blocks];
+          newBlocks.splice(index + 1, 0, newBlock);
+          onChange(newBlocks);
+          setShowMenu(null);
+          setMenuFilter("");
+          setTimeout(() => {
+            const el = blockRefs.current.get(newBlock.id);
+            if (el) {
+              const input = el.querySelector('[contenteditable], input');
+              if (input) (input as HTMLElement).focus();
+            }
+          }, 10);
         }
         return;
       }
@@ -346,6 +389,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     }
 
     if (e.key === "Backspace" && isEmpty && blocks.length > 1) {
+      // If indented list, outdent first
+      if (isListType(block.type) && (block.indentLevel || 0) > 0) {
+        e.preventDefault();
+        updateBlock(block.id, { indentLevel: (block.indentLevel || 0) - 1 });
+        return;
+      }
       e.preventDefault();
       deleteBlock(block.id);
     }
@@ -581,9 +630,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           </div>
         );
 
-      case "todo":
+      case "todo": {
+        const todoIndent = block.indentLevel || 0;
         return (
-          <div className="flex items-start gap-3 py-1">
+          <div className="flex items-start gap-3 py-1" style={{ paddingLeft: `${todoIndent * 24}px` }}>
             <motion.div
               className="mt-1"
               whileHover={{ scale: 1.1 }}
@@ -626,11 +676,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             />
           </div>
         );
+      }
 
-      case "bullet":
+      case "bullet": {
+        const bulletIndent = block.indentLevel || 0;
+        const bulletStyles = ["rounded-full bg-primary/60", "rounded-full border-2 border-primary/60 bg-transparent", "rounded-sm bg-primary/40", "rounded-full bg-primary/30"];
+        const bulletSizes = ["w-2 h-2", "w-2 h-2", "w-1.5 h-1.5", "w-1.5 h-1.5"];
         return (
-          <div className="flex items-start gap-3 py-1">
-            <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/60 flex-shrink-0" />
+          <div className="flex items-start gap-3 py-1" style={{ paddingLeft: `${bulletIndent * 24}px` }}>
+            <span className={`mt-2.5 ${bulletSizes[bulletIndent]} ${bulletStyles[bulletIndent]} flex-shrink-0`} />
             <div
               ref={(el) => {
                 if (el) {
@@ -661,11 +715,14 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             />
           </div>
         );
+      }
 
-      case "numbered":
+      case "numbered": {
+        const numIndent = block.indentLevel || 0;
+        const numberStyles = ["", "text-sm", "text-xs italic", "text-xs"];
         return (
-          <div className="flex items-start gap-3 py-1">
-            <span className="mt-0.5 text-primary/60 font-medium min-w-[1.5rem]">
+          <div className="flex items-start gap-3 py-1" style={{ paddingLeft: `${numIndent * 24}px` }}>
+            <span className={`mt-0.5 text-primary/60 font-medium min-w-[1.5rem] ${numberStyles[numIndent]}`}>
               {getNumberedIndex(block.id)}.
             </span>
             <div
@@ -698,6 +755,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             />
           </div>
         );
+      }
 
       case "toggle":
         return (
