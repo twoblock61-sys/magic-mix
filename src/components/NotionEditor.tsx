@@ -117,6 +117,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [studyModeBlock, setStudyModeBlock] = useState<NoteBlock | null>(null);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
+  const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const dragYRef = useRef(0);
@@ -211,20 +212,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     setShowMenu(null);
     setMenuFilter("");
     
-    // Use a longer timeout to ensure React has rendered the new block
-    const focusNewBlock = () => {
-      const el = blockRefs.current.get(newBlock.id);
-      if (el) {
-        const input = el.querySelector('[contenteditable], input');
-        if (input) {
-          (input as HTMLElement).focus();
-          return;
-        }
-      }
-      // Retry if element not yet in DOM
-      setTimeout(focusNewBlock, 50);
-    };
-    setTimeout(focusNewBlock, 50);
+    // Schedule focus for after React renders the new block
+    setPendingFocusId(newBlock.id);
   };
 
   const updateTableCell = (blockId: string, rowIndex: number, colIndex: number, value: string) => {
@@ -277,14 +266,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     onChange(newBlocks);
     
     if (index > 0) {
-      setTimeout(() => {
-        const prevBlock = newBlocks[index - 1];
-        const el = blockRefs.current.get(prevBlock.id);
-        if (el) {
-          const input = el.querySelector('[contenteditable], input');
-          if (input) (input as HTMLElement).focus();
-        }
-      }, 10);
+      const prevBlock = newBlocks[index - 1];
+      setPendingFocusId(prevBlock.id);
     }
   };
 
@@ -325,13 +308,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           onChange(newBlocks);
 
           // Focus the new text block
-          setTimeout(() => {
-            const el = blockRefs.current.get(newBlock.id);
-            if (el) {
-              const input = el.querySelector('[contenteditable], input');
-              if (input) (input as HTMLElement).focus();
-            }
-          }, 10);
+          setPendingFocusId(newBlock.id);
         } else {
           // Non-empty: create new list item
           e.preventDefault();
@@ -517,7 +494,31 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     });
   }, [blocks]);
 
-  // Add pointer move and up listeners for drag detection
+  // Focus newly added blocks after React renders them
+  useEffect(() => {
+    if (!pendingFocusId) return;
+    const el = blockRefs.current.get(pendingFocusId);
+    if (el) {
+      const input = el.querySelector('[contenteditable], input') as HTMLElement;
+      if (input) {
+        input.focus();
+        setPendingFocusId(null);
+        return;
+      }
+    }
+    // If not found yet, retry once more after a brief delay
+    const timer = setTimeout(() => {
+      const el = blockRefs.current.get(pendingFocusId);
+      if (el) {
+        const input = el.querySelector('[contenteditable], input') as HTMLElement;
+        if (input) input.focus();
+      }
+      setPendingFocusId(null);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [pendingFocusId, blocks]);
+
+
   useEffect(() => {
     if (!draggedBlockId) return;
 
