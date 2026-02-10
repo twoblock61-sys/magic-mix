@@ -492,13 +492,22 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const initializedRefs = useRef<Set<string>>(new Set());
   const currentBlockIds = useRef<string>("");
 
-  // Clear initialized refs when blocks change (switching notes)
+  // Clear initialized refs when blocks change (switching notes) or content changes externally
   useEffect(() => {
     const blockIds = blocks.map(b => b.id).join(",");
     if (currentBlockIds.current !== blockIds) {
       initializedRefs.current.clear();
       currentBlockIds.current = blockIds;
     }
+    // Sync DOM with state for blocks whose content changed externally (e.g., find & replace)
+    blocks.forEach((block) => {
+      const el = contentRefs.current.get(block.id);
+      if (el && initializedRefs.current.has(block.id)) {
+        if (el.textContent !== block.content) {
+          el.textContent = block.content || "";
+        }
+      }
+    });
   }, [blocks]);
 
   // Add pointer move and up listeners for drag detection
