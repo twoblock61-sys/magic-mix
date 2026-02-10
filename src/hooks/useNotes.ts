@@ -75,6 +75,7 @@ export interface NoteBlock {
   chartSelectedSeries?: string[];
   chartSeriesColors?: { [key: string]: string };
   linkedTableId?: string; // For charts linked to table data
+  indentLevel?: number; // For nested lists (0-3)
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
