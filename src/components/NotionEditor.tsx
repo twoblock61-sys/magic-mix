@@ -462,12 +462,23 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   };
 
   const getNumberedIndex = (blockId: string) => {
+    const targetIdx = blocks.findIndex(b => b.id === blockId);
+    if (targetIdx === -1) return 1;
+    const targetIndent = blocks[targetIdx].indentLevel || 0;
     let count = 0;
-    for (const block of blocks) {
-      if (block.type === "numbered") count++;
-      if (block.id === blockId) return count;
+    for (let i = 0; i <= targetIdx; i++) {
+      const b = blocks[i];
+      if (b.type === "numbered" && (b.indentLevel || 0) === targetIndent) {
+        count++;
+      } else if (b.type === "numbered" && (b.indentLevel || 0) < targetIndent) {
+        // Reset count when we encounter a parent-level numbered item
+        count = 0;
+      } else if (b.type !== "numbered" && (b.indentLevel || 0) <= targetIndent) {
+        // Reset when a non-numbered block at same or lower indent breaks the sequence
+        count = 0;
+      }
     }
-    return 1;
+    return count || 1;
   };
 
   const filteredBlockTypes = blockTypes.filter(
