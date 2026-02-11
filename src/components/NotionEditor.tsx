@@ -560,11 +560,20 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       currentBlockIds.current = blockIds;
     }
     // Sync DOM with state for blocks whose content changed externally (e.g., find & replace)
+    // Skip sync for the currently focused element to prevent cursor reset (especially in code blocks)
     blocks.forEach((block) => {
       const el = contentRefs.current.get(block.id);
       if (el && initializedRefs.current.has(block.id)) {
-        if (el.textContent !== block.content) {
-          el.textContent = block.content || "";
+        // Don't sync if this element has focus - prevents cursor jumping in code blocks
+        if (document.activeElement === el) return;
+        const currentContent = block.type === "code" ? extractContentFromEditable(el) : (el.textContent || "");
+        if (currentContent !== block.content) {
+          if (block.type === "code") {
+            // Preserve line breaks for code blocks
+            el.innerText = block.content || "";
+          } else {
+            el.textContent = block.content || "";
+          }
         }
       }
     });
@@ -1730,7 +1739,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       <div className="space-y-1 min-h-[200px]">
         {blocks.map((block) => (
           <motion.div
-            key={block.id}
+            key={`${block.id}-${block.type}`}
             layout
             data-block-id={block.id}
             ref={(el) => el && blockRefs.current.set(block.id, el)}
