@@ -566,13 +566,13 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       if (el && initializedRefs.current.has(block.id)) {
         // Don't sync if this element has focus - prevents cursor jumping in code blocks
         if (document.activeElement === el) return;
-        const currentContent = block.type === "code" ? extractContentFromEditable(el) : (el.textContent || "");
+        const currentContent = block.type === "code" ? extractContentFromEditable(el) : (el.innerHTML || "");
         if (currentContent !== block.content) {
           if (block.type === "code") {
             // Preserve line breaks for code blocks
             el.innerText = block.content || "";
           } else {
-            el.textContent = block.content || "";
+            el.innerHTML = block.content || "";
           }
         }
       }
@@ -604,7 +604,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             contentRefs.current.set(block.id, el);
             // Only set content on first mount to avoid cursor reset
             if (!initializedRefs.current.has(block.id)) {
-              el.textContent = block.content || "";
+              el.innerHTML = block.content || "";
               initializedRefs.current.add(block.id);
             }
           }
@@ -612,17 +612,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         contentEditable
         suppressContentEditableWarning
         onInput={(e) => {
-          // Capture content changes during typing for undo/redo
-          const text = e.currentTarget.textContent || "";
-          if (text !== block.content) {
-            updateBlock(block.id, { content: text });
+          const html = e.currentTarget.innerHTML || "";
+          if (html !== block.content) {
+            updateBlock(block.id, { content: html });
           }
         }}
         onBlur={(e) => {
-          // Ensure final state is captured on blur
-          const text = e.currentTarget.textContent || "";
-          if (text !== block.content) {
-            updateBlock(block.id, { content: text });
+          const html = e.currentTarget.innerHTML || "";
+          if (html !== block.content) {
+            updateBlock(block.id, { content: html });
           }
         }}
         onKeyDown={(e) => handleKeyDown(e, block)}
@@ -671,7 +669,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
                   if (!initializedRefs.current.has(block.id)) {
-                    el.textContent = block.content || "";
+                    el.innerHTML = block.content || "";
                     initializedRefs.current.add(block.id);
                   }
                 }
@@ -679,15 +677,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               contentEditable
               suppressContentEditableWarning
               onInput={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onBlur={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, block)}
@@ -710,7 +708,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
                   if (!initializedRefs.current.has(block.id)) {
-                    el.textContent = block.content || "";
+                    el.innerHTML = block.content || "";
                     initializedRefs.current.add(block.id);
                   }
                 }
@@ -718,15 +716,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               contentEditable
               suppressContentEditableWarning
               onInput={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onBlur={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, block)}
@@ -750,7 +748,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                 if (el) {
                   contentRefs.current.set(block.id, el);
                   if (!initializedRefs.current.has(block.id)) {
-                    el.textContent = block.content || "";
+                    el.innerHTML = block.content || "";
                     initializedRefs.current.add(block.id);
                   }
                 }
@@ -758,15 +756,15 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               contentEditable
               suppressContentEditableWarning
               onInput={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onBlur={(e) => {
-                const text = e.currentTarget.textContent || "";
-                if (text !== block.content) {
-                  updateBlock(block.id, { content: text });
+                const html = e.currentTarget.innerHTML || "";
+                if (html !== block.content) {
+                  updateBlock(block.id, { content: html });
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, block)}
@@ -797,30 +795,30 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               <div
                 ref={(el) => {
                   if (el) {
-                    contentRefs.current.set(block.id, el);
-                    if (!initializedRefs.current.has(block.id)) {
-                      el.textContent = block.content || "";
-                      initializedRefs.current.add(block.id);
-                    }
-                  }
-                }}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={(e) => {
-                  const text = e.currentTarget.textContent || "";
-                  if (text !== block.content) {
-                    updateBlock(block.id, { content: text });
-                  }
-                }}
-                onBlur={(e) => {
-                  const text = e.currentTarget.textContent || "";
-                  if (text !== block.content) {
-                    updateBlock(block.id, { content: text });
-                  }
-                }}
-                onKeyDown={(e) => handleKeyDown(e, block)}
-                className="flex-1 outline-none font-medium"
-                data-placeholder="Toggle heading"
+                     contentRefs.current.set(block.id, el);
+                     if (!initializedRefs.current.has(block.id)) {
+                       el.innerHTML = block.content || "";
+                       initializedRefs.current.add(block.id);
+                     }
+                   }
+                 }}
+                 contentEditable
+                 suppressContentEditableWarning
+                 onInput={(e) => {
+                   const html = e.currentTarget.innerHTML || "";
+                   if (html !== block.content) {
+                     updateBlock(block.id, { content: html });
+                   }
+                 }}
+                 onBlur={(e) => {
+                   const html = e.currentTarget.innerHTML || "";
+                   if (html !== block.content) {
+                     updateBlock(block.id, { content: html });
+                   }
+                 }}
+                 onKeyDown={(e) => handleKeyDown(e, block)}
+                 className="flex-1 outline-none font-medium"
+                 data-placeholder="Toggle heading"
               />
             </div>
             <AnimatePresence>
@@ -835,26 +833,26 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                     ref={(el) => {
                       if (el) {
                         const toggleKey = `${block.id}-toggle`;
-                        if (!initializedRefs.current.has(toggleKey)) {
-                          el.textContent = block.toggleContent || "";
-                          initializedRefs.current.add(toggleKey);
-                        }
-                      }
-                    }}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onInput={(e) => {
-                      const text = e.currentTarget.textContent || "";
-                      if (text !== block.toggleContent) {
-                        updateBlock(block.id, { toggleContent: text });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const text = e.currentTarget.textContent || "";
-                      if (text !== block.toggleContent) {
-                        updateBlock(block.id, { toggleContent: text });
-                      }
-                    }}
+                         if (!initializedRefs.current.has(toggleKey)) {
+                           el.innerHTML = block.toggleContent || "";
+                           initializedRefs.current.add(toggleKey);
+                         }
+                       }
+                     }}
+                     contentEditable
+                     suppressContentEditableWarning
+                     onInput={(e) => {
+                       const html = e.currentTarget.innerHTML || "";
+                       if (html !== block.toggleContent) {
+                         updateBlock(block.id, { toggleContent: html });
+                       }
+                     }}
+                     onBlur={(e) => {
+                       const html = e.currentTarget.innerHTML || "";
+                       if (html !== block.toggleContent) {
+                         updateBlock(block.id, { toggleContent: html });
+                       }
+                     }}
                     className="outline-none text-sm min-h-[40px] py-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
                     data-placeholder="Add content inside this toggle..."
                   />
@@ -1108,7 +1106,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                               if (el) {
                                 contentRefs.current.set(nestedBlock.id, el);
                                 if (!initializedRefs.current.has(nestedBlock.id)) {
-                                  el.textContent = nestedBlock.content || "";
+                                  el.innerHTML = nestedBlock.content || "";
                                   initializedRefs.current.add(nestedBlock.id);
                                 }
                               }
@@ -1116,9 +1114,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => {
-                              const text = e.currentTarget.textContent || "";
-                              if (text !== nestedBlock.content) {
-                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                              const html = e.currentTarget.innerHTML || "";
+                              if (html !== nestedBlock.content) {
+                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: html });
                               }
                             }}
                             onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
@@ -1134,7 +1132,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                 if (el) {
                                   contentRefs.current.set(nestedBlock.id, el);
                                   if (!initializedRefs.current.has(nestedBlock.id)) {
-                                    el.textContent = nestedBlock.content || "";
+                                    el.innerHTML = nestedBlock.content || "";
                                     initializedRefs.current.add(nestedBlock.id);
                                   }
                                 }
@@ -1142,9 +1140,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                               contentEditable
                               suppressContentEditableWarning
                               onBlur={(e) => {
-                                const text = e.currentTarget.textContent || "";
-                                if (text !== nestedBlock.content) {
-                                  updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                                const html = e.currentTarget.innerHTML || "";
+                                if (html !== nestedBlock.content) {
+                                  updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: html });
                                 }
                               }}
                               onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
@@ -1159,7 +1157,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                               if (el) {
                                 contentRefs.current.set(nestedBlock.id, el);
                                 if (!initializedRefs.current.has(nestedBlock.id)) {
-                                  el.textContent = nestedBlock.content || "";
+                                  el.innerHTML = nestedBlock.content || "";
                                   initializedRefs.current.add(nestedBlock.id);
                                 }
                               }
@@ -1167,9 +1165,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => {
-                              const text = e.currentTarget.textContent || "";
-                              if (text !== nestedBlock.content) {
-                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: text });
+                              const html = e.currentTarget.innerHTML || "";
+                              if (html !== nestedBlock.content) {
+                                updateNestedBlock(block.id, colIndex, nestedBlock.id, { content: html });
                               }
                             }}
                             onKeyDown={(e) => handleKeyDown(e, nestedBlock)}
