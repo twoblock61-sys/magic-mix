@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Folder, Plus, Trash2, FolderOpen, StickyNote, X, ArrowLeft } from "lucide-react";
 import { useNotesContext } from "@/contexts/NotesContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 
 interface FolderPageProps {
   onNavigate: (nav: string, noteId?: string) => void;
@@ -40,6 +41,9 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
   const folderNotes = selectedFolderId ? getNotesInFolder(selectedFolderId) : [];
+
+  const handleFolderBack = useCallback(() => setSelectedFolderId(null), []);
+  const swipeHandlers = useSwipeBack({ onSwipeBack: handleFolderBack, enabled: isMobile && !!selectedFolderId });
 
   const showFolderList = !isMobile || !selectedFolderId;
   const showFolderContent = !isMobile || selectedFolderId;
@@ -127,7 +131,7 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
 
       {/* Folder Contents */}
       {showFolderContent && (
-        <div className="flex-1 overflow-y-auto scrollbar-thin p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto scrollbar-thin p-4 md:p-8" {...swipeHandlers}>
           {selectedFolder ? (
             <>
               <div className="flex items-center gap-3 mb-6">
