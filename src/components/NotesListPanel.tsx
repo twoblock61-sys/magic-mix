@@ -52,7 +52,7 @@ const NotesListPanel = ({
   };
 
   return (
-    <div className="w-80 h-full bg-card border-r border-border flex flex-col">
+    <div className="w-full md:w-80 h-full bg-card border-r border-border flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
