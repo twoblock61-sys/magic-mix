@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNotesContext } from "@/contexts/NotesContext";
 import NotesListPanel from "@/components/NotesListPanel";
 import NoteEditorFull from "@/components/NoteEditorFull";
 import { StickyNote, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 
 interface IdeasPageProps {
   initialNoteId?: string;
@@ -56,6 +57,9 @@ const IdeasPage = ({ initialNoteId }: IdeasPageProps) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [focusMode]);
 
+  const handleGoBack = useCallback(() => setActiveNoteId(null), []);
+  const swipeHandlers = useSwipeBack({ onSwipeBack: handleGoBack, enabled: isMobile && !!activeNoteId });
+
   // Mobile: show list or editor, not both
   const showListOnMobile = isMobile && !activeNoteId;
   const showEditorOnMobile = isMobile && activeNoteId;
@@ -88,7 +92,7 @@ const IdeasPage = ({ initialNoteId }: IdeasPageProps) => {
       {(!isMobile || showEditorOnMobile) && (
         <>
           {activeNote ? (
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden" {...swipeHandlers}>
               {/* Mobile back button */}
               {isMobile && (
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card flex-shrink-0">
