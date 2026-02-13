@@ -173,7 +173,7 @@ const FlashcardsPage = () => {
   return (
     <div className="flex-1 flex flex-col bg-background overflow-hidden">
       <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+        <div className="max-w-4xl mx-auto p-6 space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>

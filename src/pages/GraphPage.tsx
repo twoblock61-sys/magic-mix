@@ -17,7 +17,7 @@ const GraphPage = ({ onNavigate }: GraphPageProps) => {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-card/50 backdrop-blur-sm"
+        className="px-6 py-4 border-b border-border bg-card/50 backdrop-blur-sm"
       >
         <div className="flex items-center gap-4">
           <motion.button
