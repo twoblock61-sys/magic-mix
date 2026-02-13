@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Menu } from "lucide-react";
+import { Menu, Calendar, Share2, Network, Layers } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import { NotesProvider } from "@/contexts/NotesContext";
 import HomePage from "@/pages/HomePage";
@@ -113,9 +113,34 @@ const Index = () => {
           )}
 
           {/* Main Content */}
-          <main className="flex-1 flex overflow-hidden">
+          <main className="flex-1 flex overflow-hidden pb-[env(safe-area-inset-bottom)]">
             {renderPage()}
           </main>
+
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <nav className="flex-shrink-0 flex items-center justify-around px-2 py-2 border-t border-border sidebar-gradient">
+              {[
+                { id: "calendar", icon: Calendar, label: "Calendar" },
+                { id: "shared", icon: Share2, label: "Shared" },
+                { id: "graph", icon: Network, label: "Graph" },
+                { id: "flashcards", icon: Layers, label: "Cards" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate(item.id)}
+                  className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${
+                    activeNav === item.id
+                      ? "bg-white/20 text-white"
+                      : "text-white/70"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          )}
         </motion.div>
       </div>
     </NotesProvider>
