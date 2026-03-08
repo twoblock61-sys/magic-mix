@@ -45,6 +45,7 @@ import {
   Pause,
   Volume2,
   ZoomIn,
+  Layers,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -56,6 +57,7 @@ import EquationBlock from "./EquationBlock";
 import DatabaseBlock from "./DatabaseBlock";
 import DataTable from "./DataTable";
 import KanbanBlock from "./KanbanBlock";
+import TabsBlock from "./TabsBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -94,6 +96,7 @@ const blockTypes = [
   { type: "mindmap" as const, icon: Share2, label: "Mind Map", description: "Interactive mind map", category: "advanced" },
   { type: "flashcard" as const, icon: Lightbulb, label: "Flashcards", description: "Quick revision cards", category: "advanced" },
   { type: "chart" as const, icon: BarChart3, label: "Chart", description: "Data visualization charts", category: "advanced" },
+  { type: "tabs" as const, icon: Layers, label: "Tabs", description: "Tabbed content sections", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -203,6 +206,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       chartXAxisKey: type === "chart" ? "name" : undefined,
       chartSelectedSeries: type === "chart" ? ["value"] : undefined,
       chartSeriesColors: type === "chart" ? { value: "#3b82f6" } : undefined,
+      tabsData: type === "tabs" ? [
+        { id: crypto.randomUUID(), label: "Tab 1", content: "" },
+        { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+      ] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -1727,6 +1734,16 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           </div>
         );
 
+      case "tabs":
+        return (
+          <div className="py-2">
+            <TabsBlock
+              tabs={block.tabsData || [{ id: crypto.randomUUID(), label: "Tab 1", content: "" }]}
+              onChange={(tabsData) => updateBlock(block.id, { tabsData })}
+            />
+          </div>
+        );
+
       default:
         return renderEditableContent(block);
     }
@@ -1969,6 +1986,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                 } else if (bt.type === "flashcard") {
                                   baseUpdate.flashcards = [];
                                   baseUpdate.content = "Flashcards";
+                                } else if (bt.type === "tabs") {
+                                  baseUpdate.tabsData = [
+                                    { id: crypto.randomUUID(), label: "Tab 1", content: "" },
+                                    { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+                                  ];
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
