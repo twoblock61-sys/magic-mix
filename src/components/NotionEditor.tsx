@@ -49,7 +49,7 @@ import {
   BarChart2,
   PenTool,
   Scale,
-  Vote,
+  TrendingUp,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
