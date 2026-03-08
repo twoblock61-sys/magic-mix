@@ -1769,6 +1769,46 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           </div>
         );
 
+      case "poll":
+        return (
+          <PollBlock
+            question={block.pollQuestion || "What do you think?"}
+            options={block.pollOptions || []}
+            onQuestionChange={(q) => updateBlock(block.id, { pollQuestion: q })}
+            onOptionsChange={(opts) => updateBlock(block.id, { pollOptions: opts })}
+          />
+        );
+
+      case "proscons":
+        return (
+          <ProsConsBlock
+            pros={block.prosItems || [""]}
+            cons={block.consItems || [""]}
+            onProsChange={(items) => updateBlock(block.id, { prosItems: items })}
+            onConsChange={(items) => updateBlock(block.id, { consItems: items })}
+          />
+        );
+
+      case "drawing":
+        return (
+          <DrawingBlock
+            drawingData={block.drawingData}
+            onChange={(data) => updateBlock(block.id, { drawingData: data })}
+          />
+        );
+
+      case "metric":
+        return (
+          <MetricBlock
+            value={block.metricValue || "0"}
+            label={block.metricLabel || "Metric"}
+            change={block.metricChange || ""}
+            trend={block.metricTrend || "neutral"}
+            color={block.metricColor || "Blue"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
