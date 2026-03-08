@@ -20,7 +20,9 @@ export interface NoteBlock {
     // Chart block type
     | "chart"
     // Tabs block type
-    | "tabs";
+    | "tabs"
+    // New creative blocks
+    | "poll" | "proscons" | "drawing" | "metric";
   content: string;
   checked?: boolean;
   tableData?: string[][];
