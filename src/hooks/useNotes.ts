@@ -82,6 +82,20 @@ export interface NoteBlock {
   indentLevel?: number; // For nested lists (0-3)
   // Tabs data
   tabsData?: { id: string; label: string; content: string }[];
+  // Poll data
+  pollQuestion?: string;
+  pollOptions?: { id: string; text: string; votes: number }[];
+  // Pros & Cons data
+  prosItems?: string[];
+  consItems?: string[];
+  // Drawing data
+  drawingData?: string; // data URL
+  // Metric data
+  metricValue?: string;
+  metricLabel?: string;
+  metricChange?: string;
+  metricTrend?: "up" | "down" | "neutral";
+  metricColor?: string;
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
