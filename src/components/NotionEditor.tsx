@@ -96,6 +96,7 @@ const blockTypes = [
   { type: "mindmap" as const, icon: Share2, label: "Mind Map", description: "Interactive mind map", category: "advanced" },
   { type: "flashcard" as const, icon: Lightbulb, label: "Flashcards", description: "Quick revision cards", category: "advanced" },
   { type: "chart" as const, icon: BarChart3, label: "Chart", description: "Data visualization charts", category: "advanced" },
+  { type: "tabs" as const, icon: Layers, label: "Tabs", description: "Tabbed content sections", category: "advanced" },
 ] as const;
 
 const progressColors = [
