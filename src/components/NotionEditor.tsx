@@ -57,6 +57,7 @@ import EquationBlock from "./EquationBlock";
 import DatabaseBlock from "./DatabaseBlock";
 import DataTable from "./DataTable";
 import KanbanBlock from "./KanbanBlock";
+import TabsBlock from "./TabsBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
