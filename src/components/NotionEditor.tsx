@@ -45,6 +45,7 @@ import {
   Pause,
   Volume2,
   ZoomIn,
+  Layers,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
