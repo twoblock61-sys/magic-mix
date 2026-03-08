@@ -222,6 +222,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         { id: crypto.randomUUID(), label: "Tab 1", content: "" },
         { id: crypto.randomUUID(), label: "Tab 2", content: "" },
       ] : undefined,
+      pollQuestion: type === "poll" ? "What do you think?" : undefined,
+      pollOptions: type === "poll" ? [
+        { id: crypto.randomUUID(), text: "Option 1", votes: 0 },
+        { id: crypto.randomUUID(), text: "Option 2", votes: 0 },
+        { id: crypto.randomUUID(), text: "Option 3", votes: 0 },
+      ] : undefined,
+      prosItems: type === "proscons" ? [""] : undefined,
+      consItems: type === "proscons" ? [""] : undefined,
+      metricValue: type === "metric" ? "1,234" : undefined,
+      metricLabel: type === "metric" ? "Total Users" : undefined,
+      metricChange: type === "metric" ? "+12.5%" : undefined,
+      metricTrend: type === "metric" ? "up" : undefined,
+      metricColor: type === "metric" ? "Blue" : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
