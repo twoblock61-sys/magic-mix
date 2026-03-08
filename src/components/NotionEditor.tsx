@@ -206,6 +206,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       chartXAxisKey: type === "chart" ? "name" : undefined,
       chartSelectedSeries: type === "chart" ? ["value"] : undefined,
       chartSeriesColors: type === "chart" ? { value: "#3b82f6" } : undefined,
+      tabsData: type === "tabs" ? [
+        { id: crypto.randomUUID(), label: "Tab 1", content: "" },
+        { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+      ] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
