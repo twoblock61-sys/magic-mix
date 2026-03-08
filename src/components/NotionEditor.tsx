@@ -2056,6 +2056,22 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                     { id: crypto.randomUUID(), label: "Tab 1", content: "" },
                                     { id: crypto.randomUUID(), label: "Tab 2", content: "" },
                                   ];
+                                } else if (bt.type === "poll") {
+                                  baseUpdate.pollQuestion = "What do you think?";
+                                  baseUpdate.pollOptions = [
+                                    { id: crypto.randomUUID(), text: "Option 1", votes: 0 },
+                                    { id: crypto.randomUUID(), text: "Option 2", votes: 0 },
+                                    { id: crypto.randomUUID(), text: "Option 3", votes: 0 },
+                                  ];
+                                } else if (bt.type === "proscons") {
+                                  baseUpdate.prosItems = [""];
+                                  baseUpdate.consItems = [""];
+                                } else if (bt.type === "metric") {
+                                  baseUpdate.metricValue = "1,234";
+                                  baseUpdate.metricLabel = "Total Users";
+                                  baseUpdate.metricChange = "+12.5%";
+                                  baseUpdate.metricTrend = "up";
+                                  baseUpdate.metricColor = "Blue";
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
