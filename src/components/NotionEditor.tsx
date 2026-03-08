@@ -1986,6 +1986,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                 } else if (bt.type === "flashcard") {
                                   baseUpdate.flashcards = [];
                                   baseUpdate.content = "Flashcards";
+                                } else if (bt.type === "tabs") {
+                                  baseUpdate.tabsData = [
+                                    { id: crypto.randomUUID(), label: "Tab 1", content: "" },
+                                    { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+                                  ];
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
