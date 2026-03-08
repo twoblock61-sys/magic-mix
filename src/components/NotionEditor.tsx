@@ -105,6 +105,10 @@ const blockTypes = [
   { type: "flashcard" as const, icon: Lightbulb, label: "Flashcards", description: "Quick revision cards", category: "advanced" },
   { type: "chart" as const, icon: BarChart3, label: "Chart", description: "Data visualization charts", category: "advanced" },
   { type: "tabs" as const, icon: Layers, label: "Tabs", description: "Tabbed content sections", category: "advanced" },
+  { type: "poll" as const, icon: BarChart2, label: "Poll", description: "Create interactive polls", category: "advanced" },
+  { type: "proscons" as const, icon: Scale, label: "Pros & Cons", description: "Compare pros and cons", category: "advanced" },
+  { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
+  { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
 ] as const;
 
 const progressColors = [
