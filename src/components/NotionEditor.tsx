@@ -46,6 +46,10 @@ import {
   Volume2,
   ZoomIn,
   Layers,
+  BarChart2,
+  PenTool,
+  Scale,
+  TrendingUp,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -58,6 +62,10 @@ import DatabaseBlock from "./DatabaseBlock";
 import DataTable from "./DataTable";
 import KanbanBlock from "./KanbanBlock";
 import TabsBlock from "./TabsBlock";
+import PollBlock from "./PollBlock";
+import ProsConsBlock from "./ProsConsBlock";
+import DrawingBlock from "./DrawingBlock";
+import MetricBlock from "./MetricBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -97,6 +105,10 @@ const blockTypes = [
   { type: "flashcard" as const, icon: Lightbulb, label: "Flashcards", description: "Quick revision cards", category: "advanced" },
   { type: "chart" as const, icon: BarChart3, label: "Chart", description: "Data visualization charts", category: "advanced" },
   { type: "tabs" as const, icon: Layers, label: "Tabs", description: "Tabbed content sections", category: "advanced" },
+  { type: "poll" as const, icon: BarChart2, label: "Poll", description: "Create interactive polls", category: "advanced" },
+  { type: "proscons" as const, icon: Scale, label: "Pros & Cons", description: "Compare pros and cons", category: "advanced" },
+  { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
+  { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -210,6 +222,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         { id: crypto.randomUUID(), label: "Tab 1", content: "" },
         { id: crypto.randomUUID(), label: "Tab 2", content: "" },
       ] : undefined,
+      pollQuestion: type === "poll" ? "What do you think?" : undefined,
+      pollOptions: type === "poll" ? [
+        { id: crypto.randomUUID(), text: "Option 1", votes: 0 },
+        { id: crypto.randomUUID(), text: "Option 2", votes: 0 },
+        { id: crypto.randomUUID(), text: "Option 3", votes: 0 },
+      ] : undefined,
+      prosItems: type === "proscons" ? [""] : undefined,
+      consItems: type === "proscons" ? [""] : undefined,
+      metricValue: type === "metric" ? "1,234" : undefined,
+      metricLabel: type === "metric" ? "Total Users" : undefined,
+      metricChange: type === "metric" ? "+12.5%" : undefined,
+      metricTrend: type === "metric" ? "up" : undefined,
+      metricColor: type === "metric" ? "Blue" : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -1744,6 +1769,46 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           </div>
         );
 
+      case "poll":
+        return (
+          <PollBlock
+            question={block.pollQuestion || "What do you think?"}
+            options={block.pollOptions || []}
+            onQuestionChange={(q) => updateBlock(block.id, { pollQuestion: q })}
+            onOptionsChange={(opts) => updateBlock(block.id, { pollOptions: opts })}
+          />
+        );
+
+      case "proscons":
+        return (
+          <ProsConsBlock
+            pros={block.prosItems || [""]}
+            cons={block.consItems || [""]}
+            onProsChange={(items) => updateBlock(block.id, { prosItems: items })}
+            onConsChange={(items) => updateBlock(block.id, { consItems: items })}
+          />
+        );
+
+      case "drawing":
+        return (
+          <DrawingBlock
+            drawingData={block.drawingData}
+            onChange={(data) => updateBlock(block.id, { drawingData: data })}
+          />
+        );
+
+      case "metric":
+        return (
+          <MetricBlock
+            value={block.metricValue || "0"}
+            label={block.metricLabel || "Metric"}
+            change={block.metricChange || ""}
+            trend={block.metricTrend || "neutral"}
+            color={block.metricColor || "Blue"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
@@ -1991,6 +2056,22 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                     { id: crypto.randomUUID(), label: "Tab 1", content: "" },
                                     { id: crypto.randomUUID(), label: "Tab 2", content: "" },
                                   ];
+                                } else if (bt.type === "poll") {
+                                  baseUpdate.pollQuestion = "What do you think?";
+                                  baseUpdate.pollOptions = [
+                                    { id: crypto.randomUUID(), text: "Option 1", votes: 0 },
+                                    { id: crypto.randomUUID(), text: "Option 2", votes: 0 },
+                                    { id: crypto.randomUUID(), text: "Option 3", votes: 0 },
+                                  ];
+                                } else if (bt.type === "proscons") {
+                                  baseUpdate.prosItems = [""];
+                                  baseUpdate.consItems = [""];
+                                } else if (bt.type === "metric") {
+                                  baseUpdate.metricValue = "1,234";
+                                  baseUpdate.metricLabel = "Total Users";
+                                  baseUpdate.metricChange = "+12.5%";
+                                  baseUpdate.metricTrend = "up";
+                                  baseUpdate.metricColor = "Blue";
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
