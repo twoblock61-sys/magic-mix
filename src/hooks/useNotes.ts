@@ -18,7 +18,9 @@ export interface NoteBlock {
     // Flashcard block type
     | "flashcard"
     // Chart block type
-    | "chart";
+    | "chart"
+    // Tabs block type
+    | "tabs";
   content: string;
   checked?: boolean;
   tableData?: string[][];
