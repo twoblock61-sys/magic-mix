@@ -46,6 +46,10 @@ import {
   Volume2,
   ZoomIn,
   Layers,
+  BarChart2,
+  PenTool,
+  Scale,
+  Vote,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -58,6 +62,10 @@ import DatabaseBlock from "./DatabaseBlock";
 import DataTable from "./DataTable";
 import KanbanBlock from "./KanbanBlock";
 import TabsBlock from "./TabsBlock";
+import PollBlock from "./PollBlock";
+import ProsConsBlock from "./ProsConsBlock";
+import DrawingBlock from "./DrawingBlock";
+import MetricBlock from "./MetricBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
