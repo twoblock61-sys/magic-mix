@@ -50,6 +50,7 @@ import {
   PenTool,
   Scale,
   TrendingUp,
+  Grid2x2,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -66,6 +67,7 @@ import PollBlock from "./PollBlock";
 import ProsConsBlock from "./ProsConsBlock";
 import DrawingBlock from "./DrawingBlock";
 import MetricBlock from "./MetricBlock";
+import SwotBlock from "./SwotBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -109,6 +111,7 @@ const blockTypes = [
   { type: "proscons" as const, icon: Scale, label: "Pros & Cons", description: "Compare pros and cons", category: "advanced" },
   { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
   { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
+  { type: "swot" as const, icon: Grid2x2, label: "SWOT Analysis", description: "Strengths, Weaknesses, Opportunities, Threats", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -235,6 +238,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       metricChange: type === "metric" ? "+12.5%" : undefined,
       metricTrend: type === "metric" ? "up" : undefined,
       metricColor: type === "metric" ? "Blue" : undefined,
+      swotStrengths: type === "swot" ? [""] : undefined,
+      swotWeaknesses: type === "swot" ? [""] : undefined,
+      swotOpportunities: type === "swot" ? [""] : undefined,
+      swotThreats: type === "swot" ? [""] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -1809,6 +1816,17 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "swot":
+        return (
+          <SwotBlock
+            strengths={block.swotStrengths || [""]}
+            weaknesses={block.swotWeaknesses || [""]}
+            opportunities={block.swotOpportunities || [""]}
+            threats={block.swotThreats || [""]}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
@@ -2072,6 +2090,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.metricChange = "+12.5%";
                                   baseUpdate.metricTrend = "up";
                                   baseUpdate.metricColor = "Blue";
+                                } else if (bt.type === "swot") {
+                                  baseUpdate.swotStrengths = [""];
+                                  baseUpdate.swotWeaknesses = [""];
+                                  baseUpdate.swotOpportunities = [""];
+                                  baseUpdate.swotThreats = [""];
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
