@@ -1816,6 +1816,17 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "swot":
+        return (
+          <SwotBlock
+            strengths={block.swotStrengths || [""]}
+            weaknesses={block.swotWeaknesses || [""]}
+            opportunities={block.swotOpportunities || [""]}
+            threats={block.swotThreats || [""]}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
