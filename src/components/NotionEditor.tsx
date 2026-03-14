@@ -67,6 +67,7 @@ import PollBlock from "./PollBlock";
 import ProsConsBlock from "./ProsConsBlock";
 import DrawingBlock from "./DrawingBlock";
 import MetricBlock from "./MetricBlock";
+import SwotBlock from "./SwotBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
