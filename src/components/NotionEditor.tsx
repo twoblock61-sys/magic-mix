@@ -2071,8 +2071,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.content = "Flashcards";
                                 } else if (bt.type === "tabs") {
                                   baseUpdate.tabsData = [
-                                    { id: crypto.randomUUID(), label: "Tab 1", content: "" },
-                                    { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+                                    { id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
+                                    { id: crypto.randomUUID(), label: "Tab 2", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
                                   ];
                                 } else if (bt.type === "poll") {
                                   baseUpdate.pollQuestion = "What do you think?";
