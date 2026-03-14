@@ -238,6 +238,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       metricChange: type === "metric" ? "+12.5%" : undefined,
       metricTrend: type === "metric" ? "up" : undefined,
       metricColor: type === "metric" ? "Blue" : undefined,
+      swotStrengths: type === "swot" ? [""] : undefined,
+      swotWeaknesses: type === "swot" ? [""] : undefined,
+      swotOpportunities: type === "swot" ? [""] : undefined,
+      swotThreats: type === "swot" ? [""] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
