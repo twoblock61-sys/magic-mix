@@ -111,6 +111,7 @@ const blockTypes = [
   { type: "proscons" as const, icon: Scale, label: "Pros & Cons", description: "Compare pros and cons", category: "advanced" },
   { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
   { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
+  { type: "swot" as const, icon: Grid2x2, label: "SWOT Analysis", description: "Strengths, Weaknesses, Opportunities, Threats", category: "advanced" },
 ] as const;
 
 const progressColors = [
