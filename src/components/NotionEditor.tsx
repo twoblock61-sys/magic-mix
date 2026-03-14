@@ -1770,7 +1770,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return (
           <div className="py-2">
             <TabsBlock
-              tabs={block.tabsData || [{ id: crypto.randomUUID(), label: "Tab 1", content: "" }]}
+              tabs={block.tabsData || [{ id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] }]}
               onChange={(tabsData) => updateBlock(block.id, { tabsData })}
             />
           </div>
