@@ -222,8 +222,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       chartSelectedSeries: type === "chart" ? ["value"] : undefined,
       chartSeriesColors: type === "chart" ? { value: "#3b82f6" } : undefined,
       tabsData: type === "tabs" ? [
-        { id: crypto.randomUUID(), label: "Tab 1", content: "" },
-        { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+        { id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
+        { id: crypto.randomUUID(), label: "Tab 2", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
       ] : undefined,
       pollQuestion: type === "poll" ? "What do you think?" : undefined,
       pollOptions: type === "poll" ? [
