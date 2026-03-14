@@ -50,6 +50,7 @@ import {
   PenTool,
   Scale,
   TrendingUp,
+  Grid2x2,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
