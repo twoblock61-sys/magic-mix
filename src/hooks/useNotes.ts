@@ -81,7 +81,7 @@ export interface NoteBlock {
   linkedTableId?: string; // For charts linked to table data
   indentLevel?: number; // For nested lists (0-3)
   // Tabs data
-  tabsData?: { id: string; label: string; content: string }[];
+  tabsData?: { id: string; label: string; content: string; blocks?: NoteBlock[] }[];
   // Poll data
   pollQuestion?: string;
   pollOptions?: { id: string; text: string; votes: number }[];
