@@ -1120,10 +1120,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       case "columns":
         const columnTitles = block.columnTitles || ["Column 1", "Column 2"];
         return (
-          <div className="py-2">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="py-2 w-full min-w-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 w-full">
               {(block.columns || [[], []]).map((column, colIndex) => (
-                <div key={colIndex} className="min-h-[100px] border border-dashed border-muted-foreground/20 rounded-lg p-3">
+                <div key={colIndex} className="min-h-[100px] border border-dashed border-muted-foreground/20 rounded-lg p-2 sm:p-3 w-full min-w-0">
                   <input
                     type="text"
                     value={columnTitles[colIndex] || `Column ${colIndex + 1}`}
@@ -1834,7 +1834,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
   return (
     <>
-      <div className="space-y-1 min-h-[200px]">
+      <div className="space-y-1 min-h-[200px] w-full min-w-0">
         {blocks.map((block) => (
           <motion.div
             key={`${block.id}-${block.type}`}
@@ -1848,7 +1848,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
               scale: draggedBlockId === block.id ? 0.98 : 1,
             }}
             transition={{ duration: 0.15, type: "spring", stiffness: 300, damping: 30 }}
-            className={`group relative flex items-start gap-1 rounded-lg transition-all ${
+            className={`group relative flex items-start gap-0.5 sm:gap-1 rounded-lg transition-all w-full min-w-0 ${
               draggedBlockId === block.id
                 ? 'bg-primary/5 shadow-lg shadow-primary/20'
                 : ''
@@ -1873,33 +1873,33 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             }}
           >
             {/* Block Controls */}
-            <motion.div 
-              className={`flex items-center gap-0.5 pt-1 transition-all duration-200 ${
+            <motion.div
+              className={`flex items-center gap-0.5 pt-1 flex-shrink-0 transition-all duration-200 ${
                 activeBlockId === block.id ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
               }`}
             >
               <motion.button
                 onClick={() => setShowMenu(showMenu === block.id ? null : block.id)}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors group/btn"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-muted transition-colors group/btn flex-shrink-0"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Plus className="w-4 h-4 text-muted-foreground group-hover/btn:text-primary transition-colors" />
+                <Plus className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-muted-foreground group-hover/btn:text-primary transition-colors" />
               </motion.button>
               <motion.button
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
                 whileHover={{ scale: 1.1 }}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   handleBlockDragStart(block.id, e.clientY);
                 }}
               >
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
+                <GripVertical className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-muted-foreground" />
               </motion.button>
             </motion.div>
 
             {/* Block Content */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-w-0">
               {renderBlock(block)}
 
               {/* Block Type Menu */}

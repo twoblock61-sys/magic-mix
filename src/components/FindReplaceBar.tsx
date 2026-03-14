@@ -160,7 +160,7 @@ const FindReplaceBar = ({ blocks, onReplace }: FindReplaceBarProps) => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="fixed top-14 right-6 z-50 bg-card border border-border rounded-lg shadow-xl p-3 w-80"
+        className="fixed top-14 right-3 sm:right-6 z-50 bg-card border border-border rounded-lg shadow-xl p-3 w-[calc(100%-24px)] sm:w-80 max-h-96 overflow-y-auto"
       >
         <div className="flex items-center gap-2 mb-2">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
