@@ -96,6 +96,11 @@ export interface NoteBlock {
   metricChange?: string;
   metricTrend?: "up" | "down" | "neutral";
   metricColor?: string;
+  // SWOT data
+  swotStrengths?: string[];
+  swotWeaknesses?: string[];
+  swotOpportunities?: string[];
+  swotThreats?: string[];
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
