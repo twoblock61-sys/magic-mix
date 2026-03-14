@@ -2090,6 +2090,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.metricChange = "+12.5%";
                                   baseUpdate.metricTrend = "up";
                                   baseUpdate.metricColor = "Blue";
+                                } else if (bt.type === "swot") {
+                                  baseUpdate.swotStrengths = [""];
+                                  baseUpdate.swotWeaknesses = [""];
+                                  baseUpdate.swotOpportunities = [""];
+                                  baseUpdate.swotThreats = [""];
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
