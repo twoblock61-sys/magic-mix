@@ -222,8 +222,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       chartSelectedSeries: type === "chart" ? ["value"] : undefined,
       chartSeriesColors: type === "chart" ? { value: "#3b82f6" } : undefined,
       tabsData: type === "tabs" ? [
-        { id: crypto.randomUUID(), label: "Tab 1", content: "" },
-        { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+        { id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
+        { id: crypto.randomUUID(), label: "Tab 2", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
       ] : undefined,
       pollQuestion: type === "poll" ? "What do you think?" : undefined,
       pollOptions: type === "poll" ? [
@@ -1770,7 +1770,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return (
           <div className="py-2">
             <TabsBlock
-              tabs={block.tabsData || [{ id: crypto.randomUUID(), label: "Tab 1", content: "" }]}
+              tabs={block.tabsData || [{ id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] }]}
               onChange={(tabsData) => updateBlock(block.id, { tabsData })}
             />
           </div>
@@ -2071,8 +2071,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.content = "Flashcards";
                                 } else if (bt.type === "tabs") {
                                   baseUpdate.tabsData = [
-                                    { id: crypto.randomUUID(), label: "Tab 1", content: "" },
-                                    { id: crypto.randomUUID(), label: "Tab 2", content: "" },
+                                    { id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
+                                    { id: crypto.randomUUID(), label: "Tab 2", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
                                   ];
                                 } else if (bt.type === "poll") {
                                   baseUpdate.pollQuestion = "What do you think?";
