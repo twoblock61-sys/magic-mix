@@ -1873,6 +1873,60 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "banner":
+        return (
+          <BannerBlock
+            title={block.bannerTitle || "Announcement"}
+            description={block.bannerDescription || ""}
+            style={block.bannerStyle || "info"}
+            icon={block.bannerIcon || "megaphone"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "steps":
+        return (
+          <StepsBlock
+            steps={block.stepsItems || [{ id: crypto.randomUUID(), title: "Step 1", description: "", completed: false }]}
+            onUpdate={(stepsItems) => updateBlock(block.id, { stepsItems })}
+          />
+        );
+
+      case "labeledDivider":
+        return (
+          <LabeledDividerBlock
+            label={block.dividerLabel || ""}
+            style={block.dividerStyle || "simple"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "faq":
+        return (
+          <FaqBlock
+            items={block.faqItems || [{ id: crypto.randomUUID(), question: "", answer: "" }]}
+            onUpdate={(faqItems) => updateBlock(block.id, { faqItems })}
+          />
+        );
+
+      case "quoteCard":
+        return (
+          <QuoteCardBlock
+            quote={block.quoteCardText || ""}
+            attribution={block.quoteCardAttribution || ""}
+            style={block.quoteCardStyle || "elegant"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "statRow":
+        return (
+          <StatRowBlock
+            stats={block.statRowItems || [{ id: crypto.randomUUID(), value: "0", label: "Label", change: "", trend: "neutral" }]}
+            onUpdate={(statRowItems) => updateBlock(block.id, { statRowItems })}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
