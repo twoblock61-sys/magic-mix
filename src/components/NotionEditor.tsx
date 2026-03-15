@@ -51,6 +51,12 @@ import {
   Scale,
   TrendingUp,
   Grid2x2,
+  Megaphone,
+  Footprints,
+  SeparatorHorizontal,
+  HelpCircle,
+  QuoteIcon,
+  BarChartHorizontal,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
