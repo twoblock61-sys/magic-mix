@@ -124,6 +124,12 @@ const blockTypes = [
   { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
   { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
   { type: "swot" as const, icon: Grid2x2, label: "SWOT Analysis", description: "Strengths, Weaknesses, Opportunities, Threats", category: "advanced" },
+  { type: "banner" as const, icon: Megaphone, label: "Banner", description: "Styled announcement banner", category: "media" },
+  { type: "steps" as const, icon: Footprints, label: "Steps", description: "Step-by-step process flow", category: "advanced" },
+  { type: "labeledDivider" as const, icon: SeparatorHorizontal, label: "Labeled Divider", description: "Divider with centered label", category: "basic" },
+  { type: "faq" as const, icon: HelpCircle, label: "FAQ", description: "Collapsible Q&A accordion", category: "advanced" },
+  { type: "quoteCard" as const, icon: QuoteIcon, label: "Quote Card", description: "Styled quote with attribution", category: "media" },
+  { type: "statRow" as const, icon: BarChartHorizontal, label: "Stat Row", description: "Row of key statistics", category: "advanced" },
 ] as const;
 
 const progressColors = [
