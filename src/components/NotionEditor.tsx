@@ -74,6 +74,12 @@ import ProsConsBlock from "./ProsConsBlock";
 import DrawingBlock from "./DrawingBlock";
 import MetricBlock from "./MetricBlock";
 import SwotBlock from "./SwotBlock";
+import BannerBlock from "./BannerBlock";
+import StepsBlock from "./StepsBlock";
+import LabeledDividerBlock from "./LabeledDividerBlock";
+import FaqBlock from "./FaqBlock";
+import QuoteCardBlock from "./QuoteCardBlock";
+import StatRowBlock from "./StatRowBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
