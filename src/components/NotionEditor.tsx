@@ -51,6 +51,12 @@ import {
   Scale,
   TrendingUp,
   Grid2x2,
+  Megaphone,
+  Footprints,
+  SeparatorHorizontal,
+  HelpCircle,
+  QuoteIcon,
+  BarChartHorizontal,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -68,6 +74,12 @@ import ProsConsBlock from "./ProsConsBlock";
 import DrawingBlock from "./DrawingBlock";
 import MetricBlock from "./MetricBlock";
 import SwotBlock from "./SwotBlock";
+import BannerBlock from "./BannerBlock";
+import StepsBlock from "./StepsBlock";
+import LabeledDividerBlock from "./LabeledDividerBlock";
+import FaqBlock from "./FaqBlock";
+import QuoteCardBlock from "./QuoteCardBlock";
+import StatRowBlock from "./StatRowBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -112,6 +124,12 @@ const blockTypes = [
   { type: "drawing" as const, icon: PenTool, label: "Drawing", description: "Freehand sketch canvas", category: "advanced" },
   { type: "metric" as const, icon: TrendingUp, label: "Metric Card", description: "Display key metrics", category: "advanced" },
   { type: "swot" as const, icon: Grid2x2, label: "SWOT Analysis", description: "Strengths, Weaknesses, Opportunities, Threats", category: "advanced" },
+  { type: "banner" as const, icon: Megaphone, label: "Banner", description: "Styled announcement banner", category: "media" },
+  { type: "steps" as const, icon: Footprints, label: "Steps", description: "Step-by-step process flow", category: "advanced" },
+  { type: "labeledDivider" as const, icon: SeparatorHorizontal, label: "Labeled Divider", description: "Divider with centered label", category: "basic" },
+  { type: "faq" as const, icon: HelpCircle, label: "FAQ", description: "Collapsible Q&A accordion", category: "advanced" },
+  { type: "quoteCard" as const, icon: QuoteIcon, label: "Quote Card", description: "Styled quote with attribution", category: "media" },
+  { type: "statRow" as const, icon: BarChartHorizontal, label: "Stat Row", description: "Row of key statistics", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -242,6 +260,34 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       swotWeaknesses: type === "swot" ? [""] : undefined,
       swotOpportunities: type === "swot" ? [""] : undefined,
       swotThreats: type === "swot" ? [""] : undefined,
+      // Banner
+      bannerTitle: type === "banner" ? "Announcement" : undefined,
+      bannerDescription: type === "banner" ? "" : undefined,
+      bannerStyle: type === "banner" ? "info" : undefined,
+      bannerIcon: type === "banner" ? "megaphone" : undefined,
+      // Steps
+      stepsItems: type === "steps" ? [
+        { id: crypto.randomUUID(), title: "Step 1", description: "", completed: false },
+        { id: crypto.randomUUID(), title: "Step 2", description: "", completed: false },
+        { id: crypto.randomUUID(), title: "Step 3", description: "", completed: false },
+      ] : undefined,
+      // Labeled Divider
+      dividerLabel: type === "labeledDivider" ? "Section" : undefined,
+      dividerStyle: type === "labeledDivider" ? "simple" : undefined,
+      // FAQ
+      faqItems: type === "faq" ? [
+        { id: crypto.randomUUID(), question: "", answer: "" },
+      ] : undefined,
+      // Quote Card
+      quoteCardText: type === "quoteCard" ? "" : undefined,
+      quoteCardAttribution: type === "quoteCard" ? "" : undefined,
+      quoteCardStyle: type === "quoteCard" ? "elegant" : undefined,
+      // Stat Row
+      statRowItems: type === "statRow" ? [
+        { id: crypto.randomUUID(), value: "1,234", label: "Users", change: "+12%", trend: "up" as const },
+        { id: crypto.randomUUID(), value: "56%", label: "Growth", change: "+5%", trend: "up" as const },
+        { id: crypto.randomUUID(), value: "$9.8k", label: "Revenue", change: "-2%", trend: "down" as const },
+      ] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -1824,6 +1870,60 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             opportunities={block.swotOpportunities || [""]}
             threats={block.swotThreats || [""]}
             onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "banner":
+        return (
+          <BannerBlock
+            title={block.bannerTitle || "Announcement"}
+            description={block.bannerDescription || ""}
+            style={block.bannerStyle || "info"}
+            icon={block.bannerIcon || "megaphone"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "steps":
+        return (
+          <StepsBlock
+            steps={block.stepsItems || [{ id: crypto.randomUUID(), title: "Step 1", description: "", completed: false }]}
+            onUpdate={(stepsItems) => updateBlock(block.id, { stepsItems })}
+          />
+        );
+
+      case "labeledDivider":
+        return (
+          <LabeledDividerBlock
+            label={block.dividerLabel || ""}
+            style={block.dividerStyle || "simple"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "faq":
+        return (
+          <FaqBlock
+            items={block.faqItems || [{ id: crypto.randomUUID(), question: "", answer: "" }]}
+            onUpdate={(faqItems) => updateBlock(block.id, { faqItems })}
+          />
+        );
+
+      case "quoteCard":
+        return (
+          <QuoteCardBlock
+            quote={block.quoteCardText || ""}
+            attribution={block.quoteCardAttribution || ""}
+            style={block.quoteCardStyle || "elegant"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "statRow":
+        return (
+          <StatRowBlock
+            stats={block.statRowItems || [{ id: crypto.randomUUID(), value: "0", label: "Label", change: "", trend: "neutral" }]}
+            onUpdate={(statRowItems) => updateBlock(block.id, { statRowItems })}
           />
         );
 
