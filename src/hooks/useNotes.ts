@@ -103,6 +103,24 @@ export interface NoteBlock {
   swotWeaknesses?: string[];
   swotOpportunities?: string[];
   swotThreats?: string[];
+  // Banner block
+  bannerTitle?: string;
+  bannerDescription?: string;
+  bannerStyle?: string;
+  bannerIcon?: string;
+  // Steps block
+  stepsItems?: { id: string; title: string; description: string; completed: boolean }[];
+  // Labeled Divider
+  dividerLabel?: string;
+  dividerStyle?: string;
+  // FAQ block
+  faqItems?: { id: string; question: string; answer: string }[];
+  // Quote Card
+  quoteCardText?: string;
+  quoteCardAttribution?: string;
+  quoteCardStyle?: string;
+  // Stat Row
+  statRowItems?: { id: string; value: string; label: string; change: string; trend: "up" | "down" | "neutral" }[];
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
