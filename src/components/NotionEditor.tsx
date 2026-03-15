@@ -260,6 +260,34 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       swotWeaknesses: type === "swot" ? [""] : undefined,
       swotOpportunities: type === "swot" ? [""] : undefined,
       swotThreats: type === "swot" ? [""] : undefined,
+      // Banner
+      bannerTitle: type === "banner" ? "Announcement" : undefined,
+      bannerDescription: type === "banner" ? "" : undefined,
+      bannerStyle: type === "banner" ? "info" : undefined,
+      bannerIcon: type === "banner" ? "megaphone" : undefined,
+      // Steps
+      stepsItems: type === "steps" ? [
+        { id: crypto.randomUUID(), title: "Step 1", description: "", completed: false },
+        { id: crypto.randomUUID(), title: "Step 2", description: "", completed: false },
+        { id: crypto.randomUUID(), title: "Step 3", description: "", completed: false },
+      ] : undefined,
+      // Labeled Divider
+      dividerLabel: type === "labeledDivider" ? "Section" : undefined,
+      dividerStyle: type === "labeledDivider" ? "simple" : undefined,
+      // FAQ
+      faqItems: type === "faq" ? [
+        { id: crypto.randomUUID(), question: "", answer: "" },
+      ] : undefined,
+      // Quote Card
+      quoteCardText: type === "quoteCard" ? "" : undefined,
+      quoteCardAttribution: type === "quoteCard" ? "" : undefined,
+      quoteCardStyle: type === "quoteCard" ? "elegant" : undefined,
+      // Stat Row
+      statRowItems: type === "statRow" ? [
+        { id: crypto.randomUUID(), value: "1,234", label: "Users", change: "+12%", trend: "up" as const },
+        { id: crypto.randomUUID(), value: "56%", label: "Growth", change: "+5%", trend: "up" as const },
+        { id: crypto.randomUUID(), value: "$9.8k", label: "Revenue", change: "-2%", trend: "down" as const },
+      ] : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
