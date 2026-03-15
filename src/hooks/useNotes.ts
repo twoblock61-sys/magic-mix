@@ -22,7 +22,9 @@ export interface NoteBlock {
     // Tabs block type
     | "tabs"
     // New creative blocks
-    | "poll" | "proscons" | "drawing" | "metric" | "swot";
+    | "poll" | "proscons" | "drawing" | "metric" | "swot"
+    // Layout & formatting blocks
+    | "banner" | "steps" | "labeledDivider" | "faq" | "quoteCard" | "statRow";
   content: string;
   checked?: boolean;
   tableData?: string[][];
