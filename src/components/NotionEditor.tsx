@@ -1939,6 +1939,52 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "comparisonTable":
+        return (
+          <ComparisonTableBlock
+            columns={block.comparisonColumns || [
+              { id: "col1", name: "Option A" },
+              { id: "col2", name: "Option B" },
+            ]}
+            rows={block.comparisonRows || [
+              { id: crypto.randomUUID(), feature: "", values: { col1: "", col2: "" } },
+            ]}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "featureCard":
+        return (
+          <FeatureCardBlock
+            title={block.featureCardTitle || ""}
+            description={block.featureCardDescription || ""}
+            icon={block.featureCardIcon || "sparkles"}
+            gradient={block.featureCardGradient || "blue"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "gradientCard":
+        return (
+          <GradientCardBlock
+            title={block.gradientCardTitle || ""}
+            description={block.gradientCardDescription || ""}
+            gradient={block.gradientCardGradient || "sunset"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "numberTicker":
+        return (
+          <NumberTickerBlock
+            value={block.tickerValue || "0"}
+            label={block.tickerLabel || ""}
+            prefix={block.tickerPrefix || ""}
+            suffix={block.tickerSuffix || ""}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
