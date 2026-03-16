@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Zap, Shield, Heart, Star, Rocket, Globe, Lightbulb } from "lucide-react";
 
 interface FeatureCardBlockProps {
@@ -98,7 +98,5 @@ const FeatureCardBlock = ({ title, description, icon, gradient, onUpdate }: Feat
     </div>
   );
 };
-
-const { AnimatePresence } = require("framer-motion");
 
 export default FeatureCardBlock;
