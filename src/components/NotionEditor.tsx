@@ -138,6 +138,10 @@ const blockTypes = [
   { type: "faq" as const, icon: HelpCircle, label: "FAQ", description: "Collapsible Q&A accordion", category: "advanced" },
   { type: "quoteCard" as const, icon: QuoteIcon, label: "Quote Card", description: "Styled quote with attribution", category: "media" },
   { type: "statRow" as const, icon: BarChartHorizontal, label: "Stat Row", description: "Row of key statistics", category: "advanced" },
+  { type: "comparisonTable" as const, icon: GitCompare, label: "Comparison", description: "Compare options side by side", category: "advanced" },
+  { type: "featureCard" as const, icon: CreditCard, label: "Feature Card", description: "Highlight a feature with icon", category: "media" },
+  { type: "gradientCard" as const, icon: Palette, label: "Gradient Card", description: "Colorful gradient content card", category: "media" },
+  { type: "numberTicker" as const, icon: Hash, label: "Number Ticker", description: "Animated number display", category: "advanced" },
 ] as const;
 
 const progressColors = [
