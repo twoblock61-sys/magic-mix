@@ -80,6 +80,10 @@ import LabeledDividerBlock from "./LabeledDividerBlock";
 import FaqBlock from "./FaqBlock";
 import QuoteCardBlock from "./QuoteCardBlock";
 import StatRowBlock from "./StatRowBlock";
+import ComparisonTableBlock from "./ComparisonTableBlock";
+import FeatureCardBlock from "./FeatureCardBlock";
+import GradientCardBlock from "./GradientCardBlock";
+import NumberTickerBlock from "./NumberTickerBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
