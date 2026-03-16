@@ -57,6 +57,10 @@ import {
   HelpCircle,
   QuoteIcon,
   BarChartHorizontal,
+  GitCompare,
+  CreditCard,
+  Palette,
+  Hash,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
