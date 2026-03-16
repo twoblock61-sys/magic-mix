@@ -24,7 +24,9 @@ export interface NoteBlock {
     // New creative blocks
     | "poll" | "proscons" | "drawing" | "metric" | "swot"
     // Layout & formatting blocks
-    | "banner" | "steps" | "labeledDivider" | "faq" | "quoteCard" | "statRow";
+    | "banner" | "steps" | "labeledDivider" | "faq" | "quoteCard" | "statRow"
+    // New premium blocks
+    | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker";
   content: string;
   checked?: boolean;
   tableData?: string[][];
