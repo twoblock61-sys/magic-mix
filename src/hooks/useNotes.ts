@@ -123,6 +123,23 @@ export interface NoteBlock {
   quoteCardStyle?: string;
   // Stat Row
   statRowItems?: { id: string; value: string; label: string; change: string; trend: "up" | "down" | "neutral" }[];
+  // Comparison Table
+  comparisonColumns?: { id: string; name: string; highlighted?: boolean }[];
+  comparisonRows?: { id: string; feature: string; values: Record<string, "yes" | "no" | "partial" | string> }[];
+  // Feature Card
+  featureCardTitle?: string;
+  featureCardDescription?: string;
+  featureCardIcon?: string;
+  featureCardGradient?: string;
+  // Gradient Card
+  gradientCardTitle?: string;
+  gradientCardDescription?: string;
+  gradientCardGradient?: string;
+  // Number Ticker
+  tickerValue?: string;
+  tickerLabel?: string;
+  tickerPrefix?: string;
+  tickerSuffix?: string;
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
