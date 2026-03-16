@@ -57,6 +57,10 @@ import {
   HelpCircle,
   QuoteIcon,
   BarChartHorizontal,
+  GitCompare,
+  CreditCard,
+  Palette,
+  Hash,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -80,6 +84,10 @@ import LabeledDividerBlock from "./LabeledDividerBlock";
 import FaqBlock from "./FaqBlock";
 import QuoteCardBlock from "./QuoteCardBlock";
 import StatRowBlock from "./StatRowBlock";
+import ComparisonTableBlock from "./ComparisonTableBlock";
+import FeatureCardBlock from "./FeatureCardBlock";
+import GradientCardBlock from "./GradientCardBlock";
+import NumberTickerBlock from "./NumberTickerBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -130,6 +138,10 @@ const blockTypes = [
   { type: "faq" as const, icon: HelpCircle, label: "FAQ", description: "Collapsible Q&A accordion", category: "advanced" },
   { type: "quoteCard" as const, icon: QuoteIcon, label: "Quote Card", description: "Styled quote with attribution", category: "media" },
   { type: "statRow" as const, icon: BarChartHorizontal, label: "Stat Row", description: "Row of key statistics", category: "advanced" },
+  { type: "comparisonTable" as const, icon: GitCompare, label: "Comparison", description: "Compare options side by side", category: "advanced" },
+  { type: "featureCard" as const, icon: CreditCard, label: "Feature Card", description: "Highlight a feature with icon", category: "media" },
+  { type: "gradientCard" as const, icon: Palette, label: "Gradient Card", description: "Colorful gradient content card", category: "media" },
+  { type: "numberTicker" as const, icon: Hash, label: "Number Ticker", description: "Animated number display", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -1924,6 +1936,52 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           <StatRowBlock
             stats={block.statRowItems || [{ id: crypto.randomUUID(), value: "0", label: "Label", change: "", trend: "neutral" }]}
             onUpdate={(statRowItems) => updateBlock(block.id, { statRowItems })}
+          />
+        );
+
+      case "comparisonTable":
+        return (
+          <ComparisonTableBlock
+            columns={block.comparisonColumns || [
+              { id: "col1", name: "Option A" },
+              { id: "col2", name: "Option B" },
+            ]}
+            rows={block.comparisonRows || [
+              { id: crypto.randomUUID(), feature: "", values: { col1: "", col2: "" } },
+            ]}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "featureCard":
+        return (
+          <FeatureCardBlock
+            title={block.featureCardTitle || ""}
+            description={block.featureCardDescription || ""}
+            icon={block.featureCardIcon || "sparkles"}
+            gradient={block.featureCardGradient || "blue"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "gradientCard":
+        return (
+          <GradientCardBlock
+            title={block.gradientCardTitle || ""}
+            description={block.gradientCardDescription || ""}
+            gradient={block.gradientCardGradient || "sunset"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "numberTicker":
+        return (
+          <NumberTickerBlock
+            value={block.tickerValue || "0"}
+            label={block.tickerLabel || ""}
+            prefix={block.tickerPrefix || ""}
+            suffix={block.tickerSuffix || ""}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
           />
         );
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, Shield, AlertTriangle, Zap, Target } from "lucide-react";
 
 interface SwotBlockProps {
@@ -19,59 +19,56 @@ const quadrants = [
   {
     key: "strengths" as const,
     label: "Strengths",
+    subtitle: "Internal advantages",
     icon: Shield,
     updateKey: "swotStrengths" as const,
-    gradient: "from-emerald-500 to-teal-400",
-    bg: "bg-emerald-500/5",
-    borderColor: "border-emerald-500/20",
-    dotColor: "bg-emerald-500",
-    textColor: "text-emerald-600 dark:text-emerald-400",
-    btnColor: "text-emerald-600/50 hover:text-emerald-600",
-    iconBg: "bg-emerald-500/10",
+    accentHsl: "142 71% 45%",
+    dotClass: "bg-emerald-500",
+    iconGradient: "from-emerald-400 to-green-500",
+    pillBg: "bg-emerald-500/8 hover:bg-emerald-500/12",
+    pillBorder: "border-emerald-500/15",
   },
   {
     key: "weaknesses" as const,
     label: "Weaknesses",
+    subtitle: "Areas to improve",
     icon: AlertTriangle,
     updateKey: "swotWeaknesses" as const,
-    gradient: "from-amber-500 to-orange-400",
-    bg: "bg-amber-500/5",
-    borderColor: "border-amber-500/20",
-    dotColor: "bg-amber-500",
-    textColor: "text-amber-600 dark:text-amber-400",
-    btnColor: "text-amber-600/50 hover:text-amber-600",
-    iconBg: "bg-amber-500/10",
+    accentHsl: "38 92% 50%",
+    dotClass: "bg-amber-500",
+    iconGradient: "from-amber-400 to-orange-500",
+    pillBg: "bg-amber-500/8 hover:bg-amber-500/12",
+    pillBorder: "border-amber-500/15",
   },
   {
     key: "opportunities" as const,
     label: "Opportunities",
+    subtitle: "External potential",
     icon: Zap,
     updateKey: "swotOpportunities" as const,
-    gradient: "from-blue-500 to-cyan-400",
-    bg: "bg-blue-500/5",
-    borderColor: "border-blue-500/20",
-    dotColor: "bg-blue-500",
-    textColor: "text-blue-600 dark:text-blue-400",
-    btnColor: "text-blue-600/50 hover:text-blue-600",
-    iconBg: "bg-blue-500/10",
+    accentHsl: "217 91% 60%",
+    dotClass: "bg-blue-500",
+    iconGradient: "from-blue-400 to-indigo-500",
+    pillBg: "bg-blue-500/8 hover:bg-blue-500/12",
+    pillBorder: "border-blue-500/15",
   },
   {
     key: "threats" as const,
     label: "Threats",
+    subtitle: "External risks",
     icon: Target,
     updateKey: "swotThreats" as const,
-    gradient: "from-rose-500 to-pink-400",
-    bg: "bg-rose-500/5",
-    borderColor: "border-rose-500/20",
-    dotColor: "bg-rose-500",
-    textColor: "text-rose-600 dark:text-rose-400",
-    btnColor: "text-rose-600/50 hover:text-rose-600",
-    iconBg: "bg-rose-500/10",
+    accentHsl: "0 84% 60%",
+    dotClass: "bg-rose-500",
+    iconGradient: "from-rose-400 to-red-500",
+    pillBg: "bg-rose-500/8 hover:bg-rose-500/12",
+    pillBorder: "border-rose-500/15",
   },
 ];
 
 const SwotBlock = ({ strengths, weaknesses, opportunities, threats, onUpdate }: SwotBlockProps) => {
   const data = { strengths, weaknesses, opportunities, threats };
+  const [focusedQuadrant, setFocusedQuadrant] = useState<string | null>(null);
 
   const addItem = (q: typeof quadrants[number]) => {
     onUpdate({ [q.updateKey]: [...data[q.key], ""] });
@@ -87,73 +84,116 @@ const SwotBlock = ({ strengths, weaknesses, opportunities, threats, onUpdate }: 
     onUpdate({ [q.updateKey]: data[q.key].filter((_, i) => i !== index) });
   };
 
+  const totalItems = strengths.length + weaknesses.length + opportunities.length + threats.length;
+
   return (
-    <div className="py-3">
+    <div className="py-4">
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl overflow-hidden border border-border/40"
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="rounded-2xl overflow-hidden bg-card/80 backdrop-blur-xl border border-border/30 shadow-sm"
       >
-        {/* Header */}
-        <div className="px-5 py-3 bg-muted/30 border-b border-border/30">
-          <h3 className="text-sm font-semibold text-foreground tracking-wide">SWOT Analysis</h3>
+        {/* Minimal Header */}
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-foreground/70">
+                <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">SWOT Analysis</h3>
+              <p className="text-[11px] text-muted-foreground/50">{totalItems} items across 4 quadrants</p>
+            </div>
+          </div>
         </div>
 
-        {/* 2x2 Grid */}
-        <div className="grid grid-cols-2">
+        {/* 2×2 Grid */}
+        <div className="grid grid-cols-2 gap-px bg-border/20">
           {quadrants.map((q, qi) => {
             const Icon = q.icon;
             const items = data[q.key];
+            const isFocused = focusedQuadrant === q.key;
+
             return (
-              <div
+              <motion.div
                 key={q.key}
-                className={`${q.bg} p-4 ${qi % 2 === 0 ? "border-r border-border/20" : ""} ${qi < 2 ? "border-b border-border/20" : ""}`}
+                className={`relative p-5 bg-card/90 transition-colors duration-300 ${
+                  isFocused ? "bg-card" : ""
+                }`}
+                onMouseEnter={() => setFocusedQuadrant(q.key)}
+                onMouseLeave={() => setFocusedQuadrant(null)}
               >
-                {/* Quadrant header */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`p-1.5 rounded-lg ${q.iconBg}`}>
-                    <Icon className={`w-3.5 h-3.5 ${q.textColor}`} />
+                {/* Subtle corner accent */}
+                <div
+                  className="absolute top-0 left-0 w-12 h-12 opacity-[0.04] rounded-br-full"
+                  style={{ background: `hsl(${q.accentHsl})` }}
+                />
+
+                {/* Quadrant Header */}
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${q.iconGradient} flex items-center justify-center shadow-sm`}>
+                    <Icon className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span className={`text-xs font-bold uppercase tracking-widest ${q.textColor}`}>
-                    {q.label}
+                  <div>
+                    <span className="text-xs font-semibold text-foreground tracking-tight">
+                      {q.label}
+                    </span>
+                    <p className="text-[10px] text-muted-foreground/40 leading-none mt-0.5">{q.subtitle}</p>
+                  </div>
+                  <span className="ml-auto text-[10px] font-medium text-muted-foreground/30 tabular-nums">
+                    {items.filter(i => i.trim()).length}
                   </span>
                 </div>
 
                 {/* Items */}
-                <div className="space-y-1.5 min-h-[60px]">
-                  {items.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="group/item flex items-start gap-2"
-                    >
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full ${q.dotColor} flex-shrink-0`} />
-                      <input
-                        type="text"
-                        value={item}
-                        onChange={(e) => updateItem(q, index, e.target.value)}
-                        className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground/30"
-                        placeholder={`Add ${q.label.toLowerCase().slice(0, -1)}...`}
-                      />
-                      <button
-                        onClick={() => removeItem(q, index)}
-                        className="p-0.5 rounded opacity-0 group-hover/item:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                <div className="space-y-1.5 min-h-[48px]">
+                  <AnimatePresence>
+                    {items.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4, height: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.02 }}
+                        className="group/item flex items-center gap-2 rounded-lg px-2.5 py-1.5 -mx-1 hover:bg-muted/40 transition-colors"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </motion.div>
-                  ))}
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${q.dotClass} flex-shrink-0 opacity-60`}
+                        />
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => updateItem(q, index, e.target.value)}
+                          className="flex-1 text-[13px] bg-transparent outline-none text-foreground/90 placeholder:text-muted-foreground/25 leading-snug"
+                          placeholder={`Add ${q.label.toLowerCase().slice(0, -1)}…`}
+                        />
+                        <button
+                          onClick={() => removeItem(q, index)}
+                          className="p-0.5 rounded-md opacity-0 group-hover/item:opacity-100 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
 
-                <button
+                {/* Add button */}
+                <motion.button
                   onClick={() => addItem(q)}
-                  className={`flex items-center gap-1 text-xs ${q.btnColor} transition-colors mt-2 px-1 py-0.5`}
+                  className={`mt-3 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-all duration-200 ${q.pillBg} ${q.pillBorder}`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Plus className="w-3 h-3" /> Add
-                </button>
-              </div>
+                  <Plus className="w-3 h-3" />
+                  Add
+                </motion.button>
+              </motion.div>
             );
           })}
         </div>
