@@ -61,6 +61,10 @@ import {
   CreditCard,
   Palette,
   Hash,
+  ScrollText,
+  MessageSquareQuote,
+  LayoutTemplate,
+  ListCollapse,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
