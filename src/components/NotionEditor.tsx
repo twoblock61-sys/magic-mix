@@ -2046,6 +2046,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
             description={block.imageTextDescription || ""}
             layout={block.imageTextLayout || "imageLeft"}
             onUpdate={(updates) => updateBlock(block.id, updates)}
+            onOpenLightbox={openLightbox}
           />
         );
 
