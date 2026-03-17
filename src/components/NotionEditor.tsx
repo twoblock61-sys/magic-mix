@@ -2018,6 +2018,46 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "changelog":
+        return (
+          <ChangelogBlock
+            entries={block.changelogEntries || []}
+            onUpdate={(entries) => updateBlock(block.id, { changelogEntries: entries })}
+          />
+        );
+
+      case "testimonial":
+        return (
+          <TestimonialBlock
+            quote={block.testimonialQuote || ""}
+            author={block.testimonialAuthor || ""}
+            role={block.testimonialRole || ""}
+            rating={block.testimonialRating || 5}
+            style={block.testimonialStyle || "minimal"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "imageText":
+        return (
+          <ImageTextBlock
+            imageUrl={block.imageTextUrl || ""}
+            title={block.imageTextTitle || ""}
+            description={block.imageTextDescription || ""}
+            layout={block.imageTextLayout || "imageLeft"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "accordionGroup":
+        return (
+          <AccordionGroupBlock
+            items={block.accordionItems || []}
+            style={block.accordionStyle || "clean"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
