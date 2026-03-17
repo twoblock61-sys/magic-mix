@@ -26,7 +26,9 @@ export interface NoteBlock {
     // Layout & formatting blocks
     | "banner" | "steps" | "labeledDivider" | "faq" | "quoteCard" | "statRow"
     // New premium blocks
-    | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker";
+    | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker"
+    // Layout & article blocks
+    | "changelog" | "testimonial" | "imageText" | "accordionGroup";
   content: string;
   checked?: boolean;
   tableData?: string[][];
@@ -140,6 +142,22 @@ export interface NoteBlock {
   tickerLabel?: string;
   tickerPrefix?: string;
   tickerSuffix?: string;
+  // Changelog
+  changelogEntries?: { id: string; date: string; title: string; description: string; tag: "added" | "fixed" | "improved" | "removed" | "breaking" }[];
+  // Testimonial
+  testimonialQuote?: string;
+  testimonialAuthor?: string;
+  testimonialRole?: string;
+  testimonialRating?: number;
+  testimonialStyle?: string;
+  // Image-Text Split
+  imageTextUrl?: string;
+  imageTextTitle?: string;
+  imageTextDescription?: string;
+  imageTextLayout?: "imageLeft" | "imageRight";
+  // Accordion Group
+  accordionItems?: { id: string; title: string; content: string }[];
+  accordionStyle?: string;
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }

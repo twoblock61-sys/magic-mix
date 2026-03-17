@@ -61,6 +61,10 @@ import {
   CreditCard,
   Palette,
   Hash,
+  ScrollText,
+  MessageSquareQuote,
+  LayoutTemplate,
+  ListCollapse,
 } from "lucide-react";
 import { NoteBlock, FlashcardItem } from "@/contexts/NotesContext";
 import ImageLightbox from "./ImageLightbox";
@@ -88,6 +92,10 @@ import ComparisonTableBlock from "./ComparisonTableBlock";
 import FeatureCardBlock from "./FeatureCardBlock";
 import GradientCardBlock from "./GradientCardBlock";
 import NumberTickerBlock from "./NumberTickerBlock";
+import ChangelogBlock from "./ChangelogBlock";
+import TestimonialBlock from "./TestimonialBlock";
+import ImageTextBlock from "./ImageTextBlock";
+import AccordionGroupBlock from "./AccordionGroupBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -142,6 +150,10 @@ const blockTypes = [
   { type: "featureCard" as const, icon: CreditCard, label: "Feature Card", description: "Highlight a feature with icon", category: "media" },
   { type: "gradientCard" as const, icon: Palette, label: "Gradient Card", description: "Colorful gradient content card", category: "media" },
   { type: "numberTicker" as const, icon: Hash, label: "Number Ticker", description: "Animated number display", category: "advanced" },
+  { type: "changelog" as const, icon: ScrollText, label: "Changelog", description: "Versioned update log", category: "media" },
+  { type: "testimonial" as const, icon: MessageSquareQuote, label: "Testimonial", description: "Quote with author & rating", category: "media" },
+  { type: "imageText" as const, icon: LayoutTemplate, label: "Image + Text", description: "Split layout with image", category: "media" },
+  { type: "accordionGroup" as const, icon: ListCollapse, label: "Accordion", description: "Collapsible sections group", category: "advanced" },
 ] as const;
 
 const progressColors = [
@@ -300,6 +312,27 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         { id: crypto.randomUUID(), value: "56%", label: "Growth", change: "+5%", trend: "up" as const },
         { id: crypto.randomUUID(), value: "$9.8k", label: "Revenue", change: "-2%", trend: "down" as const },
       ] : undefined,
+      // Changelog
+      changelogEntries: type === "changelog" ? [
+        { id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], title: "", description: "", tag: "added" as const },
+      ] : undefined,
+      // Testimonial
+      testimonialQuote: type === "testimonial" ? "" : undefined,
+      testimonialAuthor: type === "testimonial" ? "" : undefined,
+      testimonialRole: type === "testimonial" ? "" : undefined,
+      testimonialRating: type === "testimonial" ? 5 : undefined,
+      testimonialStyle: type === "testimonial" ? "minimal" : undefined,
+      // Image + Text
+      imageTextUrl: type === "imageText" ? "" : undefined,
+      imageTextTitle: type === "imageText" ? "" : undefined,
+      imageTextDescription: type === "imageText" ? "" : undefined,
+      imageTextLayout: type === "imageText" ? "imageLeft" : undefined,
+      // Accordion Group
+      accordionItems: type === "accordionGroup" ? [
+        { id: crypto.randomUUID(), title: "", content: "" },
+        { id: crypto.randomUUID(), title: "", content: "" },
+      ] : undefined,
+      accordionStyle: type === "accordionGroup" ? "clean" : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -1985,6 +2018,46 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         );
 
+      case "changelog":
+        return (
+          <ChangelogBlock
+            entries={block.changelogEntries || []}
+            onUpdate={(entries) => updateBlock(block.id, { changelogEntries: entries })}
+          />
+        );
+
+      case "testimonial":
+        return (
+          <TestimonialBlock
+            quote={block.testimonialQuote || ""}
+            author={block.testimonialAuthor || ""}
+            role={block.testimonialRole || ""}
+            rating={block.testimonialRating || 5}
+            style={block.testimonialStyle || "minimal"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "imageText":
+        return (
+          <ImageTextBlock
+            imageUrl={block.imageTextUrl || ""}
+            title={block.imageTextTitle || ""}
+            description={block.imageTextDescription || ""}
+            layout={block.imageTextLayout || "imageLeft"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "accordionGroup":
+        return (
+          <AccordionGroupBlock
+            items={block.accordionItems || []}
+            style={block.accordionStyle || "clean"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       default:
         return renderEditableContent(block);
     }
@@ -2159,6 +2232,19 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                 const baseUpdate: Partial<NoteBlock> = { type: bt.type, content: "" };
                                 if (bt.type === "gallery") {
                                   baseUpdate.galleryImages = [];
+                                } else if (bt.type === "changelog") {
+                                  baseUpdate.changelogEntries = [{ id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], title: "", description: "", tag: "added" }];
+                                } else if (bt.type === "testimonial") {
+                                  baseUpdate.testimonialQuote = "";
+                                  baseUpdate.testimonialAuthor = "";
+                                  baseUpdate.testimonialRole = "";
+                                  baseUpdate.testimonialRating = 5;
+                                  baseUpdate.testimonialStyle = "minimal";
+                                } else if (bt.type === "imageText") {
+                                  baseUpdate.imageTextUrl = "";
+                                  baseUpdate.imageTextTitle = "";
+                                  baseUpdate.imageTextDescription = "";
+                                  baseUpdate.imageTextLayout = "imageLeft";
                                 }
                                 updateBlock(block.id, baseUpdate);
                                 setShowMenu(null);
@@ -2253,6 +2339,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.swotWeaknesses = [""];
                                   baseUpdate.swotOpportunities = [""];
                                   baseUpdate.swotThreats = [""];
+                                } else if (bt.type === "accordionGroup") {
+                                  baseUpdate.accordionItems = [{ id: crypto.randomUUID(), title: "", content: "" }, { id: crypto.randomUUID(), title: "", content: "" }];
+                                  baseUpdate.accordionStyle = "clean";
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
