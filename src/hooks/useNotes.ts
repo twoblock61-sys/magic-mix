@@ -26,7 +26,9 @@ export interface NoteBlock {
     // Layout & formatting blocks
     | "banner" | "steps" | "labeledDivider" | "faq" | "quoteCard" | "statRow"
     // New premium blocks
-    | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker";
+    | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker"
+    // Layout & article blocks
+    | "changelog" | "testimonial" | "imageText" | "accordionGroup";
   content: string;
   checked?: boolean;
   tableData?: string[][];
