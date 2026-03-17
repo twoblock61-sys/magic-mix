@@ -150,6 +150,10 @@ const blockTypes = [
   { type: "featureCard" as const, icon: CreditCard, label: "Feature Card", description: "Highlight a feature with icon", category: "media" },
   { type: "gradientCard" as const, icon: Palette, label: "Gradient Card", description: "Colorful gradient content card", category: "media" },
   { type: "numberTicker" as const, icon: Hash, label: "Number Ticker", description: "Animated number display", category: "advanced" },
+  { type: "changelog" as const, icon: ScrollText, label: "Changelog", description: "Versioned update log", category: "media" },
+  { type: "testimonial" as const, icon: MessageSquareQuote, label: "Testimonial", description: "Quote with author & rating", category: "media" },
+  { type: "imageText" as const, icon: LayoutTemplate, label: "Image + Text", description: "Split layout with image", category: "media" },
+  { type: "accordionGroup" as const, icon: ListCollapse, label: "Accordion", description: "Collapsible sections group", category: "advanced" },
 ] as const;
 
 const progressColors = [
