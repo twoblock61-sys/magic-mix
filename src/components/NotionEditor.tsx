@@ -312,6 +312,27 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         { id: crypto.randomUUID(), value: "56%", label: "Growth", change: "+5%", trend: "up" as const },
         { id: crypto.randomUUID(), value: "$9.8k", label: "Revenue", change: "-2%", trend: "down" as const },
       ] : undefined,
+      // Changelog
+      changelogEntries: type === "changelog" ? [
+        { id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], title: "", description: "", tag: "added" as const },
+      ] : undefined,
+      // Testimonial
+      testimonialQuote: type === "testimonial" ? "" : undefined,
+      testimonialAuthor: type === "testimonial" ? "" : undefined,
+      testimonialRole: type === "testimonial" ? "" : undefined,
+      testimonialRating: type === "testimonial" ? 5 : undefined,
+      testimonialStyle: type === "testimonial" ? "minimal" : undefined,
+      // Image + Text
+      imageTextUrl: type === "imageText" ? "" : undefined,
+      imageTextTitle: type === "imageText" ? "" : undefined,
+      imageTextDescription: type === "imageText" ? "" : undefined,
+      imageTextLayout: type === "imageText" ? "imageLeft" : undefined,
+      // Accordion Group
+      accordionItems: type === "accordionGroup" ? [
+        { id: crypto.randomUUID(), title: "", content: "" },
+        { id: crypto.randomUUID(), title: "", content: "" },
+      ] : undefined,
+      accordionStyle: type === "accordionGroup" ? "clean" : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
