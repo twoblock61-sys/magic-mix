@@ -92,6 +92,10 @@ import ComparisonTableBlock from "./ComparisonTableBlock";
 import FeatureCardBlock from "./FeatureCardBlock";
 import GradientCardBlock from "./GradientCardBlock";
 import NumberTickerBlock from "./NumberTickerBlock";
+import ChangelogBlock from "./ChangelogBlock";
+import TestimonialBlock from "./TestimonialBlock";
+import ImageTextBlock from "./ImageTextBlock";
+import AccordionGroupBlock from "./AccordionGroupBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
