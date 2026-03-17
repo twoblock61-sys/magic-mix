@@ -2339,19 +2339,6 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                   baseUpdate.swotWeaknesses = [""];
                                   baseUpdate.swotOpportunities = [""];
                                   baseUpdate.swotThreats = [""];
-                                } else if (bt.type === "changelog") {
-                                  baseUpdate.changelogEntries = [{ id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], title: "", description: "", tag: "added" }];
-                                } else if (bt.type === "testimonial") {
-                                  baseUpdate.testimonialQuote = "";
-                                  baseUpdate.testimonialAuthor = "";
-                                  baseUpdate.testimonialRole = "";
-                                  baseUpdate.testimonialRating = 5;
-                                  baseUpdate.testimonialStyle = "minimal";
-                                } else if (bt.type === "imageText") {
-                                  baseUpdate.imageTextUrl = "";
-                                  baseUpdate.imageTextTitle = "";
-                                  baseUpdate.imageTextDescription = "";
-                                  baseUpdate.imageTextLayout = "imageLeft";
                                 } else if (bt.type === "accordionGroup") {
                                   baseUpdate.accordionItems = [{ id: crypto.randomUUID(), title: "", content: "" }, { id: crypto.randomUUID(), title: "", content: "" }];
                                   baseUpdate.accordionStyle = "clean";
