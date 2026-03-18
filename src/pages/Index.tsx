@@ -37,23 +37,9 @@ const Index = () => {
       case "graph":
         return <GraphPage onNavigate={handleNavigate} />;
       case "shared":
-        return (
-          <div className="flex-1 flex items-center justify-center bg-background">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Shared Notes</h2>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
-          </div>
-        );
+        return <SharedPage onNavigate={handleNavigate} />;
       case "setting":
-        return (
-          <div className="flex-1 flex items-center justify-center bg-background">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Settings</h2>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
-          </div>
-        );
+        return <SettingsPage />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }
