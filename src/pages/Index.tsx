@@ -8,6 +8,8 @@ import IdeasPage from "@/pages/IdeasPage";
 import FolderPage from "@/pages/FolderPage";
 import GraphPage from "@/pages/GraphPage";
 import FlashcardsPage from "@/pages/FlashcardsPage";
+import SettingsPage from "@/pages/SettingsPage";
+import SharedPage from "@/pages/SharedPage";
 
 const Index = () => {
   const [activeNav, setActiveNav] = useState("home");
