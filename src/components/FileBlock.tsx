@@ -69,141 +69,107 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const renderPreview = () => {
     if (!showPreview) return null;
 
-    switch (fileType) {
-      case "pdf":
-        if (pdfError) {
-          return (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mt-3 rounded-xl border border-border bg-muted/20 p-6 flex flex-col items-center gap-3"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-amber-500" />
-              </div>
-              <p className="text-sm font-medium text-foreground">PDF preview unavailable</p>
-              <p className="text-xs text-muted-foreground text-center max-w-xs">
-                This PDF doesn't allow embedding. You can still open it in a new tab.
-              </p>
-              <motion.a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Open in new tab
-              </motion.a>
-            </motion.div>
-          );
-        }
-        return (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-3 rounded-xl overflow-hidden border border-border bg-muted/10"
-          >
-            <iframe
-              src={fileUrl}
-              className="w-full h-[500px] rounded-xl"
-              title={fileName}
-              onError={() => setPdfError(true)}
-              onLoad={(e) => {
-                try {
-                  const iframe = e.target as HTMLIFrameElement;
-                  // If we can't access contentDocument, it's cross-origin (blocked)
-                  if (iframe.contentDocument === null && iframe.contentWindow === null) {
-                    setPdfError(true);
-                  }
-                } catch {
-                  // Cross-origin error means PDF loaded but we can't access it — that's fine
-                }
-              }}
-            />
-          </motion.div>
-        );
-
-      case "image":
-        if (imageError) {
-          return (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-3 rounded-xl border border-border bg-muted/20 p-6 flex flex-col items-center gap-2"
-            >
-              <AlertTriangle className="w-6 h-6 text-amber-500" />
-              <p className="text-xs text-muted-foreground">Image failed to load</p>
-            </motion.div>
-          );
-        }
-        return (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-3 rounded-xl overflow-hidden border border-border"
-          >
-            <img
-              src={fileUrl}
-              alt={fileName}
-              className="w-full max-h-[400px] object-contain bg-muted/20"
-              onError={() => setImageError(true)}
-            />
-          </motion.div>
-        );
-
-      case "video":
-        return (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-3 rounded-xl overflow-hidden border border-border bg-black"
-          >
-            <video
-              src={fileUrl}
-              controls
-              className="w-full max-h-[400px]"
-              preload="metadata"
-            />
-          </motion.div>
-        );
-
-      case "audio":
-        return (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-3 rounded-xl border border-border bg-muted/10 p-4"
-          >
-            <audio src={fileUrl} controls className="w-full" preload="metadata" />
-          </motion.div>
-        );
-
-      default:
-        return (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-3 rounded-xl border border-border bg-muted/10 p-5 flex flex-col items-center gap-2"
-          >
-            <File className="w-8 h-8 text-muted-foreground/40" />
-            <p className="text-xs text-muted-foreground">
-              Preview not available for this file type
-            </p>
-            <motion.a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
-              whileHover={{ scale: 1.03 }}
-            >
-              <ExternalLink className="w-3 h-3" />
-              Open file
-            </motion.a>
-          </motion.div>
-        );
+    // For images, use native img tag for best quality
+    if (fileType === "image" && !imageError) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-3 rounded-xl overflow-hidden border border-border"
+        >
+          <img
+            src={fileUrl}
+            alt={fileName}
+            className="w-full max-h-[400px] object-contain bg-muted/20"
+            onError={() => setImageError(true)}
+          />
+        </motion.div>
+      );
     }
+
+    if (fileType === "image" && imageError) {
+      return (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-3 rounded-xl border border-border bg-muted/20 p-6 flex flex-col items-center gap-2"
+        >
+          <AlertTriangle className="w-6 h-6 text-amber-500" />
+          <p className="text-xs text-muted-foreground">Image failed to load</p>
+        </motion.div>
+      );
+    }
+
+    // For audio, use native audio element
+    if (fileType === "audio") {
+      return (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-3 rounded-xl border border-border bg-muted/10 p-4"
+        >
+          <audio src={fileUrl} controls className="w-full" preload="metadata" />
+        </motion.div>
+      );
+    }
+
+    // For everything else (PDF, video, documents, unknown) — use iframe
+    // This handles Google Drive /preview links, PDFs, and any embeddable content
+    if (pdfError) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-3 rounded-2xl border border-border bg-muted/5 p-8 flex flex-col items-center gap-3"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <AlertTriangle className="w-7 h-7 text-amber-500" />
+          </div>
+          <p className="text-sm font-semibold text-foreground tracking-tight">Preview unavailable</p>
+          <p className="text-xs text-muted-foreground text-center max-w-xs leading-relaxed">
+            This file doesn't allow embedding. You can still view it directly.
+          </p>
+          <motion.a
+            href={fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open in new tab
+          </motion.a>
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: "auto" }}
+        className="mt-3 rounded-xl overflow-hidden border border-border bg-muted/10"
+      >
+        <iframe
+          src={fileUrl}
+          className="w-full h-[500px] rounded-xl border-0"
+          title={fileName || "File preview"}
+          allow="autoplay"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          onError={() => setPdfError(true)}
+          onLoad={(e) => {
+            try {
+              const iframe = e.target as HTMLIFrameElement;
+              if (iframe.contentDocument === null && iframe.contentWindow === null) {
+                setPdfError(true);
+              }
+            } catch {
+              // Cross-origin — that's fine, iframe is rendering
+            }
+          }}
+        />
+      </motion.div>
+    );
   };
 
   // Empty state — URL input
