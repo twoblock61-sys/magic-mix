@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Paperclip, ExternalLink, FileText, Image, Film, Music, 
-  File, Trash2, Download, Eye, EyeOff, AlertTriangle, 
-  Link2, ChevronDown, ChevronUp
+  ExternalLink, FileText, Image, Film, Music, 
+  File, Trash2, Eye, EyeOff, AlertTriangle, 
+  Link2, ChevronDown, ChevronUp, Sparkles, Globe
 } from "lucide-react";
 
 interface FileBlockProps {
@@ -35,16 +35,18 @@ const getFileIcon = (type: FileType) => {
   }
 };
 
-const getFileColor = (type: FileType) => {
+const getFileAccent = (type: FileType) => {
   switch (type) {
-    case "pdf": return "text-red-500 bg-red-500/10";
-    case "image": return "text-blue-500 bg-blue-500/10";
-    case "video": return "text-purple-500 bg-purple-500/10";
-    case "audio": return "text-orange-500 bg-orange-500/10";
-    case "document": return "text-emerald-500 bg-emerald-500/10";
-    default: return "text-muted-foreground bg-muted";
+    case "pdf": return { bg: "bg-destructive/8", text: "text-destructive", ring: "ring-destructive/20", gradient: "from-destructive/10 to-destructive/5" };
+    case "image": return { bg: "bg-primary/8", text: "text-primary", ring: "ring-primary/20", gradient: "from-primary/10 to-primary/5" };
+    case "video": return { bg: "bg-accent/30", text: "text-accent-foreground", ring: "ring-accent/30", gradient: "from-accent/20 to-accent/10" };
+    case "audio": return { bg: "bg-secondary/50", text: "text-secondary-foreground", ring: "ring-secondary/30", gradient: "from-secondary/30 to-secondary/10" };
+    case "document": return { bg: "bg-primary/8", text: "text-primary", ring: "ring-primary/20", gradient: "from-primary/10 to-primary/5" };
+    default: return { bg: "bg-muted/50", text: "text-muted-foreground", ring: "ring-border", gradient: "from-muted/30 to-muted/10" };
   }
 };
+
+const spring = { type: "spring", stiffness: 400, damping: 30 } as const;
 
 const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const [showPreview, setShowPreview] = useState(true);
@@ -52,10 +54,11 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const [imageError, setImageError] = useState(false);
   const [hover, setHover] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
 
   const fileType = fileUrl ? detectFileType(fileUrl) : "unknown";
   const Icon = getFileIcon(fileType);
-  const colorClass = getFileColor(fileType);
+  const accent = getFileAccent(fileType);
 
   const handleSubmitUrl = useCallback((url: string) => {
     if (!url.trim()) return;
@@ -69,18 +72,18 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const renderPreview = () => {
     if (!showPreview) return null;
 
-    // For images, use native img tag for best quality
     if (fileType === "image" && !imageError) {
       return (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-3 rounded-xl overflow-hidden border border-border"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={spring}
+          className="rounded-2xl overflow-hidden bg-muted/10"
         >
           <img
             src={fileUrl}
             alt={fileName}
-            className="w-full max-h-[400px] object-contain bg-muted/20"
+            className="w-full max-h-[420px] object-contain"
             onError={() => setImageError(true)}
           />
         </motion.div>
@@ -92,67 +95,88 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-3 rounded-xl border border-border bg-muted/20 p-6 flex flex-col items-center gap-2"
+          className="rounded-2xl bg-muted/10 p-8 flex flex-col items-center gap-3"
         >
-          <AlertTriangle className="w-6 h-6 text-amber-500" />
-          <p className="text-xs text-muted-foreground">Image failed to load</p>
+          <div className="w-12 h-12 rounded-2xl bg-muted/30 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm text-muted-foreground/60 font-medium">Image couldn't be loaded</p>
         </motion.div>
       );
     }
 
-    // For audio, use native audio element
     if (fileType === "audio") {
       return (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-3 rounded-xl border border-border bg-muted/10 p-4"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={spring}
+          className={`rounded-2xl bg-gradient-to-b ${accent.gradient} p-5 backdrop-blur-sm`}
         >
-          <audio src={fileUrl} controls className="w-full" preload="metadata" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-10 h-10 rounded-xl ${accent.bg} flex items-center justify-center`}>
+              <Music className={`w-4.5 h-4.5 ${accent.text}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{fileName || "Audio"}</p>
+              <p className="text-[11px] text-muted-foreground/50 mt-0.5">Audio file</p>
+            </div>
+          </div>
+          <audio src={fileUrl} controls className="w-full h-10 rounded-lg" preload="metadata" />
         </motion.div>
       );
     }
 
-    // For everything else (PDF, video, documents, unknown) — use iframe
-    // This handles Google Drive /preview links, PDFs, and any embeddable content
+    // Iframe fallback error
     if (pdfError) {
       return (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-3 rounded-2xl border border-border bg-muted/5 p-8 flex flex-col items-center gap-3"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={spring}
+          className="rounded-2xl bg-gradient-to-b from-muted/15 to-muted/5 p-10 flex flex-col items-center gap-4"
         >
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <AlertTriangle className="w-7 h-7 text-amber-500" />
+          <motion.div
+            className="w-16 h-16 rounded-[20px] bg-muted/20 flex items-center justify-center"
+            animate={{ rotate: [0, -3, 3, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
+            <AlertTriangle className="w-7 h-7 text-muted-foreground/40" />
+          </motion.div>
+          <div className="text-center space-y-1.5">
+            <p className="text-[15px] font-semibold text-foreground tracking-tight">
+              Preview unavailable
+            </p>
+            <p className="text-[13px] text-muted-foreground/50 max-w-[260px] leading-relaxed">
+              This file doesn't support inline embedding
+            </p>
           </div>
-          <p className="text-sm font-semibold text-foreground tracking-tight">Preview unavailable</p>
-          <p className="text-xs text-muted-foreground text-center max-w-xs leading-relaxed">
-            This file doesn't allow embedding. You can still view it directly.
-          </p>
           <motion.a
             href={fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
-            whileHover={{ scale: 1.03 }}
+            className="mt-1 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-foreground text-background text-[13px] font-semibold tracking-tight hover:opacity-90 transition-all shadow-lg shadow-foreground/10"
+            whileHover={{ scale: 1.04, y: -1 }}
             whileTap={{ scale: 0.97 }}
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            Open in new tab
+            Open in browser
           </motion.a>
         </motion.div>
       );
     }
 
+    // Universal iframe preview
     return (
       <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: "auto" }}
-        className="mt-3 rounded-xl overflow-hidden border border-border bg-muted/10"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={spring}
+        className="rounded-2xl overflow-hidden ring-1 ring-border/50 bg-background"
       >
         <iframe
           src={fileUrl}
-          className="w-full h-[500px] rounded-xl border-0"
+          className="w-full h-[520px] border-0"
           title={fileName || "File preview"}
           allow="autoplay"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -164,7 +188,7 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
                 setPdfError(true);
               }
             } catch {
-              // Cross-origin — that's fine, iframe is rendering
+              // Cross-origin — fine
             }
           }}
         />
@@ -172,136 +196,202 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
     );
   };
 
-  // Empty state — URL input
+  // ─── Empty state ───
   if (!fileUrl) {
     return (
-      <div className="py-2">
+      <div className="py-3">
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border-2 border-dashed border-muted-foreground/15 bg-muted/5 p-8 flex flex-col items-center"
+          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className={`
+            relative rounded-[20px] border-2 border-dashed transition-all duration-500
+            ${inputFocused 
+              ? "border-primary/30 bg-primary/[0.02] shadow-lg shadow-primary/5" 
+              : "border-border/40 bg-muted/[0.03] hover:border-muted-foreground/20 hover:bg-muted/[0.06]"
+            }
+            p-10 flex flex-col items-center
+          `}
         >
-          <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
-            <Link2 className="w-6 h-6 text-muted-foreground/40" />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground/60 mb-4">
-            Attach a file link
+          {/* Decorative glow */}
+          <motion.div
+            className="absolute inset-0 rounded-[20px] bg-gradient-to-b from-primary/5 to-transparent opacity-0 pointer-events-none"
+            animate={{ opacity: inputFocused ? 1 : 0 }}
+            transition={{ duration: 0.4 }}
+          />
+
+          <motion.div
+            className="relative w-16 h-16 rounded-[18px] bg-gradient-to-b from-muted/40 to-muted/20 flex items-center justify-center mb-5 shadow-sm"
+            whileHover={{ scale: 1.05, rotate: -2 }}
+            transition={spring}
+          >
+            <Link2 className="w-7 h-7 text-muted-foreground/35" />
+          </motion.div>
+
+          <p className="text-[15px] font-semibold text-foreground/70 mb-1.5 tracking-tight">
+            Attach a file
           </p>
-          <div className="w-full max-w-sm relative">
+          <p className="text-[13px] text-muted-foreground/40 mb-6">
+            Paste any URL to embed a preview
+          </p>
+
+          <div className="w-full max-w-md relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Globe className={`w-4 h-4 transition-colors duration-300 ${inputFocused ? "text-primary/60" : "text-muted-foreground/25"}`} />
+            </div>
             <input
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
-              placeholder="Paste file URL and press Enter…"
-              className="w-full px-4 py-2.5 bg-muted/30 rounded-xl outline-none text-sm text-foreground placeholder:text-muted-foreground/30 focus:ring-2 focus:ring-primary/20 transition-all"
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder="https://..."
+              className={`
+                w-full pl-11 pr-4 py-3.5 rounded-2xl outline-none text-[14px] text-foreground 
+                placeholder:text-muted-foreground/25 transition-all duration-300
+                bg-background/80 backdrop-blur-sm
+                ring-1 ${inputFocused ? "ring-primary/30 shadow-md shadow-primary/5" : "ring-border/40"}
+              `}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmitUrl(inputUrl);
               }}
             />
+            <AnimatePresence>
+              {inputUrl.trim() && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={spring}
+                  onClick={() => handleSubmitUrl(inputUrl)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-foreground text-background text-[12px] font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Embed
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
     );
   }
 
-  // Filled state — file card + preview
+  // ─── Filled state ───
   return (
-    <div className="py-2">
+    <div className="py-3">
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/40 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className={`
+          rounded-[20px] bg-card overflow-hidden transition-all duration-500
+          ring-1 ${hover ? "ring-border/60 shadow-xl shadow-foreground/[0.04]" : "ring-border/30 shadow-sm"}
+        `}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
-        {/* File header */}
-        <div className="flex items-center gap-3.5 p-4">
-          <div className={`p-3 rounded-xl ${colorClass} flex-shrink-0`}>
-            <Icon className="w-5 h-5" />
-          </div>
+        {/* Header */}
+        <div className="flex items-center gap-4 p-5">
+          <motion.div
+            className={`
+              w-12 h-12 rounded-[14px] flex-shrink-0 flex items-center justify-center
+              bg-gradient-to-b ${accent.gradient} ring-1 ${accent.ring}
+            `}
+            whileHover={{ scale: 1.08, rotate: -3 }}
+            transition={spring}
+          >
+            <Icon className={`w-5 h-5 ${accent.text}`} />
+          </motion.div>
+
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[15px] text-foreground truncate tracking-tight">
+            <p className="font-semibold text-[15px] text-foreground truncate tracking-tight leading-snug">
               {fileName || "Attached file"}
             </p>
-            <p className="text-xs text-muted-foreground/60 truncate mt-0.5 font-mono">
-              {fileUrl}
+            <p className="text-[11px] text-muted-foreground/40 truncate mt-1 font-mono leading-none">
+              {fileUrl.length > 60 ? fileUrl.slice(0, 60) + "…" : fileUrl}
             </p>
           </div>
 
-          {/* Actions */}
+          {/* Actions — always visible on hover */}
           <AnimatePresence>
             {hover && (
               <motion.div
-                initial={{ opacity: 0, x: 8 }}
+                initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                className="flex items-center gap-1"
+                exit={{ opacity: 0, x: 10 }}
+                transition={spring}
+                className="flex items-center gap-0.5"
               >
-                <motion.button
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title={showPreview ? "Hide preview" : "Show preview"}
-                >
-                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </motion.button>
-                <motion.a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title="Open in new tab"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </motion.a>
-                <motion.button
-                  onClick={() => {
-                    onUpdate({ fileUrl: "", fileName: "" });
-                    setPdfError(false);
-                    setImageError(false);
-                  }}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title="Remove file"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </motion.button>
+                {[
+                  { 
+                    icon: showPreview ? EyeOff : Eye, 
+                    label: showPreview ? "Hide" : "Show",
+                    onClick: () => setShowPreview(!showPreview),
+                    danger: false
+                  },
+                  { 
+                    icon: ExternalLink, 
+                    label: "Open",
+                    onClick: () => window.open(fileUrl, "_blank"),
+                    danger: false
+                  },
+                  { 
+                    icon: Trash2, 
+                    label: "Remove",
+                    onClick: () => { onUpdate({ fileUrl: "", fileName: "" }); setPdfError(false); setImageError(false); },
+                    danger: true
+                  },
+                ].map((action, i) => (
+                  <motion.button
+                    key={i}
+                    onClick={action.onClick}
+                    className={`
+                      p-2 rounded-xl transition-colors duration-200
+                      ${action.danger 
+                        ? "text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10" 
+                        : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/50"
+                      }
+                    `}
+                    whileHover={{ scale: 1.12 }}
+                    whileTap={{ scale: 0.88 }}
+                    title={action.label}
+                  >
+                    <action.icon className="w-4 h-4" />
+                  </motion.button>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Toggle preview bar */}
-        <button
+        {/* Toggle bar */}
+        <motion.button
           onClick={() => setShowPreview(!showPreview)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 bg-muted/20 hover:bg-muted/40 text-xs text-muted-foreground font-medium transition-colors border-t border-border/30"
+          className="w-full flex items-center justify-center gap-2 py-2.5 text-[12px] text-muted-foreground/50 font-medium transition-colors hover:text-muted-foreground hover:bg-muted/20 border-t border-border/20"
+          whileTap={{ scale: 0.99 }}
         >
-          {showPreview ? (
-            <>
-              <ChevronUp className="w-3 h-3" /> Hide preview
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-3 h-3" /> Show preview
-            </>
-          )}
-        </button>
+          <motion.span
+            animate={{ rotate: showPreview ? 180 : 0 }}
+            transition={spring}
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </motion.span>
+          {showPreview ? "Hide preview" : "Show preview"}
+        </motion.button>
 
-        {/* Preview area */}
+        {/* Preview */}
         <AnimatePresence>
           {showPreview && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="px-4 pb-4 overflow-hidden"
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="overflow-hidden"
             >
-              {renderPreview()}
+              <div className="p-4 pt-2">
+                {renderPreview()}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
