@@ -96,6 +96,7 @@ import ChangelogBlock from "./ChangelogBlock";
 import TestimonialBlock from "./TestimonialBlock";
 import ImageTextBlock from "./ImageTextBlock";
 import AccordionGroupBlock from "./AccordionGroupBlock";
+import FileBlock from "./FileBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
