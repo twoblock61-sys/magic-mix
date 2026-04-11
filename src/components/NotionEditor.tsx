@@ -1383,42 +1383,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       case "file":
         return (
-          <div className="py-2">
-            {block.fileUrl ? (
-              <motion.a
-                href={block.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors group/file"
-                whileHover={{ scale: 1.01 }}
-              >
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Paperclip className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{block.fileName || "Attached file"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{block.fileUrl}</p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover/file:opacity-100" />
-              </motion.a>
-            ) : (
-              <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center">
-                <Paperclip className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
-                <input
-                  type="text"
-                  placeholder="Paste file URL and press Enter..."
-                  className="w-full max-w-md mx-auto px-4 py-2 bg-muted/50 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const url = (e.target as HTMLInputElement).value;
-                      const fileName = url.split('/').pop() || 'File';
-                      updateBlock(block.id, { fileUrl: url, fileName });
-                    }
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <FileBlock
+            fileUrl={block.fileUrl || ""}
+            fileName={block.fileName || ""}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
         );
 
       case "audio":
