@@ -55,7 +55,7 @@ const IdeasPage = ({ initialNoteId }: IdeasPageProps) => {
 
   return (
     <div className="flex-1 h-full flex overflow-hidden relative">
-      {/* Notes List - hidden in focus mode */}
+      {/* Notes List - responsive sidebar */}
       <AnimatePresence>
         {!focusMode && (
           <motion.div
@@ -63,7 +63,7 @@ const IdeasPage = ({ initialNoteId }: IdeasPageProps) => {
             animate={{ width: "auto", opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
+            className="overflow-hidden max-sm:hidden"
           >
             <NotesListPanel
               title="All Ideas"

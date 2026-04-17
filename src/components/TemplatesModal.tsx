@@ -79,14 +79,13 @@ const TemplatesModal = ({
             {/* Modal Content */}
             <div className="w-full max-w-4xl bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
               {/* Header */}
-              <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between flex-shrink-0">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base sm:text-lg font-bold text-foreground">
                     Choose a Template
                   </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Start with a pre-designed template to boost your
-                    productivity
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    Start with a pre-designed template to boost your productivity
                   </p>
                 </div>
                 <motion.button
@@ -100,7 +99,7 @@ const TemplatesModal = ({
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 <div className="space-y-8">
                   {sortedCategories.map((category, categoryIndex) => (
                     <motion.div
@@ -111,9 +110,9 @@ const TemplatesModal = ({
                     >
                       {/* Category Header */}
                       <div
-                        className={`bg-gradient-to-r ${categoryColors[category]} border border-border/50 rounded-xl px-4 py-3 mb-4`}
+                        className={`bg-gradient-to-r ${categoryColors[category]} border border-border/50 rounded-xl px-3 sm:px-4 py-3 mb-3 sm:mb-4`}
                       >
-                        <h3 className="text-sm font-semibold text-foreground">
+                        <h3 className="text-xs sm:text-sm font-semibold text-foreground">
                           {category}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -123,7 +122,7 @@ const TemplatesModal = ({
                       </div>
 
                       {/* Category Templates Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {groupedTemplates[category].map((template, index) => (
                           <motion.button
                             key={template.id}
@@ -193,7 +192,7 @@ const TemplatesModal = ({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/50 bg-muted/30 text-center">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-border/50 bg-muted/30 text-center">
                 <p className="text-xs text-muted-foreground">
                   💡 You can edit or customize the template after selecting it
                 </p>
