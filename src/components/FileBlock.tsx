@@ -370,11 +370,26 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
           </motion.div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[15px] text-foreground truncate tracking-tight leading-snug">
-              {fileName || "Attached file"}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-[15px] text-foreground truncate tracking-tight leading-snug">
+                {fileName || "Attached file"}
+              </p>
+              {isLocalFile && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={spring}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider flex-shrink-0"
+                >
+                  <HardDrive className="w-2.5 h-2.5" />
+                  Local
+                </motion.span>
+              )}
+            </div>
             <p className="text-[11px] text-muted-foreground/40 truncate mt-1 font-mono leading-none">
-              {fileUrl.length > 60 ? fileUrl.slice(0, 60) + "…" : fileUrl}
+              {isLocalFile
+                ? `On this device${localFileSize ? ` · ${formatBytes(localFileSize)}` : ""}`
+                : fileUrl.length > 60 ? fileUrl.slice(0, 60) + "…" : fileUrl}
             </p>
           </div>
 
