@@ -55,8 +55,12 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const [hover, setHover] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [localFileSize, setLocalFileSize] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fileType = fileUrl ? detectFileType(fileUrl) : "unknown";
+  const isLocalFile = fileUrl.startsWith("blob:");
+  const fileType = fileUrl ? detectFileType(fileUrl || fileName) : "unknown";
   const Icon = getFileIcon(fileType);
   const accent = getFileAccent(fileType);
 
@@ -68,6 +72,33 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
     setPdfError(false);
     setImageError(false);
   }, [onUpdate]);
+
+  const handleLocalFile = useCallback((file: File) => {
+    const blobUrl = URL.createObjectURL(file);
+    onUpdate({ fileUrl: blobUrl, fileName: file.name });
+    setLocalFileSize(file.size);
+    setPdfError(false);
+    setImageError(false);
+  }, [onUpdate]);
+
+  const handleFilePick = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleLocalFile(file);
+    e.target.value = "";
+  }, [handleLocalFile]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleLocalFile(file);
+  }, [handleLocalFile]);
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  };
 
   const renderPreview = () => {
     if (!showPreview) return null;
