@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ExternalLink, FileText, Image, Film, Music, 
   File, Trash2, Eye, EyeOff, AlertTriangle, 
-  Link2, ChevronDown, ChevronUp, Sparkles, Globe
+  Link2, ChevronDown, ChevronUp, Sparkles, Globe, Upload, HardDrive
 } from "lucide-react";
 
 interface FileBlockProps {
@@ -55,8 +55,12 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
   const [hover, setHover] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [localFileSize, setLocalFileSize] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fileType = fileUrl ? detectFileType(fileUrl) : "unknown";
+  const isLocalFile = fileUrl.startsWith("blob:");
+  const fileType = fileUrl ? detectFileType(fileUrl || fileName) : "unknown";
   const Icon = getFileIcon(fileType);
   const accent = getFileAccent(fileType);
 
@@ -68,6 +72,33 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
     setPdfError(false);
     setImageError(false);
   }, [onUpdate]);
+
+  const handleLocalFile = useCallback((file: File) => {
+    const blobUrl = URL.createObjectURL(file);
+    onUpdate({ fileUrl: blobUrl, fileName: file.name });
+    setLocalFileSize(file.size);
+    setPdfError(false);
+    setImageError(false);
+  }, [onUpdate]);
+
+  const handleFilePick = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleLocalFile(file);
+    e.target.value = "";
+  }, [handleLocalFile]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleLocalFile(file);
+  }, [handleLocalFile]);
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  };
 
   const renderPreview = () => {
     if (!showPreview) return null;
@@ -204,35 +235,52 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
           className={`
             relative rounded-[20px] border-2 border-dashed transition-all duration-500
-            ${inputFocused 
-              ? "border-primary/30 bg-primary/[0.02] shadow-lg shadow-primary/5" 
-              : "border-border/40 bg-muted/[0.03] hover:border-muted-foreground/20 hover:bg-muted/[0.06]"
+            ${isDragging
+              ? "border-primary/60 bg-primary/[0.06] shadow-xl shadow-primary/10 scale-[1.01]"
+              : inputFocused 
+                ? "border-primary/30 bg-primary/[0.02] shadow-lg shadow-primary/5" 
+                : "border-border/40 bg-muted/[0.03] hover:border-muted-foreground/20 hover:bg-muted/[0.06]"
             }
             p-10 flex flex-col items-center
           `}
         >
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFilePick}
+          />
+
           {/* Decorative glow */}
           <motion.div
             className="absolute inset-0 rounded-[20px] bg-gradient-to-b from-primary/5 to-transparent opacity-0 pointer-events-none"
-            animate={{ opacity: inputFocused ? 1 : 0 }}
+            animate={{ opacity: inputFocused || isDragging ? 1 : 0 }}
             transition={{ duration: 0.4 }}
           />
 
           <motion.div
             className="relative w-16 h-16 rounded-[18px] bg-gradient-to-b from-muted/40 to-muted/20 flex items-center justify-center mb-5 shadow-sm"
             whileHover={{ scale: 1.05, rotate: -2 }}
+            animate={isDragging ? { scale: 1.15, rotate: 6 } : {}}
             transition={spring}
           >
-            <Link2 className="w-7 h-7 text-muted-foreground/35" />
+            {isDragging ? (
+              <Upload className="w-7 h-7 text-primary" />
+            ) : (
+              <Link2 className="w-7 h-7 text-muted-foreground/35" />
+            )}
           </motion.div>
 
           <p className="text-[15px] font-semibold text-foreground/70 mb-1.5 tracking-tight">
-            Attach a file
+            {isDragging ? "Drop to upload" : "Attach a file"}
           </p>
           <p className="text-[13px] text-muted-foreground/40 mb-6">
-            Paste any URL to embed a preview
+            Drag & drop, choose from device, or paste a URL
           </p>
 
           <div className="w-full max-w-md relative">
@@ -271,6 +319,24 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Divider with "or" */}
+          <div className="w-full max-w-md flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-border/40" />
+            <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-[0.15em]">or</span>
+            <div className="flex-1 h-px bg-border/40" />
+          </div>
+
+          {/* Upload from device */}
+          <motion.button
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-foreground text-background text-[13px] font-semibold tracking-tight hover:opacity-90 transition-opacity shadow-lg shadow-foreground/10"
+            whileHover={{ scale: 1.04, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <HardDrive className="w-3.5 h-3.5" />
+            Upload from device
+          </motion.button>
         </motion.div>
       </div>
     );
@@ -304,11 +370,26 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
           </motion.div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[15px] text-foreground truncate tracking-tight leading-snug">
-              {fileName || "Attached file"}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-[15px] text-foreground truncate tracking-tight leading-snug">
+                {fileName || "Attached file"}
+              </p>
+              {isLocalFile && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={spring}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider flex-shrink-0"
+                >
+                  <HardDrive className="w-2.5 h-2.5" />
+                  Local
+                </motion.span>
+              )}
+            </div>
             <p className="text-[11px] text-muted-foreground/40 truncate mt-1 font-mono leading-none">
-              {fileUrl.length > 60 ? fileUrl.slice(0, 60) + "…" : fileUrl}
+              {isLocalFile
+                ? `On this device${localFileSize ? ` · ${formatBytes(localFileSize)}` : ""}`
+                : fileUrl.length > 60 ? fileUrl.slice(0, 60) + "…" : fileUrl}
             </p>
           </div>
 
