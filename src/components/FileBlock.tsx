@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ExternalLink, FileText, Image, Film, Music, 
   File, Trash2, Eye, EyeOff, AlertTriangle, 
-  Link2, ChevronDown, ChevronUp, Sparkles, Globe
+  Link2, ChevronDown, ChevronUp, Sparkles, Globe, Upload, HardDrive
 } from "lucide-react";
 
 interface FileBlockProps {
