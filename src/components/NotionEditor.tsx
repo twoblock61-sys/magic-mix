@@ -174,6 +174,48 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [menuFilter, setMenuFilter] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const isTouch = useIsTouchDevice();
+  const [isEditingFocus, setIsEditingFocus] = useState(false);
+
+  // Track whether any editable surface inside the editor currently owns focus,
+  // so the mobile toolbar only appears while the user is actively editing.
+  useEffect(() => {
+    if (!isTouch) return;
+    const onFocusIn = () => {
+      const el = document.activeElement as HTMLElement | null;
+      const editable =
+        !!el &&
+        (el.isContentEditable || el.tagName === "INPUT" || el.tagName === "TEXTAREA");
+      setIsEditingFocus(editable);
+    };
+    const onFocusOut = () => {
+      // Defer so focus moving between editables doesn't flicker the toolbar.
+      setTimeout(onFocusIn, 0);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
+  }, [isTouch]);
+
+  // Convert the active block via the mobile toolbar — mirrors the slash menu actions.
+  const convertActiveBlockTo = useCallback(
+    (type: MobileBlockType) => {
+      const id = activeBlockId;
+      if (!id) return;
+      const current = blocks.find((b) => b.id === id);
+      if (!current) return;
+      const updates: Partial<NoteBlock> = {
+        type: type as NoteBlock["type"],
+        content: type === "divider" ? "---" : current.content,
+      };
+      updateBlock(id, updates);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeBlockId, blocks]
+  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; caption?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
