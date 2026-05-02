@@ -2440,6 +2440,16 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Mobile / tablet editing toolbar — pinned above the on-screen keyboard.
+          On touch devices, ⌘+/ slash menu is unavailable, so this provides the
+          basic block conversions plus inline formatting. */}
+      {isTouch && (
+        <MobileEditorToolbar
+          isEditing={isEditingFocus}
+          onConvertBlock={convertActiveBlockTo}
+        />
+      )}
     </>
   );
 };
