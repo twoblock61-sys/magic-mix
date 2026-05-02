@@ -1,5 +1,7 @@
-import { useState, useRef, KeyboardEvent, useEffect } from "react";
+import { useState, useRef, KeyboardEvent, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import MobileEditorToolbar, { MobileBlockType } from "./MobileEditorToolbar";
+import { useIsTouchDevice } from "@/hooks/useIsTouchDevice";
 import { 
   Plus, 
   GripVertical, 
@@ -529,7 +531,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       e.preventDefault();
       deleteBlock(block.id);
     }
-    if (e.key === "/" && isEmpty) {
+    if (e.key === "/" && isEmpty && !isTouch) {
       e.preventDefault();
       setShowMenu(block.id);
       setMenuFilter("");
