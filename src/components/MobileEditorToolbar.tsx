@@ -24,8 +24,8 @@ export type MobileBlockType =
   | "heading1"
   | "heading2"
   | "heading3"
-  | "bulletList"
-  | "numberedList"
+  | "bullet"
+  | "numbered"
   | "todo"
   | "quote"
   | "divider"
@@ -46,8 +46,8 @@ const BASIC_BLOCKS: { type: MobileBlockType; icon: React.ElementType; label: str
   { type: "heading1", icon: Heading1, label: "H1" },
   { type: "heading2", icon: Heading2, label: "H2" },
   { type: "heading3", icon: Heading3, label: "H3" },
-  { type: "bulletList", icon: List, label: "Bullet" },
-  { type: "numberedList", icon: ListOrdered, label: "Numbered" },
+  { type: "bullet", icon: List, label: "Bullet" },
+  { type: "numbered", icon: ListOrdered, label: "Numbered" },
   { type: "todo", icon: CheckSquare, label: "To-do" },
   { type: "quote", icon: Quote, label: "Quote" },
   { type: "code", icon: Code, label: "Code" },
@@ -248,8 +248,8 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
           {/* Quick block conversion */}
           <ToolbarIcon icon={Heading1} label="H1" onClick={() => onConvertBlock("heading1")} />
           <ToolbarIcon icon={Heading2} label="H2" onClick={() => onConvertBlock("heading2")} />
-          <ToolbarIcon icon={List} label="Bullet" onClick={() => onConvertBlock("bulletList")} />
-          <ToolbarIcon icon={ListOrdered} label="Numbered" onClick={() => onConvertBlock("numberedList")} />
+          <ToolbarIcon icon={List} label="Bullet" onClick={() => onConvertBlock("bullet")} />
+          <ToolbarIcon icon={ListOrdered} label="Numbered" onClick={() => onConvertBlock("numbered")} />
           <ToolbarIcon icon={CheckSquare} label="To-do" onClick={() => onConvertBlock("todo")} />
           <ToolbarIcon icon={Quote} label="Quote" onClick={() => onConvertBlock("quote")} />
 
