@@ -187,6 +187,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         !!el &&
         (el.isContentEditable || el.tagName === "INPUT" || el.tagName === "TEXTAREA");
       setIsEditingFocus(editable);
+      if (editable) {
+        const blockEl = el!.closest("[data-block-id]") as HTMLElement | null;
+        const id = blockEl?.getAttribute("data-block-id");
+        if (id) setActiveBlockId(id);
+      }
     };
     const onFocusOut = () => {
       // Defer so focus moving between editables doesn't flicker the toolbar.
