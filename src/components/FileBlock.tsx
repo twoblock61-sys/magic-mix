@@ -197,62 +197,7 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
       );
     }
 
-    // Native <video> for video files (works for both local blobs and remote URLs)
-    if (fileType === "video") {
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={spring}
-          className="rounded-2xl overflow-hidden ring-1 ring-border/50 bg-black"
-        >
-          <video
-            src={fileUrl}
-            controls
-            className="w-full max-h-[520px]"
-            preload="metadata"
-          />
-        </motion.div>
-      );
-    }
-
-    // Native <object> for local PDFs (Chrome blocks sandboxed iframes loading blob: URLs)
-    if (isLocalFile && fileType === "pdf") {
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={spring}
-          className="rounded-2xl overflow-hidden ring-1 ring-border/50 bg-background"
-        >
-          <object
-            data={fileUrl}
-            type="application/pdf"
-            className="w-full h-[520px]"
-          >
-            <div className="p-10 flex flex-col items-center gap-3 text-center">
-              <AlertTriangle className="w-7 h-7 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                Your browser can't preview this PDF inline.
-              </p>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-foreground text-background text-[13px] font-semibold"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> Open file
-              </a>
-            </div>
-          </object>
-        </motion.div>
-      );
-    }
-
-    // Universal iframe preview for remote URLs.
-    // NOTE: Do NOT combine `allow-scripts` + `allow-same-origin` in sandbox — Chrome blocks
-    // this combo (especially for blob: URLs) as a security risk. We omit `sandbox` for
-    // remote URLs so embeds like Google Drive/YouTube work, and use <object> for local PDFs.
+    // Universal iframe preview
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
@@ -264,9 +209,19 @@ const FileBlock = ({ fileUrl, fileName, onUpdate }: FileBlockProps) => {
           src={fileUrl}
           className="w-full h-[520px] border-0"
           title={fileName || "File preview"}
-          allow="autoplay; fullscreen"
-          referrerPolicy="no-referrer"
+          allow="autoplay"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
           onError={() => setPdfError(true)}
+          onLoad={(e) => {
+            try {
+              const iframe = e.target as HTMLIFrameElement;
+              if (iframe.contentDocument === null && iframe.contentWindow === null) {
+                setPdfError(true);
+              }
+            } catch {
+              // Cross-origin — fine
+            }
+          }}
         />
       </motion.div>
     );
