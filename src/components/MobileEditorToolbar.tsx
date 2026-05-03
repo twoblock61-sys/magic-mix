@@ -113,6 +113,10 @@ const MobileEditorToolbar = ({ onOpenBlockMenu, isEditing }: MobileEditorToolbar
       >
         <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto scrollbar-thin">
           <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              onOpenBlockMenu();
+            }}
             onClick={onOpenBlockMenu}
             className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium shrink-0"
           >
@@ -146,6 +150,10 @@ const ToolbarIcon = ({
 }) => (
   <button
     onMouseDown={(e) => e.preventDefault()}
+    onTouchStart={(e) => {
+      e.preventDefault();
+      onClick();
+    }}
     onClick={onClick}
     aria-label={label}
     className="h-9 w-9 flex items-center justify-center rounded-lg text-foreground hover:bg-muted active:scale-95 transition-all shrink-0"
