@@ -2145,7 +2145,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-full mt-2 z-50 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[280px]"
+                    style={isTouch ? { bottom: "calc(var(--mobile-editor-keyboard-offset, 0px) + 64px + env(safe-area-inset-bottom))" } : undefined}
+                    className={isTouch
+                      ? "fixed left-3 right-3 z-[9996] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+                      : "absolute left-0 top-full mt-2 z-50 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[280px]"
+                    }
                   >
                     {/* Search Input */}
                     <div className="p-2 border-b border-border">
@@ -2159,7 +2163,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                       />
                     </div>
                     
-                    <div className="p-1.5 max-h-[350px] overflow-y-auto scrollbar-thin">
+                    <div className={isTouch ? "p-1.5 max-h-[52vh] overflow-y-auto scrollbar-thin" : "p-1.5 max-h-[350px] overflow-y-auto scrollbar-thin"}>
                       {/* Basic Blocks */}
                       {filteredBlockTypes.filter(bt => bt.category === "basic").length > 0 && (
                         <>
