@@ -1,6 +1,4 @@
 import { useState } from "react";
-import katex from "katex";
-import "katex/dist/katex.min.css";
 import { Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,17 +10,6 @@ interface EquationBlockProps {
 const EquationBlock = ({ content, onChange }: EquationBlockProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [copiedFormula, setCopiedFormula] = useState(false);
-
-  const renderLatex = (latex: string): string => {
-    try {
-      return katex.renderToString(latex, {
-        throwOnError: false,
-        strict: false,
-      });
-    } catch {
-      return "";
-    }
-  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(content);
@@ -44,8 +31,7 @@ const EquationBlock = ({ content, onChange }: EquationBlockProps) => {
     { name: "Integral", formula: "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}" },
   ];
 
-  const hasValidLatex = content.trim().length > 0;
-  const renderedLatex = renderLatex(content);
+  const hasFormula = content.trim().length > 0;
 
   return (
     <div className="py-2 space-y-2">
@@ -111,11 +97,10 @@ const EquationBlock = ({ content, onChange }: EquationBlockProps) => {
             exit={{ opacity: 0, y: -5 }}
             className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4 flex items-center justify-center min-h-[80px]"
           >
-            {hasValidLatex && renderedLatex ? (
-              <div
-                dangerouslySetInnerHTML={{ __html: renderedLatex }}
-                className="text-center"
-              />
+            {hasFormula ? (
+              <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-center font-mono text-sm text-foreground">
+                {content}
+              </pre>
             ) : (
               <p className="text-sm text-muted-foreground">Enter a formula to see preview</p>
             )}

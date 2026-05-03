@@ -1,4 +1,4 @@
-import { useState, useRef, KeyboardEvent, useEffect, useCallback } from "react";
+import { useState, useRef, KeyboardEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MobileEditorToolbar from "./MobileEditorToolbar";
 import { useIsTouchDevice } from "@/hooks/useIsTouchDevice";
@@ -205,99 +205,6 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
   }, [isTouch]);
 
-  // Build the default field values for a given block type. Shared by the desktop
-  // slash menu and the mobile bottom-sheet so the two stay perfectly in sync.
-  const getDefaultsForType = useCallback(
-    (type: NoteBlock["type"], currentContent: string): Partial<NoteBlock> => {
-      const updates: Partial<NoteBlock> = {
-        type,
-        content: type === "divider" ? "---" : currentContent,
-      };
-      if (type === "todo") updates.checked = false;
-      if (type === "toggle") { updates.isExpanded = true; updates.toggleContent = ""; }
-      if (type === "callout") updates.content = currentContent || "Type something...";
-      if (type === "gallery") updates.galleryImages = [];
-      if (type === "changelog") updates.changelogEntries = [{ id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], title: "", description: "", tag: "added" }];
-      if (type === "testimonial") {
-        updates.testimonialQuote = ""; updates.testimonialAuthor = "";
-        updates.testimonialRole = ""; updates.testimonialRating = 5; updates.testimonialStyle = "minimal";
-      }
-      if (type === "imageText") {
-        updates.imageTextUrl = ""; updates.imageTextTitle = "";
-        updates.imageTextDescription = ""; updates.imageTextLayout = "imageLeft";
-      }
-      if (type === "table") updates.tableData = [["", "", ""], ["", "", ""], ["", "", ""]];
-      if (type === "progress") { updates.progressValue = 50; updates.progressColor = "bg-blue-500"; }
-      if (type === "columns") {
-        updates.columns = [[{ id: crypto.randomUUID(), type: "text", content: "" }], [{ id: crypto.randomUUID(), type: "text", content: "" }]];
-        updates.columnTitles = ["Column 1", "Column 2"];
-      }
-      if (type === "timeline") updates.timelineItems = [{ id: crypto.randomUUID(), title: "Milestone 1", description: "Description", date: new Date().toISOString().split("T")[0], color: "bg-blue-500" }];
-      if (type === "kanban") updates.kanbanColumns = [
-        { id: crypto.randomUUID(), title: "To Do", cards: [{ id: crypto.randomUUID(), content: "New task" }] },
-        { id: crypto.randomUUID(), title: "In Progress", cards: [] },
-        { id: crypto.randomUUID(), title: "Done", cards: [] },
-      ];
-      if (type === "rating") { updates.ratingValue = 3; updates.ratingMax = 5; }
-      if (type === "countdown") {
-        updates.countdownDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-        updates.countdownTitle = "Countdown";
-      }
-      if (type === "database") {
-        updates.databaseRows = [{ id: crypto.randomUUID(), cells: { name: "", status: "", date: "" } }];
-        updates.databaseColumns = [
-          { id: "name", name: "Name", type: "text" },
-          { id: "status", name: "Status", type: "select" },
-          { id: "date", name: "Date", type: "date" },
-        ];
-      }
-      if (type === "mindmap") {
-        updates.mindMapNodes = [{ id: crypto.randomUUID(), text: "Central Idea", x: 150, y: 150, color: "bg-blue-500" }];
-        updates.mindMapConnections = [];
-      }
-      if (type === "flashcard") { updates.flashcards = []; updates.content = "Flashcards"; }
-      if (type === "tabs") updates.tabsData = [
-        { id: crypto.randomUUID(), label: "Tab 1", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
-        { id: crypto.randomUUID(), label: "Tab 2", content: "", blocks: [{ id: crypto.randomUUID(), type: "text" as const, content: "" }] },
-      ];
-      if (type === "poll") {
-        updates.pollQuestion = "What do you think?";
-        updates.pollOptions = [
-          { id: crypto.randomUUID(), text: "Option 1", votes: 0 },
-          { id: crypto.randomUUID(), text: "Option 2", votes: 0 },
-          { id: crypto.randomUUID(), text: "Option 3", votes: 0 },
-        ];
-      }
-      if (type === "proscons") { updates.prosItems = [""]; updates.consItems = [""]; }
-      if (type === "metric") {
-        updates.metricValue = "1,234"; updates.metricLabel = "Total Users";
-        updates.metricChange = "+12.5%"; updates.metricTrend = "up"; updates.metricColor = "Blue";
-      }
-      if (type === "swot") {
-        updates.swotStrengths = [""]; updates.swotWeaknesses = [""];
-        updates.swotOpportunities = [""]; updates.swotThreats = [""];
-      }
-      if (type === "accordionGroup") {
-        updates.accordionItems = [{ id: crypto.randomUUID(), title: "", content: "" }, { id: crypto.randomUUID(), title: "", content: "" }];
-        updates.accordionStyle = "clean";
-      }
-      return updates;
-    },
-    []
-  );
-
-  // Convert the active block via the mobile bottom sheet.
-  const convertActiveBlockTo = useCallback(
-    (type: NoteBlock["type"]) => {
-      const id = activeBlockId;
-      if (!id) return;
-      const current = blocks.find((b) => b.id === id);
-      if (!current) return;
-      updateBlock(id, getDefaultsForType(type, current.content));
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeBlockId, blocks, getDefaultsForType]
-  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; caption?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -2238,7 +2145,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-full mt-2 z-50 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[280px]"
+                    style={isTouch ? { bottom: "calc(var(--mobile-editor-keyboard-offset, 0px) + 64px + env(safe-area-inset-bottom))" } : undefined}
+                    className={isTouch
+                      ? "fixed left-3 right-3 z-[9996] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+                      : "absolute left-0 top-full mt-2 z-50 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[280px]"
+                    }
                   >
                     {/* Search Input */}
                     <div className="p-2 border-b border-border">
@@ -2252,7 +2163,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                       />
                     </div>
                     
-                    <div className="p-1.5 max-h-[350px] overflow-y-auto scrollbar-thin">
+                    <div className={isTouch ? "p-1.5 max-h-[52vh] overflow-y-auto scrollbar-thin" : "p-1.5 max-h-[350px] overflow-y-auto scrollbar-thin"}>
                       {/* Basic Blocks */}
                       {filteredBlockTypes.filter(bt => bt.category === "basic").length > 0 && (
                         <>
@@ -2524,8 +2435,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       {isTouch && (
         <MobileEditorToolbar
           isEditing={isEditingFocus}
-          onConvertBlock={(t) => convertActiveBlockTo(t as NoteBlock["type"])}
-          blockTypes={blockTypes as any}
+          onOpenBlockMenu={() => {
+            if (activeBlockId) {
+              setShowMenu(activeBlockId);
+              setMenuFilter("");
+            }
+          }}
         />
       )}
     </>
