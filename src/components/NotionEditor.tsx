@@ -1,6 +1,6 @@
 import { useState, useRef, KeyboardEvent, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import MobileEditorToolbar, { MobileBlockType } from "./MobileEditorToolbar";
+import MobileEditorToolbar from "./MobileEditorToolbar";
 import { useIsTouchDevice } from "@/hooks/useIsTouchDevice";
 import { 
   Plus, 
