@@ -2435,8 +2435,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       {isTouch && (
         <MobileEditorToolbar
           isEditing={isEditingFocus}
-          onConvertBlock={(t) => convertActiveBlockTo(t as NoteBlock["type"])}
-          blockTypes={blockTypes as any}
+          onOpenBlockMenu={() => {
+            if (activeBlockId) {
+              setShowMenu(activeBlockId);
+              setMenuFilter("");
+            }
+          }}
         />
       )}
     </>
