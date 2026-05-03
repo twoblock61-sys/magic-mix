@@ -1,101 +1,47 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Type,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  CheckSquare,
-  Quote,
-  Minus,
-  Code,
   Bold,
   Italic,
   Underline,
   Plus,
   X,
   ChevronDown,
-  Image as ImageIcon,
-  Music,
-  Play,
-  Table as TableIcon,
-  Paperclip,
-  Lightbulb,
-  Columns as ColumnsIcon,
-  ChevronRight,
-  Link2,
-  BarChart3,
-  Calculator,
+  Search,
+  CheckSquare,
+  List,
+  Heading2,
 } from "lucide-react";
 
-export type MobileBlockType =
-  | "text"
-  | "heading1"
-  | "heading2"
-  | "heading3"
-  | "bullet"
-  | "numbered"
-  | "todo"
-  | "quote"
-  | "divider"
-  | "code"
-  // Special blocks
-  | "image"
-  | "audio"
-  | "video"
-  | "table"
-  | "file"
-  | "callout"
-  | "toggle"
-  | "columns"
-  | "bookmark"
-  | "chart"
-  | "equation";
+export type MobileBlockDef = {
+  type: string;
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  category: string;
+};
 
 interface MobileEditorToolbarProps {
-  onConvertBlock: (type: MobileBlockType) => void;
+  onConvertBlock: (type: string) => void;
   isEditing: boolean;
+  blockTypes: ReadonlyArray<MobileBlockDef>;
 }
 
-type BlockDef = { type: MobileBlockType; icon: React.ElementType; label: string };
+const CATEGORY_ORDER = ["basic", "lists", "media", "advanced"] as const;
+const CATEGORY_LABELS: Record<string, string> = {
+  basic: "Basic",
+  lists: "Lists",
+  media: "Media & Embeds",
+  advanced: "Advanced",
+};
 
-const BASIC_BLOCKS: BlockDef[] = [
-  { type: "text", icon: Type, label: "Text" },
-  { type: "heading1", icon: Heading1, label: "H1" },
-  { type: "heading2", icon: Heading2, label: "H2" },
-  { type: "heading3", icon: Heading3, label: "H3" },
-  { type: "bullet", icon: List, label: "Bullet" },
-  { type: "numbered", icon: ListOrdered, label: "Numbered" },
-  { type: "todo", icon: CheckSquare, label: "To-do" },
-  { type: "quote", icon: Quote, label: "Quote" },
-  { type: "code", icon: Code, label: "Code" },
-  { type: "divider", icon: Minus, label: "Divider" },
-];
-
-const MEDIA_BLOCKS: BlockDef[] = [
-  { type: "image", icon: ImageIcon, label: "Image" },
-  { type: "video", icon: Play, label: "Video" },
-  { type: "audio", icon: Music, label: "Audio" },
-  { type: "file", icon: Paperclip, label: "File" },
-  { type: "bookmark", icon: Link2, label: "Bookmark" },
-];
-
-const ADVANCED_BLOCKS: BlockDef[] = [
-  { type: "table", icon: TableIcon, label: "Table" },
-  { type: "callout", icon: Lightbulb, label: "Callout" },
-  { type: "toggle", icon: ChevronRight, label: "Toggle" },
-  { type: "columns", icon: ColumnsIcon, label: "Columns" },
-  { type: "chart", icon: BarChart3, label: "Chart" },
-  { type: "equation", icon: Calculator, label: "Equation" },
-];
-
-const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarProps) => {
+const MobileEditorToolbar = ({ onConvertBlock, isEditing, blockTypes }: MobileEditorToolbarProps) => {
   const [bottomOffset, setBottomOffset] = useState(0);
   const [showBlockSheet, setShowBlockSheet] = useState(false);
+  const [filter, setFilter] = useState("");
   const lastScrollEl = useRef<Element | null>(null);
 
+  // Keep the toolbar pinned just above the on-screen keyboard.
   useEffect(() => {
     const vv = (window as any).visualViewport as VisualViewport | undefined;
     if (!vv) return;
@@ -112,6 +58,7 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
     };
   }, []);
 
+  // Auto-scroll the focused block into view above the toolbar/keyboard.
   useEffect(() => {
     if (!isEditing) return;
     const TOOLBAR_HEIGHT = 56;
@@ -164,10 +111,27 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
     document.execCommand(cmd, false);
   }, []);
 
-  const handleConvert = (type: MobileBlockType) => {
+  const handleConvert = (type: string) => {
     onConvertBlock(type);
     setShowBlockSheet(false);
+    setFilter("");
   };
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return blockTypes;
+    return blockTypes.filter(
+      (b) => b.label.toLowerCase().includes(q) || b.description.toLowerCase().includes(q)
+    );
+  }, [filter, blockTypes]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, MobileBlockDef[]> = {};
+    filtered.forEach((b) => {
+      (map[b.category] ||= []).push(b);
+    });
+    return map;
+  }, [filtered]);
 
   if (!isEditing && bottomOffset === 0) return null;
 
@@ -181,10 +145,6 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowBlockSheet(false)}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                setShowBlockSheet(false);
-              }}
               className="fixed inset-0 z-[9998] bg-background/60 backdrop-blur-sm"
             />
             <motion.div
@@ -192,14 +152,12 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 380, damping: 36 }}
-              style={{ bottom: bottomOffset, maxHeight: "70vh" }}
+              style={{ bottom: bottomOffset, maxHeight: "75vh" }}
               className="fixed left-0 right-0 z-[9999] bg-card border-t border-border rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)] flex flex-col"
             >
-              <div className="flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-1 rounded-full bg-muted-foreground/30 absolute left-1/2 -translate-x-1/2 top-1.5" />
-                  <span className="text-sm font-semibold text-foreground">Insert block</span>
-                </div>
+              <div className="relative flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 absolute left-1/2 -translate-x-1/2 top-1.5" />
+                <span className="text-sm font-semibold text-foreground mt-1">Insert block</span>
                 <button
                   onClick={() => setShowBlockSheet(false)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
@@ -209,19 +167,62 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
                 </button>
               </div>
 
-              <div className="overflow-y-auto px-3 pb-5">
-                <BlockSection title="Basic" blocks={BASIC_BLOCKS} onSelect={handleConvert} />
-                <BlockSection title="Media" blocks={MEDIA_BLOCKS} onSelect={handleConvert} />
-                <BlockSection title="Advanced" blocks={ADVANCED_BLOCKS} onSelect={handleConvert} />
+              <div className="px-3 pb-2 shrink-0">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
+                  <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <input
+                    type="text"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    placeholder="Filter blocks..."
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-y-auto px-2 pb-5">
+                {CATEGORY_ORDER.map((cat) => {
+                  const items = grouped[cat];
+                  if (!items || items.length === 0) return null;
+                  return (
+                    <div key={cat} className="mt-2">
+                      <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {CATEGORY_LABELS[cat] || cat}
+                      </p>
+                      <div className="flex flex-col">
+                        {items.map((b) => (
+                          <button
+                            key={b.type}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleConvert(b.type)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted active:bg-muted transition-colors text-left"
+                          >
+                            <div className="p-2 rounded-lg bg-muted shrink-0">
+                              <b.icon className="w-4 h-4 text-foreground" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-sm font-medium block truncate">{b.label}</span>
+                              <span className="text-xs text-muted-foreground block truncate">
+                                {b.description}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <p className="px-3 py-6 text-sm text-muted-foreground text-center">
+                    No blocks found
+                  </p>
+                )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Persistent toolbar pinned just above the keyboard.
-          Quick block conversions live inside the bottom sheet to avoid duplication —
-          this bar focuses on Insert + inline formatting. */}
       <motion.div
         initial={false}
         animate={{ y: 0 }}
@@ -245,14 +246,12 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
 
           <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
-          {/* Inline formatting only — no duplicates of block types */}
           <ToolbarIcon icon={Bold} label="Bold" onClick={() => exec("bold")} />
           <ToolbarIcon icon={Italic} label="Italic" onClick={() => exec("italic")} />
           <ToolbarIcon icon={Underline} label="Underline" onClick={() => exec("underline")} />
 
           <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
-          {/* A few super-frequent block shortcuts */}
           <ToolbarIcon icon={CheckSquare} label="To-do" onClick={() => onConvertBlock("todo")} />
           <ToolbarIcon icon={List} label="Bullet" onClick={() => onConvertBlock("bullet")} />
           <ToolbarIcon icon={Heading2} label="Heading" onClick={() => onConvertBlock("heading2")} />
@@ -263,37 +262,6 @@ const MobileEditorToolbar = ({ onConvertBlock, isEditing }: MobileEditorToolbarP
     </>
   );
 };
-
-const BlockSection = ({
-  title,
-  blocks,
-  onSelect,
-}: {
-  title: string;
-  blocks: BlockDef[];
-  onSelect: (t: MobileBlockType) => void;
-}) => (
-  <div className="mt-3">
-    <div className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-      {title}
-    </div>
-    <div className="grid grid-cols-4 gap-2">
-      {blocks.map((b) => (
-        <button
-          key={b.type}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => onSelect(b.type)}
-          className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-muted/40 hover:bg-muted active:scale-95 transition-all"
-        >
-          <b.icon className="w-5 h-5 text-foreground" />
-          <span className="text-[11px] text-muted-foreground text-center leading-tight">
-            {b.label}
-          </span>
-        </button>
-      ))}
-    </div>
-  </div>
-);
 
 const ToolbarIcon = ({
   icon: Icon,
