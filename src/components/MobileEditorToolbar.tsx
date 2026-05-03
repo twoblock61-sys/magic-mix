@@ -31,6 +31,7 @@ const MobileEditorToolbar = ({ onOpenBlockMenu, isEditing }: MobileEditorToolbar
     if (!vv) return;
     const updateOffset = () => {
       const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--mobile-editor-keyboard-offset", `${offset}px`);
       setBottomOffset(offset);
     };
     updateOffset();
