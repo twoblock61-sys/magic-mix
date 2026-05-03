@@ -108,7 +108,7 @@ const MobileEditorToolbar = ({ onOpenBlockMenu, isEditing }: MobileEditorToolbar
         onMouseDown={(e) => e.preventDefault()}
         onTouchStart={(e) => {
           const t = e.target as HTMLElement;
-          if (!t.closest("input, textarea")) e.preventDefault();
+          if (!t.closest("button, input, textarea")) e.preventDefault();
         }}
       >
         <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto scrollbar-thin">
