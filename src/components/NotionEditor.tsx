@@ -2524,7 +2524,8 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       {isTouch && (
         <MobileEditorToolbar
           isEditing={isEditingFocus}
-          onConvertBlock={convertActiveBlockTo}
+          onConvertBlock={(t) => convertActiveBlockTo(t as NoteBlock["type"])}
+          blockTypes={blockTypes as any}
         />
       )}
     </>
