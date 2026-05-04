@@ -355,15 +355,9 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return;
       }
 
-      if (allBlocksSelected && (key === "c" || key === "x")) {
-        e.preventDefault();
-        writeBlocksToClipboard(blocksRef.current);
-        if (key === "x") {
-          onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
-          setAllBlocksSelected(false);
-        }
-        return;
-      }
+      // Note: Ctrl+C / Ctrl+X are handled by the native `copy` / `cut`
+      // events below — intercepting them here would prevent those events
+      // from firing and break clipboard writes.
     };
 
     const handleCopy = (e: ClipboardEvent) => {
