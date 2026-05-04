@@ -308,9 +308,13 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
     const isInsideEditor = (el: EventTarget | null) =>
       el instanceof Node && root.contains(el);
+    // When the whole note is selected, focus is intentionally blurred, so
+    // clipboard events fire on <body>. Treat those as "inside" too.
+    const isInsideEditorForClipboard = (el: EventTarget | null) =>
+      isInsideEditor(el) || (allBlocksSelected && (el === document.body || el === document.documentElement || el === root));
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (!isInsideEditor(e.target)) return;
+      if (!isInsideEditor(e.target) && !(allBlocksSelected && isInsideEditorForClipboard(e.target))) return;
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) {
         if (allBlocksSelected && (e.key === "Backspace" || e.key === "Delete")) {
@@ -351,19 +355,13 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return;
       }
 
-      if (allBlocksSelected && (key === "c" || key === "x")) {
-        e.preventDefault();
-        writeBlocksToClipboard(blocksRef.current);
-        if (key === "x") {
-          onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
-          setAllBlocksSelected(false);
-        }
-        return;
-      }
+      // Note: Ctrl+C / Ctrl+X are handled by the native `copy` / `cut`
+      // events below — intercepting them here would prevent those events
+      // from firing and break clipboard writes.
     };
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
       e.preventDefault();
       const json = JSON.stringify(blocksRef.current);
       const text = blocksToPlainText(blocksRef.current);
@@ -372,7 +370,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
       e.preventDefault();
       const json = JSON.stringify(blocksRef.current);
       const text = blocksToPlainText(blocksRef.current);
@@ -383,7 +381,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target)) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
       const customJson = e.clipboardData?.getData(NOTE_CLIPBOARD_MIME);
       let payload: string | null = customJson || null;
       if (!payload) {
