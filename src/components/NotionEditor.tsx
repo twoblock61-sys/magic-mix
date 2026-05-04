@@ -314,7 +314,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       isInsideEditor(el) || (allBlocksSelected && (el === document.body || el === document.documentElement || el === root));
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (!isInsideEditor(e.target)) return;
+      if (!isInsideEditor(e.target) && !(allBlocksSelected && isInsideEditorForClipboard(e.target))) return;
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) {
         if (allBlocksSelected && (e.key === "Backspace" || e.key === "Delete")) {
