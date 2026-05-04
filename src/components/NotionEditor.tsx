@@ -2294,7 +2294,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
   return (
     <>
-      <div className="space-y-1 min-h-[200px]">
+      <div
+        ref={editorRootRef}
+        className={`space-y-1 min-h-[200px] rounded-lg transition-colors ${
+          allBlocksSelected ? "bg-primary/10 ring-2 ring-primary/40 p-2" : ""
+        }`}
+      >
         {blocks.map((block) => (
           <motion.div
             key={`${block.id}-${block.type}`}
