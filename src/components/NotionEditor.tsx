@@ -211,9 +211,234 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [studyModeBlock, setStudyModeBlock] = useState<NoteBlock | null>(null);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
+  const [allBlocksSelected, setAllBlocksSelected] = useState(false);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const editorRootRef = useRef<HTMLDivElement>(null);
+  const blocksRef = useRef<NoteBlock[]>(blocks);
+  useEffect(() => { blocksRef.current = blocks; }, [blocks]);
   const dragYRef = useRef(0);
+
+  // ===== Select-all / Copy / Cut / Paste across the entire note =====
+  const NOTE_CLIPBOARD_MIME = "application/x-notion-blocks+json";
+
+  const blocksToPlainText = (bs: NoteBlock[]): string => {
+    return bs
+      .map((b) => {
+        const stripHtml = (s: string) => s ? s.replace(/<[^>]*>/g, "") : "";
+        let text = stripHtml(b.content || "");
+        if (b.type === "heading1") text = `# ${text}`;
+        else if (b.type === "heading2") text = `## ${text}`;
+        else if (b.type === "heading3") text = `### ${text}`;
+        else if (b.type === "bullet") text = `• ${text}`;
+        else if (b.type === "numbered") text = `1. ${text}`;
+        else if (b.type === "todo") text = `[${b.checked ? "x" : " "}] ${text}`;
+        else if (b.type === "quote") text = `> ${text}`;
+        else if (b.type === "divider") text = `---`;
+        else if (b.type === "code") text = `\`\`\`\n${text}\n\`\`\``;
+        if (b.toggleContent) text += `\n${stripHtml(b.toggleContent)}`;
+        return text;
+      })
+      .join("\n");
+  };
+
+  // Recursively assign new ids to a block (and any nested blocks) so pasted
+  // copies don't collide with originals.
+  const reassignIds = (b: NoteBlock): NoteBlock => {
+    const copy: NoteBlock = { ...b, id: crypto.randomUUID() };
+    if (copy.columns) {
+      copy.columns = copy.columns.map((col) => col.map(reassignIds));
+    }
+    if (copy.tabsData) {
+      copy.tabsData = copy.tabsData.map((tab) => ({
+        ...tab,
+        id: crypto.randomUUID(),
+        blocks: (tab.blocks || []).map(reassignIds),
+      }));
+    }
+    return copy;
+  };
+
+  const clearAllSelection = () => {
+    setAllBlocksSelected(false);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+  };
+
+  const isAllSelectedInActiveField = (): boolean => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    const ce = (range.commonAncestorContainer as HTMLElement)?.nodeType === 1
+      ? (range.commonAncestorContainer as HTMLElement).closest('[contenteditable="true"]')
+      : (range.commonAncestorContainer.parentElement?.closest('[contenteditable="true"]'));
+    if (!ce) return false;
+    const fieldText = (ce.textContent || "");
+    const selectedText = sel.toString();
+    return fieldText.length > 0 && selectedText.length === fieldText.length;
+  };
+
+  const writeBlocksToClipboard = async (bs: NoteBlock[]) => {
+    const json = JSON.stringify(bs);
+    const text = blocksToPlainText(bs);
+    try {
+      // Try the modern clipboard API with custom mime first
+      const ClipboardItemCtor = (window as any).ClipboardItem;
+      if (navigator.clipboard && ClipboardItemCtor) {
+        const item = new ClipboardItemCtor({
+          "text/plain": new Blob([text], { type: "text/plain" }),
+          [NOTE_CLIPBOARD_MIME]: new Blob([json], { type: NOTE_CLIPBOARD_MIME }),
+        });
+        await navigator.clipboard.write([item]);
+        return;
+      }
+    } catch {
+      // fallthrough to text-only
+    }
+    try {
+      await navigator.clipboard.writeText(`${NOTE_CLIPBOARD_MIME}:${json}`);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  useEffect(() => {
+    const root = editorRootRef.current;
+    if (!root) return;
+
+    const isInsideEditor = (el: EventTarget | null) =>
+      el instanceof Node && root.contains(el);
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (!isInsideEditor(e.target)) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) {
+        if (allBlocksSelected && (e.key === "Backspace" || e.key === "Delete")) {
+          e.preventDefault();
+          onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
+          setAllBlocksSelected(false);
+        } else if (allBlocksSelected && e.key === "Escape") {
+          clearAllSelection();
+        } else if (allBlocksSelected && e.key.length === 1) {
+          // Typing replaces the whole note with a fresh block
+          e.preventDefault();
+          onChange([{ id: crypto.randomUUID(), type: "text", content: e.key }]);
+          setAllBlocksSelected(false);
+        }
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      if (key === "a") {
+        if (allBlocksSelected) return; // already selected
+        const allSelectedInField = isAllSelectedInActiveField();
+        const sel = window.getSelection();
+        const insideEditable =
+          sel && sel.rangeCount > 0 &&
+          (sel.getRangeAt(0).commonAncestorContainer as HTMLElement | Text)
+            ?.parentElement?.closest('[contenteditable="true"]');
+
+        // If cursor isn't in any editable, OR field is already fully selected,
+        // escalate to full-note selection.
+        if (!insideEditable || allSelectedInField) {
+          e.preventDefault();
+          setAllBlocksSelected(true);
+          (document.activeElement as HTMLElement)?.blur?.();
+          window.getSelection()?.removeAllRanges();
+        }
+        // Otherwise let the browser do the default (select all in current field).
+        return;
+      }
+
+      if (allBlocksSelected && (key === "c" || key === "x")) {
+        e.preventDefault();
+        writeBlocksToClipboard(blocksRef.current);
+        if (key === "x") {
+          onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
+          setAllBlocksSelected(false);
+        }
+        return;
+      }
+    };
+
+    const handleCopy = (e: ClipboardEvent) => {
+      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      e.preventDefault();
+      const json = JSON.stringify(blocksRef.current);
+      const text = blocksToPlainText(blocksRef.current);
+      e.clipboardData?.setData("text/plain", text);
+      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      e.preventDefault();
+      const json = JSON.stringify(blocksRef.current);
+      const text = blocksToPlainText(blocksRef.current);
+      e.clipboardData?.setData("text/plain", text);
+      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
+      onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
+      setAllBlocksSelected(false);
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!isInsideEditor(e.target)) return;
+      const customJson = e.clipboardData?.getData(NOTE_CLIPBOARD_MIME);
+      let payload: string | null = customJson || null;
+      if (!payload) {
+        const txt = e.clipboardData?.getData("text/plain") || "";
+        if (txt.startsWith(`${NOTE_CLIPBOARD_MIME}:`)) {
+          payload = txt.slice(NOTE_CLIPBOARD_MIME.length + 1);
+        }
+      }
+      if (!payload) return; // not our blocks — let default paste run
+
+      try {
+        const parsed = JSON.parse(payload);
+        if (!Array.isArray(parsed) || parsed.length === 0) return;
+        const newBlocks: NoteBlock[] = parsed.map(reassignIds);
+
+        e.preventDefault();
+        if (allBlocksSelected) {
+          onChange(newBlocks);
+          setAllBlocksSelected(false);
+          return;
+        }
+
+        // Insert after the currently active/focused block
+        const current = blocksRef.current;
+        const activeId =
+          activeBlockId ||
+          (document.activeElement as HTMLElement)?.closest?.("[data-block-id]")?.getAttribute("data-block-id");
+        const idx = activeId ? current.findIndex((b) => b.id === activeId) : current.length - 1;
+        const insertAt = idx >= 0 ? idx + 1 : current.length;
+        const next = [...current.slice(0, insertAt), ...newBlocks, ...current.slice(insertAt)];
+        onChange(next);
+      } catch {
+        /* not JSON — let default run */
+      }
+    };
+
+    const handlePointerDown = (e: MouseEvent) => {
+      if (allBlocksSelected) {
+        clearAllSelection();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("cut", handleCut);
+    document.addEventListener("paste", handlePaste);
+    root.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("cut", handleCut);
+      document.removeEventListener("paste", handlePaste);
+      root.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [allBlocksSelected, onChange, activeBlockId]);
 
   const updateBlock = (id: string, updates: Partial<NoteBlock>) => {
     onChange(
