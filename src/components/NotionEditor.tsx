@@ -307,7 +307,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     if (!root) return;
 
     const isInsideEditor = (el: EventTarget | null) =>
-      (el instanceof Node && root.contains(el)) || el === root || el === document.body;
+      el instanceof Node && root.contains(el);
+    // When the whole note is selected, focus is intentionally blurred, so
+    // clipboard events fire on <body>. Treat those as "inside" too.
+    const isInsideEditorForClipboard = (el: EventTarget | null) =>
+      isInsideEditor(el) || (allBlocksSelected && (el === document.body || el === document.documentElement || el === root));
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!isInsideEditor(e.target)) return;
