@@ -367,7 +367,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
       e.preventDefault();
       const json = JSON.stringify(blocksRef.current);
       const text = blocksToPlainText(blocksRef.current);
@@ -376,7 +376,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
       e.preventDefault();
       const json = JSON.stringify(blocksRef.current);
       const text = blocksToPlainText(blocksRef.current);
@@ -387,7 +387,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isInsideEditor(e.target)) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
       const customJson = e.clipboardData?.getData(NOTE_CLIPBOARD_MIME);
       let payload: string | null = customJson || null;
       if (!payload) {
