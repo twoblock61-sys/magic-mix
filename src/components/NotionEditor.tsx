@@ -307,7 +307,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     if (!root) return;
 
     const isInsideEditor = (el: EventTarget | null) =>
-      el instanceof Node && root.contains(el);
+      (el instanceof Node && root.contains(el)) || el === root || el === document.body;
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!isInsideEditor(e.target)) return;
