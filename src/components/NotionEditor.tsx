@@ -439,6 +439,17 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           return;
         }
 
+        const blocksSelectedInDom = getSelectedTopLevelBlocks();
+        if (blocksSelectedInDom.length > 1) {
+          const selectedIds = new Set(blocksSelectedInDom.map((block) => block.id));
+          const firstSelectedIndex = blocksRef.current.findIndex((block) => selectedIds.has(block.id));
+          const next = blocksRef.current.filter((block) => !selectedIds.has(block.id));
+          next.splice(Math.max(firstSelectedIndex, 0), 0, ...newBlocks);
+          onChange(next);
+          clearAllSelection();
+          return;
+        }
+
         // Insert after the currently active/focused block
         const current = blocksRef.current;
         const activeId =
@@ -2329,6 +2340,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     <>
       <div
         ref={editorRootRef}
+        tabIndex={-1}
         className={`space-y-1 min-h-[200px] rounded-lg transition-colors ${
           allBlocksSelected ? "bg-primary/10 ring-2 ring-primary/40 p-2" : ""
         }`}
