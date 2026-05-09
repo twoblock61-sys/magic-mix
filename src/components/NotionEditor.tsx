@@ -369,22 +369,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       if (key === "a") {
         if (allBlocksSelected) return; // already selected
-        const allSelectedInField = isAllSelectedInActiveField();
-        const sel = window.getSelection();
-        const insideEditable =
-          sel && sel.rangeCount > 0 &&
-          (sel.getRangeAt(0).commonAncestorContainer as HTMLElement | Text)
-            ?.parentElement?.closest('[contenteditable="true"]');
-
-        // If cursor isn't in any editable, OR field is already fully selected,
-        // escalate to full-note selection.
-        if (!insideEditable || allSelectedInField) {
-          e.preventDefault();
-          setAllBlocksSelected(true);
-          root.focus({ preventScroll: true });
-          window.getSelection()?.removeAllRanges();
-        }
-        // Otherwise let the browser do the default (select all in current field).
+        e.preventDefault();
+        setAllBlocksSelected(true);
+        root.focus({ preventScroll: true });
+        window.getSelection()?.removeAllRanges();
         return;
       }
 
