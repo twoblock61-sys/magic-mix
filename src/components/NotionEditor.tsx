@@ -394,23 +394,23 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
+      const selectedBlocks = getBlocksForClipboard();
+      if (selectedBlocks.length === 0) return;
       e.preventDefault();
-      const json = JSON.stringify(blocksRef.current);
-      const text = blocksToPlainText(blocksRef.current);
-      e.clipboardData?.setData("text/plain", text);
-      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
+      writeBlocksToDataTransfer(e.clipboardData, selectedBlocks);
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
+      const selectedBlocks = getBlocksForClipboard();
+      if (selectedBlocks.length === 0) return;
       e.preventDefault();
-      const json = JSON.stringify(blocksRef.current);
-      const text = blocksToPlainText(blocksRef.current);
-      e.clipboardData?.setData("text/plain", text);
-      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
-      onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
-      setAllBlocksSelected(false);
+      writeBlocksToDataTransfer(e.clipboardData, selectedBlocks);
+      const selectedIds = new Set(selectedBlocks.map((block) => block.id));
+      const remainingBlocks = blocksRef.current.filter((block) => !selectedIds.has(block.id));
+      onChange(remainingBlocks.length > 0 ? remainingBlocks : [{ id: crypto.randomUUID(), type: "text", content: "" }]);
+      clearAllSelection();
     };
 
     const handlePaste = (e: ClipboardEvent) => {
@@ -418,10 +418,20 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       const customJson = e.clipboardData?.getData(NOTE_CLIPBOARD_MIME);
       let payload: string | null = customJson || null;
       if (!payload) {
+        const html = e.clipboardData?.getData("text/html") || "";
+        const htmlMatch = html.match(/data-elephant-note-blocks=["']([^"']+)["']/);
+        if (htmlMatch?.[1]) {
+          payload = decodeURIComponent(htmlMatch[1]);
+        }
+      }
+      if (!payload) {
         const txt = e.clipboardData?.getData("text/plain") || "";
         if (txt.startsWith(`${NOTE_CLIPBOARD_MIME}:`)) {
           payload = txt.slice(NOTE_CLIPBOARD_MIME.length + 1);
         }
+      }
+      if (!payload && noteBlocksClipboardFallback) {
+        payload = noteBlocksClipboardFallback.json;
       }
       if (!payload) return; // not our blocks — let default paste run
 
