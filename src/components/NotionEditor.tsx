@@ -169,6 +169,9 @@ const progressColors = [
 
 const timelineColors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500"];
 
+const NOTE_CLIPBOARD_MIME = "application/x-notion-blocks+json";
+let noteBlocksClipboardFallback: { blocks: NoteBlock[]; text: string; json: string } | null = null;
+
 const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState<string | null>(null);
@@ -219,8 +222,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   useEffect(() => { blocksRef.current = blocks; }, [blocks]);
   const dragYRef = useRef(0);
 
-  // ===== Select-all / Copy / Cut / Paste across the entire note =====
-  const NOTE_CLIPBOARD_MIME = "application/x-notion-blocks+json";
+  // ===== Select-all / Copy / Cut / Paste across note blocks =====
 
   const blocksToPlainText = (bs: NoteBlock[]): string => {
     return bs
@@ -240,6 +242,61 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return text;
       })
       .join("\n");
+  };
+
+  const cloneBlocks = (bs: NoteBlock[]): NoteBlock[] => JSON.parse(JSON.stringify(bs));
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const blocksToClipboardHtml = (json: string, text: string) =>
+    `<div data-elephant-note-blocks="${encodeURIComponent(json)}">${escapeHtml(text).replace(/\n/g, "<br>")}</div>`;
+
+  const getSelectedTopLevelBlocks = (): NoteBlock[] => {
+    const root = editorRootRef.current;
+    const selection = window.getSelection();
+    if (!root || !selection || selection.rangeCount === 0 || selection.isCollapsed) return [];
+    if (!selection.anchorNode || !selection.focusNode) return [];
+    if (!root.contains(selection.anchorNode) || !root.contains(selection.focusNode)) return [];
+
+    const ranges = Array.from({ length: selection.rangeCount }, (_, index) => selection.getRangeAt(index));
+    return blocksRef.current.filter((block) => {
+      const el = blockRefs.current.get(block.id);
+      if (!el) return false;
+      return ranges.some((range) => {
+        try {
+          return range.intersectsNode(el);
+        } catch {
+          return false;
+        }
+      });
+    });
+  };
+
+  const getBlocksForClipboard = (): NoteBlock[] => {
+    if (allBlocksSelected) return blocksRef.current;
+    const selectedBlocks = getSelectedTopLevelBlocks();
+    return selectedBlocks.length > 1 ? selectedBlocks : [];
+  };
+
+  const rememberBlocksClipboard = (bs: NoteBlock[]) => {
+    const snapshot = cloneBlocks(bs);
+    const json = JSON.stringify(snapshot);
+    const text = blocksToPlainText(snapshot);
+    noteBlocksClipboardFallback = { blocks: snapshot, text, json };
+    return { snapshot, json, text, html: blocksToClipboardHtml(json, text) };
+  };
+
+  const writeBlocksToDataTransfer = (clipboardData: DataTransfer | null, bs: NoteBlock[]) => {
+    if (!clipboardData) return;
+    const { json, text, html } = rememberBlocksClipboard(bs);
+    clipboardData.setData("text/plain", text);
+    clipboardData.setData("text/html", html);
+    clipboardData.setData(NOTE_CLIPBOARD_MIME, json);
   };
 
   // Recursively assign new ids to a block (and any nested blocks) so pasted
