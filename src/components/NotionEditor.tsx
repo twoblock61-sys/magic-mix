@@ -169,6 +169,9 @@ const progressColors = [
 
 const timelineColors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500"];
 
+const NOTE_CLIPBOARD_MIME = "application/x-notion-blocks+json";
+let noteBlocksClipboardFallback: { blocks: NoteBlock[]; text: string; json: string } | null = null;
+
 const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState<string | null>(null);
@@ -219,8 +222,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
   useEffect(() => { blocksRef.current = blocks; }, [blocks]);
   const dragYRef = useRef(0);
 
-  // ===== Select-all / Copy / Cut / Paste across the entire note =====
-  const NOTE_CLIPBOARD_MIME = "application/x-notion-blocks+json";
+  // ===== Select-all / Copy / Cut / Paste across note blocks =====
 
   const blocksToPlainText = (bs: NoteBlock[]): string => {
     return bs
@@ -240,6 +242,65 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         return text;
       })
       .join("\n");
+  };
+
+  const cloneBlocks = (bs: NoteBlock[]): NoteBlock[] => JSON.parse(JSON.stringify(bs));
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const blocksToClipboardHtml = (json: string, text: string) =>
+    `<div data-elephant-note-blocks="${encodeURIComponent(json)}">${escapeHtml(text).replace(/\n/g, "<br>")}</div>`;
+
+  const getSelectedTopLevelBlocks = (): NoteBlock[] => {
+    const root = editorRootRef.current;
+    const selection = window.getSelection();
+    if (!root || !selection || selection.rangeCount === 0 || selection.isCollapsed) return [];
+    if (!selection.anchorNode || !selection.focusNode) return [];
+    if (!root.contains(selection.anchorNode) || !root.contains(selection.focusNode)) return [];
+
+    const ranges = Array.from({ length: selection.rangeCount }, (_, index) => selection.getRangeAt(index));
+    return blocksRef.current.filter((block) => {
+      const el = blockRefs.current.get(block.id);
+      if (!el) return false;
+      return ranges.some((range) => {
+        try {
+          return range.intersectsNode(el);
+        } catch {
+          return false;
+        }
+      });
+    });
+  };
+
+  const getBlocksForClipboard = (): NoteBlock[] => {
+    if (allBlocksSelected) return blocksRef.current;
+    const selectedBlocks = getSelectedTopLevelBlocks();
+    return selectedBlocks.length > 1 ? selectedBlocks : [];
+  };
+
+  const rememberBlocksClipboard = (bs: NoteBlock[]) => {
+    const snapshot = cloneBlocks(bs);
+    const json = JSON.stringify(snapshot);
+    const text = blocksToPlainText(snapshot);
+    noteBlocksClipboardFallback = { blocks: snapshot, text, json };
+    return { snapshot, json, text, html: blocksToClipboardHtml(json, text) };
+  };
+
+  const writeBlocksToDataTransfer = (clipboardData: DataTransfer | null, bs: NoteBlock[]) => {
+    if (!clipboardData) return;
+    const { json, text, html } = rememberBlocksClipboard(bs);
+    clipboardData.setData("text/plain", text);
+    clipboardData.setData("text/html", html);
+    try {
+      clipboardData.setData(NOTE_CLIPBOARD_MIME, json);
+    } catch {
+      // Some browsers reject custom clipboard MIME types; text/html + fallback still preserve blocks.
+    }
   };
 
   // Recursively assign new ids to a block (and any nested blocks) so pasted
@@ -278,30 +339,6 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     return fieldText.length > 0 && selectedText.length === fieldText.length;
   };
 
-  const writeBlocksToClipboard = async (bs: NoteBlock[]) => {
-    const json = JSON.stringify(bs);
-    const text = blocksToPlainText(bs);
-    try {
-      // Try the modern clipboard API with custom mime first
-      const ClipboardItemCtor = (window as any).ClipboardItem;
-      if (navigator.clipboard && ClipboardItemCtor) {
-        const item = new ClipboardItemCtor({
-          "text/plain": new Blob([text], { type: "text/plain" }),
-          [NOTE_CLIPBOARD_MIME]: new Blob([json], { type: NOTE_CLIPBOARD_MIME }),
-        });
-        await navigator.clipboard.write([item]);
-        return;
-      }
-    } catch {
-      // fallthrough to text-only
-    }
-    try {
-      await navigator.clipboard.writeText(`${NOTE_CLIPBOARD_MIME}:${json}`);
-    } catch {
-      /* ignore */
-    }
-  };
-
   useEffect(() => {
     const root = editorRootRef.current;
     if (!root) return;
@@ -311,7 +348,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     // When the whole note is selected, focus is intentionally blurred, so
     // clipboard events fire on <body>. Treat those as "inside" too.
     const isInsideEditorForClipboard = (el: EventTarget | null) =>
-      isInsideEditor(el) || (allBlocksSelected && (el === document.body || el === document.documentElement || el === root));
+      isInsideEditor(el) || ((allBlocksSelected || !!noteBlocksClipboardFallback) && (el === document.body || el === document.documentElement || el === root));
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!isInsideEditor(e.target) && !(allBlocksSelected && isInsideEditorForClipboard(e.target))) return;
@@ -336,22 +373,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
 
       if (key === "a") {
         if (allBlocksSelected) return; // already selected
-        const allSelectedInField = isAllSelectedInActiveField();
-        const sel = window.getSelection();
-        const insideEditable =
-          sel && sel.rangeCount > 0 &&
-          (sel.getRangeAt(0).commonAncestorContainer as HTMLElement | Text)
-            ?.parentElement?.closest('[contenteditable="true"]');
-
-        // If cursor isn't in any editable, OR field is already fully selected,
-        // escalate to full-note selection.
-        if (!insideEditable || allSelectedInField) {
-          e.preventDefault();
-          setAllBlocksSelected(true);
-          (document.activeElement as HTMLElement)?.blur?.();
-          window.getSelection()?.removeAllRanges();
-        }
-        // Otherwise let the browser do the default (select all in current field).
+        e.preventDefault();
+        setAllBlocksSelected(true);
+        root.focus({ preventScroll: true });
+        window.getSelection()?.removeAllRanges();
         return;
       }
 
@@ -361,23 +386,23 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     };
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
+      const selectedBlocks = getBlocksForClipboard();
+      if (selectedBlocks.length === 0) return;
       e.preventDefault();
-      const json = JSON.stringify(blocksRef.current);
-      const text = blocksToPlainText(blocksRef.current);
-      e.clipboardData?.setData("text/plain", text);
-      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
+      writeBlocksToDataTransfer(e.clipboardData, selectedBlocks);
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      if (!isInsideEditorForClipboard(e.target) || !allBlocksSelected) return;
+      if (!isInsideEditorForClipboard(e.target)) return;
+      const selectedBlocks = getBlocksForClipboard();
+      if (selectedBlocks.length === 0) return;
       e.preventDefault();
-      const json = JSON.stringify(blocksRef.current);
-      const text = blocksToPlainText(blocksRef.current);
-      e.clipboardData?.setData("text/plain", text);
-      e.clipboardData?.setData(NOTE_CLIPBOARD_MIME, json);
-      onChange([{ id: crypto.randomUUID(), type: "text", content: "" }]);
-      setAllBlocksSelected(false);
+      writeBlocksToDataTransfer(e.clipboardData, selectedBlocks);
+      const selectedIds = new Set(selectedBlocks.map((block) => block.id));
+      const remainingBlocks = blocksRef.current.filter((block) => !selectedIds.has(block.id));
+      onChange(remainingBlocks.length > 0 ? remainingBlocks : [{ id: crypto.randomUUID(), type: "text", content: "" }]);
+      clearAllSelection();
     };
 
     const handlePaste = (e: ClipboardEvent) => {
@@ -385,10 +410,20 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
       const customJson = e.clipboardData?.getData(NOTE_CLIPBOARD_MIME);
       let payload: string | null = customJson || null;
       if (!payload) {
+        const html = e.clipboardData?.getData("text/html") || "";
+        const htmlMatch = html.match(/data-elephant-note-blocks=["']([^"']+)["']/);
+        if (htmlMatch?.[1]) {
+          payload = decodeURIComponent(htmlMatch[1]);
+        }
+      }
+      if (!payload) {
         const txt = e.clipboardData?.getData("text/plain") || "";
         if (txt.startsWith(`${NOTE_CLIPBOARD_MIME}:`)) {
           payload = txt.slice(NOTE_CLIPBOARD_MIME.length + 1);
         }
+      }
+      if (!payload && noteBlocksClipboardFallback) {
+        payload = noteBlocksClipboardFallback.json;
       }
       if (!payload) return; // not our blocks — let default paste run
 
@@ -401,6 +436,17 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         if (allBlocksSelected) {
           onChange(newBlocks);
           setAllBlocksSelected(false);
+          return;
+        }
+
+        const blocksSelectedInDom = getSelectedTopLevelBlocks();
+        if (blocksSelectedInDom.length > 1) {
+          const selectedIds = new Set(blocksSelectedInDom.map((block) => block.id));
+          const firstSelectedIndex = blocksRef.current.findIndex((block) => selectedIds.has(block.id));
+          const next = blocksRef.current.filter((block) => !selectedIds.has(block.id));
+          next.splice(Math.max(firstSelectedIndex, 0), 0, ...newBlocks);
+          onChange(next);
+          clearAllSelection();
           return;
         }
 
@@ -2294,6 +2340,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     <>
       <div
         ref={editorRootRef}
+        tabIndex={-1}
         className={`space-y-1 min-h-[200px] rounded-lg transition-colors ${
           allBlocksSelected ? "bg-primary/10 ring-2 ring-primary/40 p-2" : ""
         }`}
