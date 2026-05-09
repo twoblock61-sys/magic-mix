@@ -296,7 +296,11 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     const { json, text, html } = rememberBlocksClipboard(bs);
     clipboardData.setData("text/plain", text);
     clipboardData.setData("text/html", html);
-    clipboardData.setData(NOTE_CLIPBOARD_MIME, json);
+    try {
+      clipboardData.setData(NOTE_CLIPBOARD_MIME, json);
+    } catch {
+      // Some browsers reject custom clipboard MIME types; text/html + fallback still preserve blocks.
+    }
   };
 
   // Recursively assign new ids to a block (and any nested blocks) so pasted
