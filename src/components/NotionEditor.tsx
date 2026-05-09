@@ -335,30 +335,6 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     return fieldText.length > 0 && selectedText.length === fieldText.length;
   };
 
-  const writeBlocksToClipboard = async (bs: NoteBlock[]) => {
-    const json = JSON.stringify(bs);
-    const text = blocksToPlainText(bs);
-    try {
-      // Try the modern clipboard API with custom mime first
-      const ClipboardItemCtor = (window as any).ClipboardItem;
-      if (navigator.clipboard && ClipboardItemCtor) {
-        const item = new ClipboardItemCtor({
-          "text/plain": new Blob([text], { type: "text/plain" }),
-          [NOTE_CLIPBOARD_MIME]: new Blob([json], { type: NOTE_CLIPBOARD_MIME }),
-        });
-        await navigator.clipboard.write([item]);
-        return;
-      }
-    } catch {
-      // fallthrough to text-only
-    }
-    try {
-      await navigator.clipboard.writeText(`${NOTE_CLIPBOARD_MIME}:${json}`);
-    } catch {
-      /* ignore */
-    }
-  };
-
   useEffect(() => {
     const root = editorRootRef.current;
     if (!root) return;
@@ -368,7 +344,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
     // When the whole note is selected, focus is intentionally blurred, so
     // clipboard events fire on <body>. Treat those as "inside" too.
     const isInsideEditorForClipboard = (el: EventTarget | null) =>
-      isInsideEditor(el) || (allBlocksSelected && (el === document.body || el === document.documentElement || el === root));
+      isInsideEditor(el) || ((allBlocksSelected || !!noteBlocksClipboardFallback) && (el === document.body || el === document.documentElement || el === root));
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!isInsideEditor(e.target) && !(allBlocksSelected && isInsideEditorForClipboard(e.target))) return;
@@ -405,7 +381,7 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         if (!insideEditable || allSelectedInField) {
           e.preventDefault();
           setAllBlocksSelected(true);
-          (document.activeElement as HTMLElement)?.blur?.();
+          root.focus({ preventScroll: true });
           window.getSelection()?.removeAllRanges();
         }
         // Otherwise let the browser do the default (select all in current field).
