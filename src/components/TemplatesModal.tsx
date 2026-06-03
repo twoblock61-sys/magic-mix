@@ -253,7 +253,9 @@ const TemplatesModal = ({
                     </motion.div>
                   ))}
                 </div>
+                )}
               </div>
+
 
               {/* Footer */}
               <div className="px-6 py-4 border-t border-border/50 bg-muted/30 text-center">
