@@ -1,6 +1,8 @@
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Search } from "lucide-react";
 import { templates, Template } from "@/data/templates";
+
 
 interface TemplatesModalProps {
   isOpen: boolean;
