@@ -15,8 +15,29 @@ const TemplatesModal = ({
   onClose,
   onSelectTemplate,
 }: TemplatesModalProps) => {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setQuery("");
+  }, [isOpen]);
+
+  const filteredTemplates = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return templates;
+    return templates.filter((t) => {
+      const blockTypes = [...new Set(t.blocks.map((b) => b.type))].join(" ");
+      return (
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q) ||
+        t.icon.includes(q) ||
+        blockTypes.toLowerCase().includes(q)
+      );
+    });
+  }, [query]);
+
   // Group templates by category
-  const groupedTemplates = templates.reduce(
+  const groupedTemplates = filteredTemplates.reduce(
     (acc, template) => {
       if (!acc[template.category]) {
         acc[template.category] = [];
@@ -30,6 +51,9 @@ const TemplatesModal = ({
   // Define category order and colors
   const categoryOrder = [
     "Personal & Learning",
+    "Health & Wellness",
+    "Education",
+    "Creative & Design",
     "Project Management",
     "Sales & Business",
     "Marketing",
@@ -37,10 +61,14 @@ const TemplatesModal = ({
     "Operations & Finance",
     "People & HR",
     "Customer Success",
+    "Travel & Lifestyle",
   ];
 
   const categoryColors: Record<string, string> = {
     "Personal & Learning": "from-blue-500/30 to-cyan-500/30",
+    "Health & Wellness": "from-emerald-500/30 to-teal-500/30",
+    "Education": "from-violet-500/30 to-indigo-500/30",
+    "Creative & Design": "from-fuchsia-500/30 to-pink-500/30",
     "Project Management": "from-green-500/30 to-emerald-500/30",
     "Sales & Business": "from-purple-500/30 to-pink-500/30",
     Marketing: "from-orange-500/30 to-red-500/30",
@@ -48,7 +76,9 @@ const TemplatesModal = ({
     "Operations & Finance": "from-rose-500/30 to-pink-500/30",
     "People & HR": "from-indigo-500/30 to-purple-500/30",
     "Customer Success": "from-teal-500/30 to-cyan-500/30",
+    "Travel & Lifestyle": "from-sky-500/30 to-blue-500/30",
   };
+
 
   const sortedCategories = categoryOrder.filter((cat) => groupedTemplates[cat]);
 
