@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Download, FileText, FileCode, FileType } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Download, FileText, FileCode, FileType, Wand2 } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
 import FindReplaceBar from "./FindReplaceBar";
 import TemplatesModal from "./TemplatesModal";
+import AiAssistantModal from "./AiAssistantModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -36,6 +37,13 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [showIndex, setShowIndex] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showAi, setShowAi] = useState(false);
+
+  const handleAppendAiBlocks = useCallback((newBlocks: NoteBlock[]) => {
+    const merged = [...note.blocks, ...newBlocks];
+    pushState(merged, true);
+    onUpdate({ blocks: merged });
+  }, [note.blocks, onUpdate]);
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
   const { exportNote } = useNoteExport();
