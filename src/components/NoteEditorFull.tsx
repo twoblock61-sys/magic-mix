@@ -39,11 +39,6 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAi, setShowAi] = useState(false);
 
-  const handleAppendAiBlocks = useCallback((newBlocks: NoteBlock[]) => {
-    const merged = [...note.blocks, ...newBlocks];
-    pushState(merged, true);
-    onUpdate({ blocks: merged });
-  }, [note.blocks, onUpdate]);
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
   const { exportNote } = useNoteExport();
@@ -53,6 +48,12 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
     maxHistorySize: 100,
     debounceMs: 300,
   });
+
+  const handleAppendAiBlocks = useCallback((newBlocks: NoteBlock[]) => {
+    const merged = [...note.blocks, ...newBlocks];
+    pushState(merged, true);
+    onUpdate({ blocks: merged });
+  }, [note.blocks, onUpdate, pushState]);
   
   // Reset history when switching notes
   useEffect(() => {
