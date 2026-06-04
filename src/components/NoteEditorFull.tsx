@@ -392,6 +392,15 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         onSelectTemplate={handleApplyTemplate}
       />
 
+      {/* AI Assistant Modal */}
+      <AiAssistantModal
+        isOpen={showAi}
+        onClose={() => setShowAi(false)}
+        note={note}
+        onAppendBlocks={handleAppendAiBlocks}
+      />
+
+
       {/* Index Dropdown Menu */}
       <AnimatePresence>
         {showIndex && (
