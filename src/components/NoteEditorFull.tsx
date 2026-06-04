@@ -260,6 +260,19 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             <Sparkles className="w-4 h-4" />
           </motion.button>
 
+          {/* AI Assistant Button */}
+          <motion.button
+            onClick={() => setShowAi(true)}
+            className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors group"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="AI Assistant"
+          >
+            <Wand2 className="w-4 h-4 group-hover:text-primary transition-colors" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-br from-primary to-primary/60 shadow-sm shadow-primary/40" />
+          </motion.button>
+
+
           {/* Focus Mode Toggle */}
           <motion.button
             onClick={onToggleFocusMode}
