@@ -40,7 +40,7 @@ import {
   getKey as vaultGetKey,
   listSavedProviders,
   subscribe as subscribeVault,
-  changePassphrase,
+  
 } from "@/lib/aiKeyVault";
 import { toast } from "@/hooks/use-toast";
 
