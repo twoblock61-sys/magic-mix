@@ -15,6 +15,12 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  MessageSquare,
+  Zap,
+  Lock,
 } from "lucide-react";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { noteToMarkdown } from "@/lib/noteToMarkdown";
@@ -38,23 +44,31 @@ interface AiAssistantModalProps {
 type Mode = "external" | "byok";
 type Task = "summary" | "flashcards" | "quiz";
 
-const TASKS: { id: Task; label: string; description: string; icon: typeof BookOpen; accent: string }[] = [
-  { id: "summary", label: "Summary", description: "Concise key takeaways", icon: BookOpen, accent: "from-sky-500/20 to-indigo-500/20" },
-  { id: "flashcards", label: "Flashcards", description: "Question · Answer cards", icon: LayersIcon, accent: "from-amber-500/20 to-rose-500/20" },
-  { id: "quiz", label: "Quiz · FAQ", description: "Test yourself", icon: HelpCircle, accent: "from-emerald-500/20 to-teal-500/20" },
+const TASKS: { id: Task; label: string; icon: typeof BookOpen }[] = [
+  { id: "summary", label: "Summary", icon: BookOpen },
+  { id: "flashcards", label: "Flashcards", icon: LayersIcon },
+  { id: "quiz", label: "Quiz", icon: HelpCircle },
 ];
 
 const SYSTEM_PROMPTS: Record<Task, string> = {
   summary:
     "You are a precise study assistant. Read the provided note (in Markdown) and produce a concise, well-structured summary in Markdown. Use short paragraphs and bullet points. No preamble.",
   flashcards:
-    "You are a precise study assistant. Read the provided note (in Markdown) and produce 8-15 high-quality flashcards. Respond ONLY with a JSON array of objects of the form {\"question\": string, \"answer\": string}. No prose, no markdown fences.",
+    'You are a precise study assistant. Read the provided note (in Markdown) and produce 8-15 high-quality flashcards. Respond ONLY with a JSON array of objects of the form {"question": string, "answer": string}. No prose, no markdown fences.',
   quiz:
-    "You are a precise study assistant. Read the provided note (in Markdown) and produce 6-12 quiz questions in FAQ form. Respond ONLY with a JSON array of objects of the form {\"question\": string, \"answer\": string}. No prose, no markdown fences.",
+    'You are a precise study assistant. Read the provided note (in Markdown) and produce 6-12 quiz questions in FAQ form. Respond ONLY with a JSON array of objects of the form {"question": string, "answer": string}. No prose, no markdown fences.',
 };
 
-const DEFAULT_USER_PROMPT =
-  "Remember the full context. Use only the material I paste below. Be accurate, concise, and helpful. When unsure, say so.";
+const DEFAULT_USER_PROMPT = "Be accurate, concise, and helpful.";
+
+const providerMeta: Record<AiProviderId, { icon: React.ReactNode; color: string; activeColor: string }> = {
+  openai: { icon: <span className="text-emerald-500 text-lg">✦</span>, color: "border-emerald-500/20 hover:border-emerald-500/40", activeColor: "border-emerald-500 bg-emerald-500/5" },
+  gemini: { icon: <span className="text-sky-500 text-lg">✺</span>, color: "border-sky-500/20 hover:border-sky-500/40", activeColor: "border-sky-500 bg-sky-500/5" },
+  anthropic: { icon: <span className="text-orange-500 text-lg">✶</span>, color: "border-orange-500/20 hover:border-orange-500/40", activeColor: "border-orange-500 bg-orange-500/5" },
+  deepseek: { icon: <span className="text-blue-500 text-lg">◈</span>, color: "border-blue-500/20 hover:border-blue-500/40", activeColor: "border-blue-500 bg-blue-500/5" },
+  groq: { icon: <span className="text-rose-500 text-lg">⚡</span>, color: "border-rose-500/20 hover:border-rose-500/40", activeColor: "border-rose-500 bg-rose-500/5" },
+  xai: { icon: <span className="text-zinc-400 text-lg">𝕏</span>, color: "border-zinc-500/20 hover:border-zinc-500/40", activeColor: "border-zinc-500 bg-zinc-500/5" },
+};
 
 const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistantModalProps) => {
   const [mode, setMode] = useState<Mode>("external");
@@ -89,7 +103,6 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   };
 
   const openProvider = async (url: string) => {
-    // Copy the combined prompt so the user can paste it on the other side.
     await copyToClipboard(combined, "all");
     window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -115,11 +128,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
       );
 
       const newBlocks: NoteBlock[] = [];
-      newBlocks.push({
-        id: crypto.randomUUID(),
-        type: "divider",
-        content: "",
-      });
+      newBlocks.push({ id: crypto.randomUUID(), type: "divider", content: "" });
       newBlocks.push({
         id: crypto.randomUUID(),
         type: "heading2",
@@ -132,11 +141,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
       });
 
       if (task === "summary") {
-        newBlocks.push({
-          id: crypto.randomUUID(),
-          type: "callout",
-          content: raw.trim(),
-        });
+        newBlocks.push({ id: crypto.randomUUID(), type: "callout", content: raw.trim() });
       } else if (task === "flashcards") {
         const items = extractJson(raw) as { question: string; answer: string }[];
         newBlocks.push({
@@ -155,11 +160,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
           id: crypto.randomUUID(),
           type: "faq",
           content: "AI Quiz",
-          faqItems: items.map((it) => ({
-            id: crypto.randomUUID(),
-            question: it.question,
-            answer: it.answer,
-          })),
+          faqItems: items.map((it) => ({ id: crypto.randomUUID(), question: it.question, answer: it.answer })),
         });
       }
 
@@ -198,16 +199,16 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="pointer-events-auto w-full max-w-3xl max-h-[88vh] bg-card border border-border/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="pointer-events-auto w-full max-w-xl max-h-[90vh] bg-card border border-border/50 rounded-[28px] shadow-2xl shadow-black/10 overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="px-6 py-5 border-b border-border/60 flex items-center justify-between bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+              <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-                    <Sparkles className="w-5 h-5 text-primary-foreground" />
+                  <div className="w-9 h-9 rounded-[14px] bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-md shadow-primary/15">
+                    <Sparkles className="w-[18px] h-[18px] text-primary-foreground" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold tracking-tight">AI Assistant</h2>
-                    <p className="text-xs text-muted-foreground">Local-first. Your note stays yours.</p>
+                    <h2 className="text-[15px] font-semibold tracking-tight">AI Assistant</h2>
+                    <p className="text-[11px] text-muted-foreground">Your note stays on your device.</p>
                   </div>
                 </div>
                 <button
@@ -219,21 +220,19 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
               </div>
 
               {/* Mode Switch */}
-              <div className="px-6 pt-4">
+              <div className="px-6 pt-4 shrink-0">
                 <div className="inline-flex p-1 bg-muted/60 rounded-xl">
                   {(
                     [
-                      { id: "external", label: "Copy & Open", icon: ExternalLink },
-                      { id: "byok", label: "Bring Your Own Key", icon: KeyRound },
+                      { id: "external" as Mode, label: "Copy & Open", icon: ExternalLink },
+                      { id: "byok" as Mode, label: "Your Key", icon: KeyRound },
                     ] as const
                   ).map((opt) => (
                     <button
                       key={opt.id}
                       onClick={() => setMode(opt.id)}
-                      className={`relative flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                        mode === opt.id
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                      className={`relative flex items-center gap-2 px-4 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
+                        mode === opt.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       {mode === opt.id && (
@@ -251,34 +250,44 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
               </div>
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 scrollbar-thin">
-                {mode === "external" ? (
-                  <ExternalMode
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    markdown={markdown}
-                    combined={combined}
-                    copied={copied}
-                    onCopy={copyToClipboard}
-                    onOpenProvider={openProvider}
-                  />
-                ) : (
-                  <ByokMode
-                    keys={keys}
-                    activeKey={activeKey}
-                    showKey={showKey}
-                    setShowKey={setShowKey}
-                    selectedProvider={selectedProvider}
-                    setSelectedProvider={setSelectedProvider}
-                    onSaveKey={handleSaveKey}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    task={task}
-                    setTask={setTask}
-                    running={running}
-                    onRun={handleRun}
-                  />
-                )}
+              <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin min-h-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={mode}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    {mode === "external" ? (
+                      <ExternalMode
+                        prompt={prompt}
+                        setPrompt={setPrompt}
+                        markdown={markdown}
+                        combined={combined}
+                        copied={copied}
+                        onCopy={copyToClipboard}
+                        onOpenProvider={openProvider}
+                      />
+                    ) : (
+                      <ByokMode
+                        keys={keys}
+                        activeKey={activeKey}
+                        showKey={showKey}
+                        setShowKey={setShowKey}
+                        selectedProvider={selectedProvider}
+                        setSelectedProvider={setSelectedProvider}
+                        onSaveKey={handleSaveKey}
+                        prompt={prompt}
+                        setPrompt={setPrompt}
+                        task={task}
+                        setTask={setTask}
+                        running={running}
+                        onRun={handleRun}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </motion.div>
@@ -307,72 +316,88 @@ const ExternalMode = ({
   onCopy: (value: string, kind: "all" | "md") => void;
   onOpenProvider: (url: string) => void;
 }) => {
+  const [showPreview, setShowPreview] = useState(false);
+
   return (
-    <div className="space-y-5">
-      <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Your prompt
-        </label>
+    <div className="space-y-4">
+      {/* Prompt */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wider">Prompt</span>
+        </div>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          rows={3}
-          className="mt-2 w-full px-4 py-3 rounded-2xl bg-muted/40 border border-border/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none transition-all"
-          placeholder="Tell the assistant what you want…"
+          rows={2}
+          className="w-full px-4 py-2.5 rounded-2xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm resize-none transition-all placeholder:text-muted-foreground/40"
+          placeholder="Tell the AI what to do…"
         />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Note markdown
-          </label>
-          <div className="flex items-center gap-2">
-            <button
+      {/* Markdown Preview (collapsible) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowPreview(!showPreview)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium uppercase tracking-wider">Note content</span>
+            {showPreview ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+          <div className="flex items-center gap-1.5">
+            <CopyButton
+              copied={copied === "md"}
               onClick={() => onCopy(markdown, "md")}
-              className="text-xs px-3 py-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-            >
-              {copied === "md" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              Markdown only
-            </button>
-            <button
+              label="Markdown"
+            />
+            <CopyButton
+              copied={copied === "all"}
               onClick={() => onCopy(combined, "all")}
-              className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5 font-medium"
-            >
-              {copied === "all" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              Copy prompt + note
-            </button>
+              label="All"
+              primary
+            />
           </div>
         </div>
-        <pre className="max-h-48 overflow-auto px-4 py-3 rounded-2xl bg-muted/30 border border-border/40 text-xs text-muted-foreground whitespace-pre-wrap font-mono scrollbar-thin">
-          {markdown || "Empty note."}
-        </pre>
+        <AnimatePresence>
+          {showPreview && (
+            <motion.pre
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 py-3 rounded-2xl bg-muted/30 border border-border/30 text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-y-auto scrollbar-thin">
+                {markdown || "Empty note."}
+              </div>
+            </motion.pre>
+          )}
+        </AnimatePresence>
       </div>
 
-      <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Open in
-        </label>
-        <p className="text-xs text-muted-foreground/80 mt-1 mb-3">
-          We copy the prompt + note to your clipboard and open the chat. Just paste.
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {AI_PROVIDERS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => onOpenProvider(p.webUrl)}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 hover:border-border bg-card hover:bg-muted/40 transition-all p-4 text-left"
-            >
-              <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br ${p.accent} transition-opacity`} style={{ mixBlendMode: "overlay" }} />
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Open chat</div>
-                </div>
-                <span className="text-lg opacity-70 group-hover:opacity-100">{p.icon}</span>
-              </div>
-            </button>
-          ))}
+      {/* Providers */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Zap className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wider">Open in</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {AI_PROVIDERS.map((p) => {
+            const meta = providerMeta[p.id];
+            return (
+              <button
+                key={p.id}
+                onClick={() => onOpenProvider(p.webUrl)}
+                className={`group relative flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${meta.color}`}
+              >
+                {meta.icon}
+                <span className="text-[12px] font-medium">{p.name}</span>
+                <ExternalLink className="w-3 h-3 text-muted-foreground/50 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -411,34 +436,36 @@ const ByokMode = ({
   onRun: () => void;
 }) => {
   const [draft, setDraft] = useState(activeKey);
-  useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
+  const hasKey = !!activeKey;
+
+  useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Provider picker */}
-      <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Provider
-        </label>
-        <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Zap className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wider">Provider</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           {AI_PROVIDERS.map((p) => {
-            const has = !!keys[p.id];
+            const meta = providerMeta[p.id];
             const active = selectedProvider === p.id;
+            const saved = !!keys[p.id];
             return (
               <button
                 key={p.id}
                 onClick={() => setSelectedProvider(p.id)}
-                className={`relative rounded-xl border p-3 text-center transition-all ${
-                  active
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-border/60 hover:border-border hover:bg-muted/40"
+                className={`relative flex flex-col items-center gap-1 rounded-xl border p-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                  active ? meta.activeColor : meta.color
                 }`}
               >
-                <div className="text-lg">{p.icon}</div>
-                <div className="text-[11px] font-medium mt-1">{p.name}</div>
-                {has && (
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {meta.icon}
+                <span className="text-[11px] font-medium">{p.name}</span>
+                {saved && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                 )}
               </button>
             );
@@ -447,14 +474,15 @@ const ByokMode = ({
       </div>
 
       {/* API Key */}
-      <div>
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {provider.name} API key
-          </label>
-          <span className="text-[11px] text-muted-foreground/70">Stored locally on this device</span>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Lock className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground/50">Local only</span>
         </div>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <div className="flex-1 relative">
             <input
               type={showKey ? "text" : "password"}
@@ -462,12 +490,11 @@ const ByokMode = ({
               onChange={(e) => setDraft(e.target.value)}
               onBlur={() => onSaveKey(selectedProvider, draft)}
               placeholder={provider.keyHint}
-              className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm font-mono"
+              className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
             />
-            <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <button
               onClick={() => setShowKey(!showKey)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
               type="button"
             >
               {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -475,12 +502,8 @@ const ByokMode = ({
           </div>
           {activeKey && (
             <button
-              onClick={() => {
-                onSaveKey(selectedProvider, "");
-                setDraft("");
-              }}
-              className="p-2.5 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-              title="Remove key"
+              onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
+              className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -488,25 +511,13 @@ const ByokMode = ({
         </div>
       </div>
 
-      {/* Custom prompt */}
-      <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Extra instructions (optional)
-        </label>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={2}
-          className="mt-2 w-full px-4 py-3 rounded-2xl bg-muted/40 border border-border/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none"
-        />
-      </div>
-
       {/* Task picker */}
-      <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Generate
-        </label>
-        <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Wand2 className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wider">Generate</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           {TASKS.map((t) => {
             const Icon = t.icon;
             const active = task === t.id;
@@ -514,33 +525,42 @@ const ByokMode = ({
               <button
                 key={t.id}
                 onClick={() => setTask(t.id)}
-                className={`relative overflow-hidden rounded-2xl border p-4 text-left transition-all ${
+                className={`flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   active
-                    ? "border-primary shadow-sm bg-primary/5"
-                    : "border-border/60 hover:border-border hover:bg-muted/40"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/60 hover:border-border/80 hover:bg-muted/30"
                 }`}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${t.accent} opacity-${active ? 100 : 0} transition-opacity`} />
-                <div className="relative flex items-start gap-3">
-                  <Icon className="w-5 h-5 mt-0.5 text-foreground" />
-                  <div>
-                    <div className="text-sm font-semibold">{t.label}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{t.description}</div>
-                  </div>
-                </div>
+                <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <span className="text-[12px] font-medium">{t.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Extra prompt */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium uppercase tracking-wider">Instructions</span>
+        </div>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={2}
+          className="w-full px-4 py-2.5 rounded-2xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm resize-none transition-all placeholder:text-muted-foreground/40"
+          placeholder="Optional instructions…"
+        />
+      </div>
+
       {/* Run */}
       <motion.button
         onClick={onRun}
-        disabled={running || !activeKey}
-        whileHover={!running && activeKey ? { scale: 1.01 } : {}}
-        whileTap={!running && activeKey ? { scale: 0.99 } : {}}
-        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        disabled={running || !hasKey}
+        whileHover={!running && hasKey ? { scale: 1.01 } : {}}
+        whileTap={!running && hasKey ? { scale: 0.99 } : {}}
+        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       >
         {running ? (
           <>
@@ -550,15 +570,47 @@ const ByokMode = ({
         ) : (
           <>
             <Wand2 className="w-4 h-4" />
-            Generate & append to note
+            Generate & append
           </>
         )}
       </motion.button>
-      <p className="text-[11px] text-center text-muted-foreground/70">
-        Calls go directly from your browser to {provider.name}. No data passes through our servers.
+      <p className="text-[10px] text-center text-muted-foreground/40">
+        Direct from browser to {provider.name}. No servers involved.
       </p>
     </div>
   );
 };
+
+/* -------------------------------- Helpers -------------------------------- */
+
+function CopyButton({
+  copied,
+  onClick,
+  label,
+  primary,
+}: {
+  copied: boolean;
+  onClick: () => void;
+  label: string;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+        primary
+          ? copied
+            ? "bg-emerald-500 text-white"
+            : "bg-primary text-primary-foreground hover:bg-primary/90"
+          : copied
+          ? "bg-emerald-500/10 text-emerald-600"
+          : "hover:bg-muted text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
 
 export default AiAssistantModal;
