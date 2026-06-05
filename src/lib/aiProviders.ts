@@ -77,23 +77,16 @@ export const AI_PROVIDERS: AiProvider[] = [
   },
 ];
 
-const KEYS_STORAGE = "elephant.ai.keys.v1";
-
-export const loadKeys = (): Record<AiProviderId, string> => {
-  try {
-    const raw = localStorage.getItem(KEYS_STORAGE);
-    return raw ? JSON.parse(raw) : ({} as Record<AiProviderId, string>);
-  } catch {
-    return {} as Record<AiProviderId, string>;
+// Legacy plaintext storage from v1. We proactively wipe it on load so any
+// previously-saved unencrypted keys don't linger in localStorage. New keys
+// flow exclusively through the encrypted vault in `aiKeyVault.ts`.
+const LEGACY_KEYS_STORAGE = "elephant.ai.keys.v1";
+try {
+  if (typeof localStorage !== "undefined" && localStorage.getItem(LEGACY_KEYS_STORAGE)) {
+    localStorage.removeItem(LEGACY_KEYS_STORAGE);
   }
-};
+} catch {}
 
-export const saveKey = (provider: AiProviderId, key: string) => {
-  const all = loadKeys();
-  if (key) all[provider] = key;
-  else delete all[provider];
-  localStorage.setItem(KEYS_STORAGE, JSON.stringify(all));
-};
 
 export const callAi = async (
   provider: AiProviderId,
