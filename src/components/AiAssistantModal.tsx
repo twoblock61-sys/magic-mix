@@ -309,8 +309,9 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                       />
                     ) : (
                       <ByokMode
-                        keys={keys}
-                        activeKey={activeKey}
+                        vaultExists={vaultExists}
+                        vaultUnlocked={vaultUnlocked}
+                        savedProviders={savedProviders}
                         showKey={showKey}
                         setShowKey={setShowKey}
                         selectedProvider={selectedProvider}
@@ -323,6 +324,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                         running={running}
                         onRun={handleRun}
                       />
+
                     )}
                   </motion.div>
                 </AnimatePresence>
