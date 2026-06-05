@@ -29,10 +29,21 @@ import {
   AiProviderId,
   callAi,
   extractJson,
-  loadKeys,
-  saveKey,
 } from "@/lib/aiProviders";
+import {
+  hasVault,
+  isUnlocked,
+  createVault,
+  unlockVault,
+  lockVault,
+  setKey as vaultSetKey,
+  getKey as vaultGetKey,
+  listSavedProviders,
+  subscribe as subscribeVault,
+  changePassphrase,
+} from "@/lib/aiKeyVault";
 import { toast } from "@/hooks/use-toast";
+
 
 interface AiAssistantModalProps {
   isOpen: boolean;
