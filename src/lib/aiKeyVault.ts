@@ -41,8 +41,9 @@ const emit = () => listeners.forEach((l) => l());
 
 export const subscribe = (fn: () => void) => {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 };
+
 
 const resetIdleTimer = () => {
   if (idleTimer) window.clearTimeout(idleTimer);
