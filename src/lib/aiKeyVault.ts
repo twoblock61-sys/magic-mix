@@ -114,24 +114,7 @@ const decrypt = async (key: CryptoKey, blob: { iv: string; ct: string }) => {
 };
 
 
-const encrypt = async (key: CryptoKey, plaintext: string) => {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    new TextEncoder().encode(plaintext),
-  );
-  return { iv: b64(iv.buffer), ct: b64(ct) };
-};
 
-const decrypt = async (key: CryptoKey, blob: { iv: string; ct: string }) => {
-  const pt = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: unb64(blob.iv) },
-    key,
-    unb64(blob.ct),
-  );
-  return new TextDecoder().decode(pt);
-};
 
 // ---- public API ------------------------------------------------------------
 
