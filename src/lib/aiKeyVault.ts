@@ -192,7 +192,7 @@ export const changePassphrase = async (oldPass: string, newPass: string) => {
     if (pt) newKeys[pid as AiProviderId] = await encrypt(newKey, pt);
   }
   const verifier = await encrypt(newKey, VERIFIER_PLAINTEXT);
-  writeBlob({ v: 2, salt: b64(newSalt.buffer), verifier, keys: newKeys });
+  writeBlob({ v: 2, salt: b64(newSalt.buffer as ArrayBuffer), verifier, keys: newKeys });
   memCryptoKey = newKey;
   resetIdleTimer();
   emit();
