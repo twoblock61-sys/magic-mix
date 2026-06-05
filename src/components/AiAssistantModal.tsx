@@ -447,8 +447,9 @@ const ExternalMode = ({
 /* -------------------------------- BYOK mode ------------------------------- */
 
 const ByokMode = ({
-  keys,
-  activeKey,
+  vaultExists,
+  vaultUnlocked,
+  savedProviders,
   showKey,
   setShowKey,
   selectedProvider,
@@ -461,13 +462,14 @@ const ByokMode = ({
   running,
   onRun,
 }: {
-  keys: Record<AiProviderId, string>;
-  activeKey: string;
+  vaultExists: boolean;
+  vaultUnlocked: boolean;
+  savedProviders: AiProviderId[];
   showKey: boolean;
   setShowKey: (v: boolean) => void;
   selectedProvider: AiProviderId;
   setSelectedProvider: (p: AiProviderId) => void;
-  onSaveKey: (p: AiProviderId, k: string) => void;
+  onSaveKey: (p: AiProviderId, k: string) => Promise<void> | void;
   prompt: string;
   setPrompt: (v: string) => void;
   task: Task;
@@ -475,14 +477,33 @@ const ByokMode = ({
   running: boolean;
   onRun: () => void;
 }) => {
-  const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
-  const hasKey = !!activeKey;
 
-  useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
+  // ---- Gate: vault must exist & be unlocked before showing key UI ----------
+  if (!vaultExists) return <VaultCreatePane />;
+  if (!vaultUnlocked) return <VaultUnlockPane />;
+
+  // ---- Unlocked: render the normal BYOK UI ---------------------------------
+  const savedSet = new Set(savedProviders);
+  const hasKey = savedSet.has(selectedProvider);
 
   return (
     <div className="space-y-4">
+      {/* Vault status bar */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+        <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400">
+          <Lock className="w-3 h-3" />
+          <span className="font-medium">Vault unlocked</span>
+          <span className="text-muted-foreground/60">· encrypted at rest</span>
+        </div>
+        <button
+          onClick={() => lockVault()}
+          className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Lock
+        </button>
+      </div>
+
       {/* Provider picker */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -493,7 +514,7 @@ const ByokMode = ({
           {AI_PROVIDERS.map((p) => {
             const meta = providerMeta[p.id];
             const active = selectedProvider === p.id;
-            const saved = !!keys[p.id];
+            const saved = savedSet.has(p.id);
             return (
               <button
                 key={p.id}
@@ -513,43 +534,16 @@ const ByokMode = ({
         </div>
       </div>
 
-      {/* API Key */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Lock className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
-          </div>
-          <span className="text-[10px] text-muted-foreground/50">Local only</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <input
-              type={showKey ? "text" : "password"}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => onSaveKey(selectedProvider, draft)}
-              placeholder={provider.keyHint}
-              className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
-            />
-            <button
-              onClick={() => setShowKey(!showKey)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-              type="button"
-            >
-              {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-          {activeKey && (
-            <button
-              onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
-              className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
+      {/* API Key editor — note: never read existing key plaintext into UI */}
+      <KeyEditor
+        provider={provider}
+        hasSaved={hasKey}
+        showKey={showKey}
+        setShowKey={setShowKey}
+        onSave={(v) => onSaveKey(selectedProvider, v)}
+        onClear={() => onSaveKey(selectedProvider, "")}
+      />
+
 
       {/* Task picker */}
       <div className="space-y-2">
