@@ -86,13 +86,33 @@ const deriveKey = async (passphrase: string, salt: Uint8Array) => {
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: PBKDF2_ITER, hash: "SHA-256" },
+    { name: "PBKDF2", salt: salt as BufferSource, iterations: PBKDF2_ITER, hash: "SHA-256" },
     base,
     { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"],
   );
 };
+
+const encrypt = async (key: CryptoKey, plaintext: string) => {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv as BufferSource },
+    key,
+    new TextEncoder().encode(plaintext),
+  );
+  return { iv: b64(iv.buffer as ArrayBuffer), ct: b64(ct) };
+};
+
+const decrypt = async (key: CryptoKey, blob: { iv: string; ct: string }) => {
+  const pt = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: unb64(blob.iv) as BufferSource },
+    key,
+    unb64(blob.ct),
+  );
+  return new TextDecoder().decode(pt);
+};
+
 
 const encrypt = async (key: CryptoKey, plaintext: string) => {
   const iv = crypto.getRandomValues(new Uint8Array(12));
