@@ -127,7 +127,7 @@ export const createVault = async (passphrase: string) => {
   const verifier = await encrypt(key, VERIFIER_PLAINTEXT);
   const blob: VaultBlob = {
     v: 2,
-    salt: b64(salt.buffer),
+    salt: b64(salt.buffer as ArrayBuffer),
     verifier,
     keys: {},
   };
