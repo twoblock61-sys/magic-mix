@@ -86,15 +86,30 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   const [prompt, setPrompt] = useState(DEFAULT_USER_PROMPT);
   const [copied, setCopied] = useState<"all" | "md" | null>(null);
 
-  // BYOK state
-  const [keys, setKeys] = useState<Record<AiProviderId, string>>({} as any);
+  // BYOK state — keys are NEVER kept here in plaintext; we only track which
+  // providers have a stored entry. Plaintext is read on demand from the vault.
+  const [savedProviders, setSavedProviders] = useState<AiProviderId[]>([]);
+  const [vaultExists, setVaultExists] = useState(false);
+  const [vaultUnlocked, setVaultUnlocked] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<AiProviderId>("gemini");
   const [showKey, setShowKey] = useState(false);
   const [task, setTask] = useState<Task>("summary");
   const [running, setRunning] = useState(false);
 
+  // Sync with vault state.
   useEffect(() => {
-    if (isOpen) setKeys(loadKeys());
+    const sync = () => {
+      setVaultExists(hasVault());
+      setVaultUnlocked(isUnlocked());
+      setSavedProviders(isUnlocked() ? listSavedProviders() : []);
+    };
+    sync();
+    return subscribeVault(sync);
+  }, [isOpen]);
+
+  // Auto-lock when modal closes — passphrase must be re-entered next time.
+  useEffect(() => {
+    if (!isOpen && isUnlocked()) lockVault();
   }, [isOpen]);
 
   const markdown = useMemo(() => noteToMarkdown(note), [note]);
@@ -118,17 +133,29 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const handleSaveKey = (provider: AiProviderId, key: string) => {
-    saveKey(provider, key.trim());
-    setKeys((k) => ({ ...k, [provider]: key.trim() }));
+  const handleSaveKey = async (provider: AiProviderId, key: string) => {
+    try {
+      await vaultSetKey(provider, key.trim());
+      setSavedProviders(listSavedProviders());
+    } catch (e: any) {
+      toast({ title: "Could not save", description: e?.message || "Vault is locked.", variant: "destructive" });
+    }
   };
 
   const handleRun = async () => {
-    const apiKey = keys[selectedProvider];
+    if (!isUnlocked()) {
+      toast({ title: "Unlock first", description: "Enter your master passphrase to use saved keys." });
+      return;
+    }
+    let apiKey: string | null = null;
+    try {
+      apiKey = await vaultGetKey(selectedProvider);
+    } catch {/* locked */}
     if (!apiKey) {
       toast({ title: "Add an API key", description: "Paste a key for the selected provider first." });
       return;
     }
+
     setRunning(true);
     try {
       const raw = await callAi(
