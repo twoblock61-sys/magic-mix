@@ -217,7 +217,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
     }
   };
 
-  const activeKey = keys[selectedProvider] || "";
+  
 
   return (
     <AnimatePresence>
