@@ -32,6 +32,8 @@ import {
   loadKeys,
   saveKey,
 } from "@/lib/aiProviders";
+import ApiKeyManagerModal from "./ApiKeyManagerModal";
+import { Settings2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AiAssistantModalProps {
@@ -81,10 +83,11 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   const [showKey, setShowKey] = useState(false);
   const [task, setTask] = useState<Task>("summary");
   const [running, setRunning] = useState(false);
+  const [showKeyManager, setShowKeyManager] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setKeys(loadKeys());
-  }, [isOpen]);
+    if (isOpen && !showKeyManager) setKeys(loadKeys());
+  }, [isOpen, showKeyManager]);
 
   const markdown = useMemo(() => noteToMarkdown(note), [note]);
   const combined = useMemo(
@@ -284,6 +287,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                         setTask={setTask}
                         running={running}
                         onRun={handleRun}
+                        onOpenManager={() => setShowKeyManager(true)}
                       />
                     )}
                   </motion.div>
@@ -291,6 +295,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
               </div>
             </div>
           </motion.div>
+          <ApiKeyManagerModal isOpen={showKeyManager} onClose={() => setShowKeyManager(false)} />
         </>
       )}
     </AnimatePresence>
@@ -420,6 +425,7 @@ const ByokMode = ({
   setTask,
   running,
   onRun,
+  onOpenManager,
 }: {
   keys: Record<AiProviderId, string>;
   activeKey: string;
@@ -434,6 +440,7 @@ const ByokMode = ({
   setTask: (t: Task) => void;
   running: boolean;
   onRun: () => void;
+  onOpenManager: () => void;
 }) => {
   const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
@@ -480,7 +487,12 @@ const ByokMode = ({
             <Lock className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
           </div>
-          <span className="text-[10px] text-muted-foreground/50">Local only</span>
+          <button
+            onClick={onOpenManager}
+            className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
+          >
+            <Settings2 className="w-3 h-3" /> Manage all keys
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">

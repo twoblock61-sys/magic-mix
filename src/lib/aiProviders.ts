@@ -1,4 +1,8 @@
 // Lightweight BYO-key AI client. All keys live in localStorage on the user's device.
+// Keys are stored obfuscated using a device-derived secret (random salt + userAgent),
+// so they aren't readable as plaintext from a casual storage inspection.
+// This is NOT end-to-end encryption — without a master password (which the user
+// explicitly does not want), perfect protection is impossible in a browser.
 // We never proxy through any server — calls go straight from the browser to the
 // chosen provider so the system stays local-first.
 
@@ -16,8 +20,9 @@ export interface AiProvider {
   defaultModel: string;
   webUrl: string;
   keyHint: string;
-  accent: string; // tailwind gradient classes
-  icon: string; // emoji or short label
+  keyPrefix: string; // expected prefix for basic format validation
+  accent: string;
+  icon: string;
 }
 
 export const AI_PROVIDERS: AiProvider[] = [
@@ -27,6 +32,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "gpt-4o-mini",
     webUrl: "https://chat.openai.com/",
     keyHint: "sk-...  •  platform.openai.com/api-keys",
+    keyPrefix: "sk-",
     accent: "from-emerald-500 to-teal-500",
     icon: "✦",
   },
@@ -36,6 +42,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "gemini-2.0-flash",
     webUrl: "https://gemini.google.com/",
     keyHint: "AIza...  •  aistudio.google.com/apikey",
+    keyPrefix: "AIza",
     accent: "from-sky-500 to-indigo-500",
     icon: "✺",
   },
@@ -45,6 +52,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "claude-3-5-sonnet-latest",
     webUrl: "https://claude.ai/",
     keyHint: "sk-ant-...  •  console.anthropic.com",
+    keyPrefix: "sk-ant-",
     accent: "from-orange-500 to-amber-500",
     icon: "✶",
   },
@@ -54,6 +62,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "deepseek-chat",
     webUrl: "https://chat.deepseek.com/",
     keyHint: "sk-...  •  platform.deepseek.com",
+    keyPrefix: "sk-",
     accent: "from-blue-500 to-cyan-500",
     icon: "◈",
   },
@@ -63,6 +72,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "llama-3.3-70b-versatile",
     webUrl: "https://groq.com/",
     keyHint: "gsk_...  •  console.groq.com/keys",
+    keyPrefix: "gsk_",
     accent: "from-rose-500 to-pink-500",
     icon: "⚡",
   },
@@ -72,17 +82,87 @@ export const AI_PROVIDERS: AiProvider[] = [
     defaultModel: "grok-2-latest",
     webUrl: "https://grok.com/",
     keyHint: "xai-...  •  console.x.ai",
+    keyPrefix: "xai-",
     accent: "from-zinc-700 to-zinc-900",
     icon: "𝕏",
   },
 ];
 
-const KEYS_STORAGE = "elephant.ai.keys.v1";
+/* --------------------------- Obfuscated storage --------------------------- */
+// Device-bound obfuscation. The salt is generated once per browser and combined
+// with navigator.userAgent to derive a XOR key. This stops casual plaintext
+// scraping while keeping the system fully passwordless.
+
+const KEYS_STORAGE = "elephant.ai.keys.v2";
+const SALT_STORAGE = "elephant.ai.salt.v1";
+const LEGACY_KEYS = "elephant.ai.keys.v1"; // plaintext legacy
+
+const getDeviceSalt = (): string => {
+  try {
+    let s = localStorage.getItem(SALT_STORAGE);
+    if (!s) {
+      const buf = new Uint8Array(24);
+      crypto.getRandomValues(buf);
+      s = Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+      localStorage.setItem(SALT_STORAGE, s);
+    }
+    return s;
+  } catch {
+    return "fallback-salt";
+  }
+};
+
+const getCipherSeed = (): string => {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "node";
+  return `${getDeviceSalt()}::${ua}`;
+};
+
+const xorTransform = (text: string, seed: string): string => {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    out += String.fromCharCode(text.charCodeAt(i) ^ seed.charCodeAt(i % seed.length));
+  }
+  return out;
+};
+
+const obfuscate = (plain: string): string => {
+  try {
+    return btoa(unescape(encodeURIComponent(xorTransform(plain, getCipherSeed()))));
+  } catch {
+    return plain;
+  }
+};
+
+const deobfuscate = (encoded: string): string => {
+  try {
+    return xorTransform(decodeURIComponent(escape(atob(encoded))), getCipherSeed());
+  } catch {
+    return "";
+  }
+};
 
 export const loadKeys = (): Record<AiProviderId, string> => {
   try {
+    // Migrate legacy plaintext store if present.
+    const legacy = localStorage.getItem(LEGACY_KEYS);
+    if (legacy) {
+      try {
+        const parsed = JSON.parse(legacy) as Record<string, string>;
+        const enc: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed)) if (v) enc[k] = obfuscate(v);
+        localStorage.setItem(KEYS_STORAGE, JSON.stringify(enc));
+      } catch {/* ignore */}
+      localStorage.removeItem(LEGACY_KEYS);
+    }
     const raw = localStorage.getItem(KEYS_STORAGE);
-    return raw ? JSON.parse(raw) : ({} as Record<AiProviderId, string>);
+    if (!raw) return {} as Record<AiProviderId, string>;
+    const enc = JSON.parse(raw) as Record<string, string>;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(enc)) {
+      const dec = deobfuscate(v);
+      if (dec) out[k] = dec;
+    }
+    return out as Record<AiProviderId, string>;
   } catch {
     return {} as Record<AiProviderId, string>;
   }
@@ -92,8 +172,90 @@ export const saveKey = (provider: AiProviderId, key: string) => {
   const all = loadKeys();
   if (key) all[provider] = key;
   else delete all[provider];
-  localStorage.setItem(KEYS_STORAGE, JSON.stringify(all));
+  const enc: Record<string, string> = {};
+  for (const [k, v] of Object.entries(all)) enc[k] = obfuscate(v);
+  localStorage.setItem(KEYS_STORAGE, JSON.stringify(enc));
 };
+
+export const clearAllKeys = () => {
+  localStorage.removeItem(KEYS_STORAGE);
+};
+
+/* ------------------------------ Key helpers ------------------------------ */
+
+export const maskKey = (key: string): string => {
+  if (!key) return "";
+  if (key.length <= 8) return "•".repeat(key.length);
+  return `${key.slice(0, 4)}${"•".repeat(Math.min(key.length - 8, 16))}${key.slice(-4)}`;
+};
+
+export const looksValidKey = (provider: AiProviderId, key: string): boolean => {
+  const p = AI_PROVIDERS.find((x) => x.id === provider);
+  if (!p || !key) return false;
+  return key.startsWith(p.keyPrefix) && key.length >= p.keyPrefix.length + 8;
+};
+
+/** Live ping against the provider to verify a key actually works. */
+export const validateKey = async (
+  provider: AiProviderId,
+  apiKey: string,
+): Promise<{ ok: boolean; message: string }> => {
+  if (!apiKey) return { ok: false, message: "No key provided." };
+  try {
+    if (provider === "openai") {
+      const r = await fetch("https://api.openai.com/v1/models", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      return r.ok
+        ? { ok: true, message: "Key is valid." }
+        : { ok: false, message: `OpenAI rejected the key (${r.status}).` };
+    }
+    if (provider === "gemini") {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+      );
+      return r.ok
+        ? { ok: true, message: "Key is valid." }
+        : { ok: false, message: `Gemini rejected the key (${r.status}).` };
+    }
+    if (provider === "anthropic") {
+      // Anthropic has no public /models; do a cheap 1-token completion ping.
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-latest",
+          max_tokens: 1,
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      });
+      if (r.ok) return { ok: true, message: "Key is valid." };
+      if (r.status === 401 || r.status === 403)
+        return { ok: false, message: "Claude rejected the key." };
+      return { ok: true, message: "Key looks active." };
+    }
+    const endpoints: Record<string, string> = {
+      deepseek: "https://api.deepseek.com/models",
+      groq: "https://api.groq.com/openai/v1/models",
+      xai: "https://api.x.ai/v1/models",
+    };
+    const r = await fetch(endpoints[provider], {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    return r.ok
+      ? { ok: true, message: "Key is valid." }
+      : { ok: false, message: `Provider rejected the key (${r.status}).` };
+  } catch (e: any) {
+    return { ok: false, message: e?.message?.slice(0, 160) || "Network error." };
+  }
+};
+
+/* ----------------------------- AI invocation ----------------------------- */
 
 export const callAi = async (
   provider: AiProviderId,
@@ -139,7 +301,6 @@ export const callAi = async (
     return data?.content?.[0]?.text ?? "";
   }
 
-  // OpenAI-compatible providers: OpenAI, DeepSeek, Groq, xAI
   const endpoints: Record<string, string> = {
     openai: "https://api.openai.com/v1/chat/completions",
     deepseek: "https://api.deepseek.com/chat/completions",
@@ -165,13 +326,10 @@ export const callAi = async (
   return data?.choices?.[0]?.message?.content ?? "";
 };
 
-// Try to extract JSON from a model response that may be wrapped in markdown fences.
 export const extractJson = (text: string): any => {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidate = (fenced ? fenced[1] : text).trim();
-  // Find first { or [
   const start = candidate.search(/[\[{]/);
   if (start < 0) throw new Error("No JSON found in response");
-  const slice = candidate.slice(start);
-  return JSON.parse(slice);
+  return JSON.parse(candidate.slice(start));
 };
