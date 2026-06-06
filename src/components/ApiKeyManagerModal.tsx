@@ -290,21 +290,46 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                         )}
                       </div>
 
-                      {!formatOk && (
-                        <p className="mt-2 text-[10.5px] text-amber-600 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Expected prefix <span className="font-mono">{p.keyPrefix}</span>
-                        </p>
-                      )}
+                      <div className="mt-2 flex items-center justify-between">
+                        {!formatOk ? (
+                          <p className="text-[10.5px] text-amber-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Expected prefix <span className="font-mono">{p.keyPrefix}</span>
+                          </p>
+                        ) : <span />}
+                        <button
+                          onClick={() => setGuideOpen((g) => ({ ...g, [p.id]: !g[p.id] }))}
+                          className="text-[10.5px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 ml-auto"
+                        >
+                          <HelpCircle className="w-3 h-3" />
+                          {guideOpen[p.id] ? "Hide guide" : "How to get a key"}
+                        </button>
+                      </div>
+
                       {st.message && st.state !== "idle" && st.state !== "checking" && (
                         <p className={`mt-2 text-[10.5px] ${st.state === "valid" ? "text-emerald-600" : "text-destructive"}`}>
                           {st.message}
                         </p>
                       )}
+
+                      <AnimatePresence initial={false}>
+                        {guideOpen[p.id] && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <KeyGuidePanel providerId={p.id} providerName={p.name} />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })}
               </div>
+
 
               {/* Footer */}
               <div className="px-6 py-3 border-t border-border/40 flex items-center justify-between shrink-0">
