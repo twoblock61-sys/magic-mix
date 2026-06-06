@@ -86,8 +86,8 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   const [showKeyManager, setShowKeyManager] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setKeys(loadKeys());
-  }, [isOpen]);
+    if (isOpen && !showKeyManager) setKeys(loadKeys());
+  }, [isOpen, showKeyManager]);
 
   const markdown = useMemo(() => noteToMarkdown(note), [note]);
   const combined = useMemo(
@@ -287,6 +287,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                         setTask={setTask}
                         running={running}
                         onRun={handleRun}
+                        onOpenManager={() => setShowKeyManager(true)}
                       />
                     )}
                   </motion.div>
@@ -294,6 +295,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
               </div>
             </div>
           </motion.div>
+          <ApiKeyManagerModal isOpen={showKeyManager} onClose={() => setShowKeyManager(false)} />
         </>
       )}
     </AnimatePresence>
