@@ -425,6 +425,7 @@ const ByokMode = ({
   setTask,
   running,
   onRun,
+  onOpenManager,
 }: {
   keys: Record<AiProviderId, string>;
   activeKey: string;
@@ -439,6 +440,7 @@ const ByokMode = ({
   setTask: (t: Task) => void;
   running: boolean;
   onRun: () => void;
+  onOpenManager: () => void;
 }) => {
   const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
