@@ -487,7 +487,12 @@ const ByokMode = ({
             <Lock className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
           </div>
-          <span className="text-[10px] text-muted-foreground/50">Local only</span>
+          <button
+            onClick={onOpenManager}
+            className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
+          >
+            <Settings2 className="w-3 h-3" /> Manage all keys
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
