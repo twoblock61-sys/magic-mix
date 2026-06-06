@@ -29,21 +29,10 @@ import {
   AiProviderId,
   callAi,
   extractJson,
+  loadKeys,
+  saveKey,
 } from "@/lib/aiProviders";
-import {
-  hasVault,
-  isUnlocked,
-  createVault,
-  unlockVault,
-  lockVault,
-  setKey as vaultSetKey,
-  getKey as vaultGetKey,
-  listSavedProviders,
-  subscribe as subscribeVault,
-  
-} from "@/lib/aiKeyVault";
 import { toast } from "@/hooks/use-toast";
-
 
 interface AiAssistantModalProps {
   isOpen: boolean;
@@ -86,30 +75,15 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   const [prompt, setPrompt] = useState(DEFAULT_USER_PROMPT);
   const [copied, setCopied] = useState<"all" | "md" | null>(null);
 
-  // BYOK state — keys are NEVER kept here in plaintext; we only track which
-  // providers have a stored entry. Plaintext is read on demand from the vault.
-  const [savedProviders, setSavedProviders] = useState<AiProviderId[]>([]);
-  const [vaultExists, setVaultExists] = useState(false);
-  const [vaultUnlocked, setVaultUnlocked] = useState(false);
+  // BYOK state
+  const [keys, setKeys] = useState<Record<AiProviderId, string>>({} as any);
   const [selectedProvider, setSelectedProvider] = useState<AiProviderId>("gemini");
   const [showKey, setShowKey] = useState(false);
   const [task, setTask] = useState<Task>("summary");
   const [running, setRunning] = useState(false);
 
-  // Sync with vault state.
   useEffect(() => {
-    const sync = () => {
-      setVaultExists(hasVault());
-      setVaultUnlocked(isUnlocked());
-      setSavedProviders(isUnlocked() ? listSavedProviders() : []);
-    };
-    sync();
-    return subscribeVault(sync);
-  }, [isOpen]);
-
-  // Auto-lock when modal closes — passphrase must be re-entered next time.
-  useEffect(() => {
-    if (!isOpen && isUnlocked()) lockVault();
+    if (isOpen) setKeys(loadKeys());
   }, [isOpen]);
 
   const markdown = useMemo(() => noteToMarkdown(note), [note]);
@@ -133,29 +107,17 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const handleSaveKey = async (provider: AiProviderId, key: string) => {
-    try {
-      await vaultSetKey(provider, key.trim());
-      setSavedProviders(listSavedProviders());
-    } catch (e: any) {
-      toast({ title: "Could not save", description: e?.message || "Vault is locked.", variant: "destructive" });
-    }
+  const handleSaveKey = (provider: AiProviderId, key: string) => {
+    saveKey(provider, key.trim());
+    setKeys((k) => ({ ...k, [provider]: key.trim() }));
   };
 
   const handleRun = async () => {
-    if (!isUnlocked()) {
-      toast({ title: "Unlock first", description: "Enter your master passphrase to use saved keys." });
-      return;
-    }
-    let apiKey: string | null = null;
-    try {
-      apiKey = await vaultGetKey(selectedProvider);
-    } catch {/* locked */}
+    const apiKey = keys[selectedProvider];
     if (!apiKey) {
       toast({ title: "Add an API key", description: "Paste a key for the selected provider first." });
       return;
     }
-
     setRunning(true);
     try {
       const raw = await callAi(
@@ -217,7 +179,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
     }
   };
 
-  
+  const activeKey = keys[selectedProvider] || "";
 
   return (
     <AnimatePresence>
@@ -309,9 +271,8 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                       />
                     ) : (
                       <ByokMode
-                        vaultExists={vaultExists}
-                        vaultUnlocked={vaultUnlocked}
-                        savedProviders={savedProviders}
+                        keys={keys}
+                        activeKey={activeKey}
                         showKey={showKey}
                         setShowKey={setShowKey}
                         selectedProvider={selectedProvider}
@@ -324,7 +285,6 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
                         running={running}
                         onRun={handleRun}
                       />
-
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -447,9 +407,8 @@ const ExternalMode = ({
 /* -------------------------------- BYOK mode ------------------------------- */
 
 const ByokMode = ({
-  vaultExists,
-  vaultUnlocked,
-  savedProviders,
+  keys,
+  activeKey,
   showKey,
   setShowKey,
   selectedProvider,
@@ -462,14 +421,13 @@ const ByokMode = ({
   running,
   onRun,
 }: {
-  vaultExists: boolean;
-  vaultUnlocked: boolean;
-  savedProviders: AiProviderId[];
+  keys: Record<AiProviderId, string>;
+  activeKey: string;
   showKey: boolean;
   setShowKey: (v: boolean) => void;
   selectedProvider: AiProviderId;
   setSelectedProvider: (p: AiProviderId) => void;
-  onSaveKey: (p: AiProviderId, k: string) => Promise<void> | void;
+  onSaveKey: (p: AiProviderId, k: string) => void;
   prompt: string;
   setPrompt: (v: string) => void;
   task: Task;
@@ -477,33 +435,14 @@ const ByokMode = ({
   running: boolean;
   onRun: () => void;
 }) => {
+  const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
+  const hasKey = !!activeKey;
 
-  // ---- Gate: vault must exist & be unlocked before showing key UI ----------
-  if (!vaultExists) return <VaultCreatePane />;
-  if (!vaultUnlocked) return <VaultUnlockPane />;
-
-  // ---- Unlocked: render the normal BYOK UI ---------------------------------
-  const savedSet = new Set(savedProviders);
-  const hasKey = savedSet.has(selectedProvider);
+  useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
 
   return (
     <div className="space-y-4">
-      {/* Vault status bar */}
-      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-        <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400">
-          <Lock className="w-3 h-3" />
-          <span className="font-medium">Vault unlocked</span>
-          <span className="text-muted-foreground/60">· encrypted at rest</span>
-        </div>
-        <button
-          onClick={() => lockVault()}
-          className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Lock
-        </button>
-      </div>
-
       {/* Provider picker */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -514,7 +453,7 @@ const ByokMode = ({
           {AI_PROVIDERS.map((p) => {
             const meta = providerMeta[p.id];
             const active = selectedProvider === p.id;
-            const saved = savedSet.has(p.id);
+            const saved = !!keys[p.id];
             return (
               <button
                 key={p.id}
@@ -534,16 +473,43 @@ const ByokMode = ({
         </div>
       </div>
 
-      {/* API Key editor — note: never read existing key plaintext into UI */}
-      <KeyEditor
-        provider={provider}
-        hasSaved={hasKey}
-        showKey={showKey}
-        setShowKey={setShowKey}
-        onSave={(v) => onSaveKey(selectedProvider, v)}
-        onClear={() => onSaveKey(selectedProvider, "")}
-      />
-
+      {/* API Key */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Lock className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground/50">Local only</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 relative">
+            <input
+              type={showKey ? "text" : "password"}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => onSaveKey(selectedProvider, draft)}
+              placeholder={provider.keyHint}
+              className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
+            />
+            <button
+              onClick={() => setShowKey(!showKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
+              type="button"
+            >
+              {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+          {activeKey && (
+            <button
+              onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
+              className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Task picker */}
       <div className="space-y-2">
@@ -647,258 +613,4 @@ function CopyButton({
   );
 }
 
-/* ------------------------------ Vault panes ------------------------------ */
-
-const VaultCreatePane = () => {
-  const [pass, setPass] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const strong =
-    pass.length >= 12 && /[A-Z]/.test(pass) && /[0-9]/.test(pass);
-  const score = Math.min(4, Math.floor(pass.length / 4)) + (strong ? 1 : 0);
-
-  const create = async () => {
-    if (pass.length < 8) {
-      toast({ title: "Too short", description: "Use at least 8 characters.", variant: "destructive" });
-      return;
-    }
-    if (pass !== confirm) {
-      toast({ title: "Passphrases don't match", variant: "destructive" });
-      return;
-    }
-    setBusy(true);
-    try {
-      await createVault(pass);
-      toast({ title: "Vault created", description: "Your keys will be encrypted with this passphrase." });
-    } catch (e: any) {
-      toast({ title: "Could not create vault", description: e?.message, variant: "destructive" });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-center text-center gap-3 pt-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-          <Lock className="w-6 h-6 text-primary-foreground" />
-        </div>
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Create a master passphrase</h3>
-          <p className="text-[12px] text-muted-foreground max-w-sm mt-1">
-            Your API keys are encrypted with this passphrase using AES-256. It is never stored — only you can unlock them.
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div className="relative">
-          <input
-            type={show ? "text" : "password"}
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            placeholder="Master passphrase"
-            className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm"
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={() => setShow(!show)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-          >
-            {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-        <input
-          type={show ? "text" : "password"}
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Confirm passphrase"
-          className="w-full px-3 py-2.5 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm"
-        />
-
-        {/* Strength meter */}
-        <div className="flex gap-1">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                i < score
-                  ? score >= 4 ? "bg-emerald-500" : score >= 3 ? "bg-amber-500" : "bg-rose-500"
-                  : "bg-muted"
-              }`}
-            />
-          ))}
-        </div>
-        <p className="text-[10.5px] text-muted-foreground/70 leading-relaxed">
-          Tip: use 12+ characters with a number and an uppercase letter. If you forget it, saved keys cannot be recovered — they're encrypted, not stored.
-        </p>
-      </div>
-
-      <button
-        onClick={create}
-        disabled={busy || !pass || pass !== confirm}
-        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-      >
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-        Create secure vault
-      </button>
-    </div>
-  );
-};
-
-const VaultUnlockPane = () => {
-  const [pass, setPass] = useState("");
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const unlock = async () => {
-    if (!pass) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await unlockVault(pass);
-      setPass("");
-    } catch (e: any) {
-      setError(e?.message || "Incorrect passphrase.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-center text-center gap-3 pt-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-          <KeyRound className="w-6 h-6 text-primary-foreground" />
-        </div>
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Unlock your key vault</h3>
-          <p className="text-[12px] text-muted-foreground max-w-sm mt-1">
-            Enter your master passphrase to decrypt your saved API keys. The vault auto-locks when you close this panel.
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="relative">
-          <input
-            type={show ? "text" : "password"}
-            value={pass}
-            onChange={(e) => { setPass(e.target.value); setError(null); }}
-            onKeyDown={(e) => { if (e.key === "Enter") unlock(); }}
-            placeholder="Master passphrase"
-            className={`w-full pl-3 pr-10 py-2.5 rounded-xl bg-muted/40 border focus:outline-none text-sm transition-colors ${
-              error ? "border-destructive/60 focus:border-destructive" : "border-border/60 focus:border-primary/50"
-            }`}
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={() => setShow(!show)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-          >
-            {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-        {error && <p className="text-[11px] text-destructive">{error}</p>}
-      </div>
-
-      <button
-        onClick={unlock}
-        disabled={busy || !pass}
-        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-      >
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-        Unlock
-      </button>
-
-      <p className="text-[10px] text-center text-muted-foreground/50">
-        Forgot it? Reset via Settings — saved keys will be wiped.
-      </p>
-    </div>
-  );
-};
-
-const KeyEditor = ({
-  provider,
-  hasSaved,
-  showKey,
-  setShowKey,
-  onSave,
-  onClear,
-}: {
-  provider: { id: AiProviderId; name: string; keyHint: string };
-  hasSaved: boolean;
-  showKey: boolean;
-  setShowKey: (v: boolean) => void;
-  onSave: (v: string) => Promise<void> | void;
-  onClear: () => Promise<void> | void;
-}) => {
-  // We never load the existing plaintext into state. The user types a NEW key
-  // to replace it, or clears it. This way the modal can't leak the key into
-  // React devtools, screenshots, error overlays, etc.
-  const [draft, setDraft] = useState("");
-
-  useEffect(() => { setDraft(""); }, [provider.id]);
-
-  const save = async () => {
-    if (!draft.trim()) return;
-    await onSave(draft.trim());
-    setDraft("");
-    toast({ title: "Key encrypted & saved", description: `${provider.name} key stored in vault.` });
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Lock className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
-        </div>
-        <span className="text-[10px] text-muted-foreground/50">
-          {hasSaved ? "Encrypted • stored" : "Not set"}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <input
-            type={showKey ? "text" : "password"}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={hasSaved ? "Type to replace saved key…" : provider.keyHint}
-            className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
-          />
-          <button
-            onClick={() => setShowKey(!showKey)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-            type="button"
-          >
-            {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-        <button
-          onClick={save}
-          disabled={!draft.trim()}
-          className="px-3 py-2 rounded-xl bg-primary text-primary-foreground text-[12px] font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
-        >
-          Save
-        </button>
-        {hasSaved && (
-          <button
-            onClick={() => onClear()}
-            className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default AiAssistantModal;
-
