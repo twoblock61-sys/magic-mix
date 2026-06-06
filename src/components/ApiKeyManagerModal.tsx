@@ -114,6 +114,7 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
   const [drafts, setDrafts] = useState<Record<AiProviderId, string>>({} as any);
   const [reveal, setReveal] = useState<Record<AiProviderId, boolean>>({} as any);
   const [status, setStatus] = useState<Record<AiProviderId, { state: Status; message?: string }>>({} as any);
+  const [guideOpen, setGuideOpen] = useState<Record<AiProviderId, boolean>>({} as any);
   const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
@@ -123,6 +124,7 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
       setDrafts(k);
       setReveal({} as any);
       setStatus({} as any);
+      setGuideOpen({} as any);
       setConfirmClear(false);
     }
   }, [isOpen]);
