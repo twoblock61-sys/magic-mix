@@ -32,6 +32,8 @@ import {
   loadKeys,
   saveKey,
 } from "@/lib/aiProviders";
+import ApiKeyManagerModal from "./ApiKeyManagerModal";
+import { Settings2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AiAssistantModalProps {
@@ -81,6 +83,7 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   const [showKey, setShowKey] = useState(false);
   const [task, setTask] = useState<Task>("summary");
   const [running, setRunning] = useState(false);
+  const [showKeyManager, setShowKeyManager] = useState(false);
 
   useEffect(() => {
     if (isOpen) setKeys(loadKeys());
