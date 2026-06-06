@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, KeyRound, Eye, EyeOff, Trash2, Check, AlertCircle,
-  Loader2, ShieldCheck, Save, ShieldAlert,
+  Loader2, ShieldCheck, Save, ShieldAlert, HelpCircle, ExternalLink, CreditCard, Sparkles,
 } from "lucide-react";
 import {
   AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
@@ -26,11 +26,95 @@ const providerDot: Record<AiProviderId, string> = {
   xai: "bg-zinc-400",
 };
 
+interface KeyGuide {
+  consoleUrl: string;
+  signupUrl: string;
+  steps: string[];
+  pricing: string;
+  freeTier?: string;
+  tip?: string;
+}
+
+const KEY_GUIDES: Record<AiProviderId, KeyGuide> = {
+  openai: {
+    consoleUrl: "https://platform.openai.com/api-keys",
+    signupUrl: "https://platform.openai.com/signup",
+    steps: [
+      "Sign in (or sign up) at platform.openai.com",
+      "Open the API keys page from your profile menu",
+      "Click ‘Create new secret key’, name it and copy it once",
+      "Add billing under Settings → Billing to enable requests",
+    ],
+    pricing: "Pay-as-you-go · ~$0.15 / 1M input tokens (gpt-4o-mini)",
+    tip: "The key is shown only once. Paste it here right after creating it.",
+  },
+  gemini: {
+    consoleUrl: "https://aistudio.google.com/apikey",
+    signupUrl: "https://aistudio.google.com/",
+    steps: [
+      "Open Google AI Studio with your Google account",
+      "Click ‘Get API key’ in the left sidebar",
+      "Press ‘Create API key’ and pick a project",
+      "Copy the key starting with AIza…",
+    ],
+    pricing: "Free tier available · Paid plans on Google Cloud",
+    freeTier: "Generous free quota for personal use",
+  },
+  anthropic: {
+    consoleUrl: "https://console.anthropic.com/settings/keys",
+    signupUrl: "https://console.anthropic.com/",
+    steps: [
+      "Sign in at console.anthropic.com",
+      "Go to Settings → API Keys",
+      "Click ‘Create Key’, name it and copy it",
+      "Add credit under Plans & Billing to start using it",
+    ],
+    pricing: "Pay-as-you-go · ~$0.80 / 1M input tokens (Haiku)",
+    tip: "Browser calls need direct-access enabled — already handled by this app.",
+  },
+  deepseek: {
+    consoleUrl: "https://platform.deepseek.com/api_keys",
+    signupUrl: "https://platform.deepseek.com/",
+    steps: [
+      "Sign up at platform.deepseek.com",
+      "Open API Keys from the left sidebar",
+      "Click ‘Create new API key’ and copy it",
+      "Top up a small balance under Billing",
+    ],
+    pricing: "Very low cost · ~$0.14 / 1M input tokens",
+    tip: "One of the cheapest providers for long notes.",
+  },
+  groq: {
+    consoleUrl: "https://console.groq.com/keys",
+    signupUrl: "https://console.groq.com/",
+    steps: [
+      "Sign in at console.groq.com (Google or GitHub works)",
+      "Open the API Keys page",
+      "Click ‘Create API Key’, name it and copy it",
+      "No billing required to start — free tier is generous",
+    ],
+    pricing: "Free tier · Pay-as-you-go for higher limits",
+    freeTier: "Fastest free option — great for quick summaries",
+  },
+  xai: {
+    consoleUrl: "https://console.x.ai/",
+    signupUrl: "https://console.x.ai/",
+    steps: [
+      "Sign in at console.x.ai with your X account",
+      "Open API Keys in the left sidebar",
+      "Click ‘Create API Key’ and copy the xai-… token",
+      "Add credit under Billing to enable requests",
+    ],
+    pricing: "Pay-as-you-go · Credits required",
+  },
+};
+
 const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
   const [keys, setKeys] = useState<Record<AiProviderId, string>>({} as any);
   const [drafts, setDrafts] = useState<Record<AiProviderId, string>>({} as any);
   const [reveal, setReveal] = useState<Record<AiProviderId, boolean>>({} as any);
   const [status, setStatus] = useState<Record<AiProviderId, { state: Status; message?: string }>>({} as any);
+  const [guideOpen, setGuideOpen] = useState<Record<AiProviderId, boolean>>({} as any);
   const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
@@ -40,6 +124,7 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
       setDrafts(k);
       setReveal({} as any);
       setStatus({} as any);
+      setGuideOpen({} as any);
       setConfirmClear(false);
     }
   }, [isOpen]);
@@ -205,21 +290,46 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                         )}
                       </div>
 
-                      {!formatOk && (
-                        <p className="mt-2 text-[10.5px] text-amber-600 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Expected prefix <span className="font-mono">{p.keyPrefix}</span>
-                        </p>
-                      )}
+                      <div className="mt-2 flex items-center justify-between">
+                        {!formatOk ? (
+                          <p className="text-[10.5px] text-amber-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Expected prefix <span className="font-mono">{p.keyPrefix}</span>
+                          </p>
+                        ) : <span />}
+                        <button
+                          onClick={() => setGuideOpen((g) => ({ ...g, [p.id]: !g[p.id] }))}
+                          className="text-[10.5px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 ml-auto"
+                        >
+                          <HelpCircle className="w-3 h-3" />
+                          {guideOpen[p.id] ? "Hide guide" : "How to get a key"}
+                        </button>
+                      </div>
+
                       {st.message && st.state !== "idle" && st.state !== "checking" && (
                         <p className={`mt-2 text-[10.5px] ${st.state === "valid" ? "text-emerald-600" : "text-destructive"}`}>
                           {st.message}
                         </p>
                       )}
+
+                      <AnimatePresence initial={false}>
+                        {guideOpen[p.id] && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <KeyGuidePanel providerId={p.id} providerName={p.name} />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })}
               </div>
+
 
               {/* Footer */}
               <div className="px-6 py-3 border-t border-border/40 flex items-center justify-between shrink-0">
@@ -257,6 +367,68 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
     </AnimatePresence>
   );
 };
+
+function KeyGuidePanel({ providerId, providerName }: { providerId: AiProviderId; providerName: string }) {
+  const guide = KEY_GUIDES[providerId];
+  return (
+    <div className="mt-3 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/20 border border-border/40 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Sparkles className="w-3 h-3 text-primary" />
+        </div>
+        <span className="text-[12px] font-semibold tracking-tight">Get a {providerName} key</span>
+      </div>
+
+      <ol className="space-y-1.5 mb-3">
+        {guide.steps.map((step, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-[11.5px] leading-relaxed text-foreground/80">
+            <span className="shrink-0 w-4 h-4 rounded-full bg-background border border-border/60 text-[9px] font-semibold flex items-center justify-center text-muted-foreground mt-0.5">
+              {i + 1}
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background border border-border/50 text-[10px] text-muted-foreground">
+          <CreditCard className="w-2.5 h-2.5" /> {guide.pricing}
+        </span>
+        {guide.freeTier && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-medium">
+            <Sparkles className="w-2.5 h-2.5" /> {guide.freeTier}
+          </span>
+        )}
+      </div>
+
+      {guide.tip && (
+        <p className="text-[10.5px] text-muted-foreground italic mb-3 leading-relaxed">
+          💡 {guide.tip}
+        </p>
+      )}
+
+      <div className="flex items-center gap-2">
+        <a
+          href={guide.consoleUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[11.5px] font-medium"
+        >
+          <ExternalLink className="w-3 h-3" /> Open key console
+        </a>
+        <a
+          href={guide.signupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-2 rounded-xl border border-border/60 hover:bg-background text-[11.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Sign up
+        </a>
+      </div>
+    </div>
+  );
+}
+
 
 function StatusBadge({ st }: { st: { state: Status; message?: string } }) {
   if (st.state === "valid")
