@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, KeyRound, Eye, EyeOff, Trash2, Check, AlertCircle,
-  Loader2, ShieldCheck, Save, ShieldAlert,
+  Loader2, ShieldCheck, Save, ShieldAlert, HelpCircle, ExternalLink, CreditCard, Sparkles,
 } from "lucide-react";
 import {
   AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
@@ -24,6 +24,89 @@ const providerDot: Record<AiProviderId, string> = {
   deepseek: "bg-blue-500",
   groq: "bg-rose-500",
   xai: "bg-zinc-400",
+};
+
+interface KeyGuide {
+  consoleUrl: string;
+  signupUrl: string;
+  steps: string[];
+  pricing: string;
+  freeTier?: string;
+  tip?: string;
+}
+
+const KEY_GUIDES: Record<AiProviderId, KeyGuide> = {
+  openai: {
+    consoleUrl: "https://platform.openai.com/api-keys",
+    signupUrl: "https://platform.openai.com/signup",
+    steps: [
+      "Sign in (or sign up) at platform.openai.com",
+      "Open the API keys page from your profile menu",
+      "Click ‘Create new secret key’, name it and copy it once",
+      "Add billing under Settings → Billing to enable requests",
+    ],
+    pricing: "Pay-as-you-go · ~$0.15 / 1M input tokens (gpt-4o-mini)",
+    tip: "The key is shown only once. Paste it here right after creating it.",
+  },
+  gemini: {
+    consoleUrl: "https://aistudio.google.com/apikey",
+    signupUrl: "https://aistudio.google.com/",
+    steps: [
+      "Open Google AI Studio with your Google account",
+      "Click ‘Get API key’ in the left sidebar",
+      "Press ‘Create API key’ and pick a project",
+      "Copy the key starting with AIza…",
+    ],
+    pricing: "Free tier available · Paid plans on Google Cloud",
+    freeTier: "Generous free quota for personal use",
+  },
+  anthropic: {
+    consoleUrl: "https://console.anthropic.com/settings/keys",
+    signupUrl: "https://console.anthropic.com/",
+    steps: [
+      "Sign in at console.anthropic.com",
+      "Go to Settings → API Keys",
+      "Click ‘Create Key’, name it and copy it",
+      "Add credit under Plans & Billing to start using it",
+    ],
+    pricing: "Pay-as-you-go · ~$0.80 / 1M input tokens (Haiku)",
+    tip: "Browser calls need direct-access enabled — already handled by this app.",
+  },
+  deepseek: {
+    consoleUrl: "https://platform.deepseek.com/api_keys",
+    signupUrl: "https://platform.deepseek.com/",
+    steps: [
+      "Sign up at platform.deepseek.com",
+      "Open API Keys from the left sidebar",
+      "Click ‘Create new API key’ and copy it",
+      "Top up a small balance under Billing",
+    ],
+    pricing: "Very low cost · ~$0.14 / 1M input tokens",
+    tip: "One of the cheapest providers for long notes.",
+  },
+  groq: {
+    consoleUrl: "https://console.groq.com/keys",
+    signupUrl: "https://console.groq.com/",
+    steps: [
+      "Sign in at console.groq.com (Google or GitHub works)",
+      "Open the API Keys page",
+      "Click ‘Create API Key’, name it and copy it",
+      "No billing required to start — free tier is generous",
+    ],
+    pricing: "Free tier · Pay-as-you-go for higher limits",
+    freeTier: "Fastest free option — great for quick summaries",
+  },
+  xai: {
+    consoleUrl: "https://console.x.ai/",
+    signupUrl: "https://console.x.ai/",
+    steps: [
+      "Sign in at console.x.ai with your X account",
+      "Open API Keys in the left sidebar",
+      "Click ‘Create API Key’ and copy the xai-… token",
+      "Add credit under Billing to enable requests",
+    ],
+    pricing: "Pay-as-you-go · Credits required",
+  },
 };
 
 const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
