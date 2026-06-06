@@ -368,6 +368,68 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
   );
 };
 
+function KeyGuidePanel({ providerId, providerName }: { providerId: AiProviderId; providerName: string }) {
+  const guide = KEY_GUIDES[providerId];
+  return (
+    <div className="mt-3 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/20 border border-border/40 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Sparkles className="w-3 h-3 text-primary" />
+        </div>
+        <span className="text-[12px] font-semibold tracking-tight">Get a {providerName} key</span>
+      </div>
+
+      <ol className="space-y-1.5 mb-3">
+        {guide.steps.map((step, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-[11.5px] leading-relaxed text-foreground/80">
+            <span className="shrink-0 w-4 h-4 rounded-full bg-background border border-border/60 text-[9px] font-semibold flex items-center justify-center text-muted-foreground mt-0.5">
+              {i + 1}
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background border border-border/50 text-[10px] text-muted-foreground">
+          <CreditCard className="w-2.5 h-2.5" /> {guide.pricing}
+        </span>
+        {guide.freeTier && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-medium">
+            <Sparkles className="w-2.5 h-2.5" /> {guide.freeTier}
+          </span>
+        )}
+      </div>
+
+      {guide.tip && (
+        <p className="text-[10.5px] text-muted-foreground italic mb-3 leading-relaxed">
+          💡 {guide.tip}
+        </p>
+      )}
+
+      <div className="flex items-center gap-2">
+        <a
+          href={guide.consoleUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[11.5px] font-medium"
+        >
+          <ExternalLink className="w-3 h-3" /> Open key console
+        </a>
+        <a
+          href={guide.signupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-2 rounded-xl border border-border/60 hover:bg-background text-[11.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Sign up
+        </a>
+      </div>
+    </div>
+  );
+}
+
+
 function StatusBadge({ st }: { st: { state: Status; message?: string } }) {
   if (st.state === "valid")
     return (
