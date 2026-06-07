@@ -663,9 +663,9 @@ const ByokMode = ({
       {/* Run */}
       <motion.button
         onClick={onRun}
-        disabled={running || !hasKey}
-        whileHover={!running && hasKey ? { scale: 1.01 } : {}}
-        whileTap={!running && hasKey ? { scale: 0.99 } : {}}
+        disabled={running || !canRun}
+        whileHover={!running && canRun ? { scale: 1.01 } : {}}
+        whileTap={!running && canRun ? { scale: 0.99 } : {}}
         className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       >
         {running ? (
