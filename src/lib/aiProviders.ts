@@ -12,7 +12,9 @@ export type AiProviderId =
   | "anthropic"
   | "deepseek"
   | "groq"
-  | "xai";
+  | "xai"
+  | "ollama"
+  | "ollama-cloud";
 
 export interface AiProvider {
   id: AiProviderId;
@@ -23,6 +25,8 @@ export interface AiProvider {
   keyPrefix: string; // expected prefix for basic format validation
   accent: string;
   icon: string;
+  /** When false, the provider doesn't need an API key (e.g. local Ollama). */
+  requiresKey?: boolean;
 }
 
 export const AI_PROVIDERS: AiProvider[] = [
@@ -86,7 +90,64 @@ export const AI_PROVIDERS: AiProvider[] = [
     accent: "from-zinc-700 to-zinc-900",
     icon: "𝕏",
   },
+  {
+    id: "ollama",
+    name: "Ollama Local",
+    defaultModel: "llama3.2",
+    webUrl: "https://ollama.com/",
+    keyHint: "No key — runs on your machine",
+    keyPrefix: "",
+    accent: "from-stone-500 to-stone-700",
+    icon: "◉",
+    requiresKey: false,
+  },
+  {
+    id: "ollama-cloud",
+    name: "Ollama Cloud",
+    defaultModel: "gpt-oss:120b",
+    webUrl: "https://ollama.com/cloud",
+    keyHint: "Paste your Ollama Cloud key",
+    keyPrefix: "",
+    accent: "from-violet-500 to-fuchsia-500",
+    icon: "☁",
+  },
 ];
+
+/* ----------------------------- Ollama config ----------------------------- */
+// Ollama uses a base URL + model name instead of a pure API key. We store
+// these locally so users can point at any host (LAN box, Docker, etc.) and
+// switch between installed models without touching code.
+
+const OLLAMA_CFG = "elephant.ai.ollama.cfg.v1";
+
+export interface OllamaConfig {
+  localBaseUrl: string;
+  localModel: string;
+  cloudBaseUrl: string;
+  cloudModel: string;
+}
+
+const OLLAMA_DEFAULTS: OllamaConfig = {
+  localBaseUrl: "http://localhost:11434",
+  localModel: "llama3.2",
+  cloudBaseUrl: "https://ollama.com",
+  cloudModel: "gpt-oss:120b",
+};
+
+export const loadOllamaConfig = (): OllamaConfig => {
+  try {
+    const raw = localStorage.getItem(OLLAMA_CFG);
+    if (!raw) return { ...OLLAMA_DEFAULTS };
+    return { ...OLLAMA_DEFAULTS, ...JSON.parse(raw) };
+  } catch {
+    return { ...OLLAMA_DEFAULTS };
+  }
+};
+
+export const saveOllamaConfig = (cfg: Partial<OllamaConfig>) => {
+  const merged = { ...loadOllamaConfig(), ...cfg };
+  localStorage.setItem(OLLAMA_CFG, JSON.stringify(merged));
+};
 
 /* --------------------------- Obfuscated storage --------------------------- */
 // Device-bound obfuscation. The salt is generated once per browser and combined
@@ -191,7 +252,10 @@ export const maskKey = (key: string): string => {
 
 export const looksValidKey = (provider: AiProviderId, key: string): boolean => {
   const p = AI_PROVIDERS.find((x) => x.id === provider);
-  if (!p || !key) return false;
+  if (!p) return false;
+  if (p.requiresKey === false) return true; // local Ollama needs no key
+  if (!key) return false;
+  if (!p.keyPrefix) return key.length >= 8;
   return key.startsWith(p.keyPrefix) && key.length >= p.keyPrefix.length + 8;
 };
 
@@ -200,8 +264,27 @@ export const validateKey = async (
   provider: AiProviderId,
   apiKey: string,
 ): Promise<{ ok: boolean; message: string }> => {
-  if (!apiKey) return { ok: false, message: "No key provided." };
   try {
+    if (provider === "ollama") {
+      const cfg = loadOllamaConfig();
+      const r = await fetch(`${cfg.localBaseUrl.replace(/\/$/, "")}/api/tags`);
+      return r.ok
+        ? { ok: true, message: "Ollama is reachable." }
+        : { ok: false, message: `Ollama responded ${r.status}.` };
+    }
+    if (provider === "ollama-cloud") {
+      if (!apiKey) return { ok: false, message: "No key provided." };
+      const cfg = loadOllamaConfig();
+      const r = await fetch(`${cfg.cloudBaseUrl.replace(/\/$/, "")}/api/tags`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      return r.ok
+        ? { ok: true, message: "Key is valid." }
+        : { ok: false, message: `Ollama Cloud rejected the key (${r.status}).` };
+    }
+
+    if (!apiKey) return { ok: false, message: "No key provided." };
+
     if (provider === "openai") {
       const r = await fetch("https://api.openai.com/v1/models", {
         headers: { Authorization: `Bearer ${apiKey}` },
@@ -219,7 +302,6 @@ export const validateKey = async (
         : { ok: false, message: `Gemini rejected the key (${r.status}).` };
     }
     if (provider === "anthropic") {
-      // Anthropic has no public /models; do a cheap 1-token completion ping.
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -265,6 +347,30 @@ export const callAi = async (
 ): Promise<string> => {
   const p = AI_PROVIDERS.find((x) => x.id === provider)!;
   const model = p.defaultModel;
+
+  if (provider === "ollama" || provider === "ollama-cloud") {
+    const cfg = loadOllamaConfig();
+    const isLocal = provider === "ollama";
+    const baseUrl = (isLocal ? cfg.localBaseUrl : cfg.cloudBaseUrl).replace(/\/$/, "");
+    const useModel = isLocal ? cfg.localModel : cfg.cloudModel;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (!isLocal && apiKey) headers.Authorization = `Bearer ${apiKey}`;
+    const res = await fetch(`${baseUrl}/api/chat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: useModel,
+        stream: false,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return data?.message?.content ?? "";
+  }
 
   if (provider === "gemini") {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
