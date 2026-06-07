@@ -395,7 +395,7 @@ const ExternalMode = ({
           <span className="text-[11px] font-medium uppercase tracking-wider">Open in</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {AI_PROVIDERS.map((p) => {
+          {AI_PROVIDERS.filter((p) => p.id !== "ollama" && p.id !== "ollama-cloud").map((p) => {
             const meta = providerMeta[p.id];
             return (
               <button
