@@ -31,9 +31,12 @@ import {
   extractJson,
   loadKeys,
   saveKey,
+  loadOllamaConfig,
+  saveOllamaConfig,
+  OllamaConfig,
 } from "@/lib/aiProviders";
 import ApiKeyManagerModal from "./ApiKeyManagerModal";
-import { Settings2 } from "lucide-react";
+import { Settings2, Server, Cloud, Cpu } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AiAssistantModalProps {
@@ -70,6 +73,8 @@ const providerMeta: Record<AiProviderId, { icon: React.ReactNode; color: string;
   deepseek: { icon: <span className="text-blue-500 text-lg">◈</span>, color: "border-blue-500/20 hover:border-blue-500/40", activeColor: "border-blue-500 bg-blue-500/5" },
   groq: { icon: <span className="text-rose-500 text-lg">⚡</span>, color: "border-rose-500/20 hover:border-rose-500/40", activeColor: "border-rose-500 bg-rose-500/5" },
   xai: { icon: <span className="text-zinc-400 text-lg">𝕏</span>, color: "border-zinc-500/20 hover:border-zinc-500/40", activeColor: "border-zinc-500 bg-zinc-500/5" },
+  ollama: { icon: <Cpu className="w-4 h-4 text-stone-500" />, color: "border-stone-500/20 hover:border-stone-500/40", activeColor: "border-stone-500 bg-stone-500/5" },
+  "ollama-cloud": { icon: <Cloud className="w-4 h-4 text-violet-500" />, color: "border-violet-500/20 hover:border-violet-500/40", activeColor: "border-violet-500 bg-violet-500/5" },
 };
 
 const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistantModalProps) => {
