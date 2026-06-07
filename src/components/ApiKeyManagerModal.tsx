@@ -160,6 +160,7 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
       setStatus({} as any);
       setGuideOpen({} as any);
       setConfirmClear(false);
+      setOllamaCfg(loadOllamaConfig());
     }
   }, [isOpen]);
 
