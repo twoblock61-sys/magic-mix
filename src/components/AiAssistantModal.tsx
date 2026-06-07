@@ -121,8 +121,9 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   };
 
   const handleRun = async () => {
-    const apiKey = keys[selectedProvider];
-    if (!apiKey) {
+    const apiKey = keys[selectedProvider] || "";
+    const p = AI_PROVIDERS.find((x) => x.id === selectedProvider)!;
+    if (p.requiresKey !== false && !apiKey) {
       toast({ title: "Add an API key", description: "Paste a key for the selected provider first." });
       return;
     }
