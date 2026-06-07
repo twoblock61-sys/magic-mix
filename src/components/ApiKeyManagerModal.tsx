@@ -258,13 +258,18 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                   const dirty = draft.trim() !== (saved || "");
                   const formatOk = !draft || looksValidKey(p.id, draft.trim());
 
+                  const isLocalOllama = p.id === "ollama";
+
                   return (
                     <div key={p.id} className="rounded-2xl border border-border/50 bg-background/40 p-3.5">
                       <div className="flex items-center justify-between mb-2.5">
                         <div className="flex items-center gap-2.5">
-                          <span className={`w-2 h-2 rounded-full ${saved ? providerDot[p.id] : "bg-muted-foreground/30"}`} />
+                          <span className={`w-2 h-2 rounded-full ${(saved || isLocalOllama) ? providerDot[p.id] : "bg-muted-foreground/30"}`} />
                           <span className="text-[13.5px] font-medium">{p.name}</span>
-                          {saved && !dirty && (
+                          {isLocalOllama && (
+                            <span className="text-[10px] text-emerald-600 font-medium ml-1">no key needed</span>
+                          )}
+                          {!isLocalOllama && saved && !dirty && (
                             <span className="text-[10px] font-mono text-muted-foreground/70 ml-1">
                               {maskKey(saved)}
                             </span>
