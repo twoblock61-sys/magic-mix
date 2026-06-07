@@ -31,9 +31,12 @@ import {
   extractJson,
   loadKeys,
   saveKey,
+  loadOllamaConfig,
+  saveOllamaConfig,
+  OllamaConfig,
 } from "@/lib/aiProviders";
 import ApiKeyManagerModal from "./ApiKeyManagerModal";
-import { Settings2 } from "lucide-react";
+import { Settings2, Server, Cloud, Cpu } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AiAssistantModalProps {
@@ -70,6 +73,8 @@ const providerMeta: Record<AiProviderId, { icon: React.ReactNode; color: string;
   deepseek: { icon: <span className="text-blue-500 text-lg">◈</span>, color: "border-blue-500/20 hover:border-blue-500/40", activeColor: "border-blue-500 bg-blue-500/5" },
   groq: { icon: <span className="text-rose-500 text-lg">⚡</span>, color: "border-rose-500/20 hover:border-rose-500/40", activeColor: "border-rose-500 bg-rose-500/5" },
   xai: { icon: <span className="text-zinc-400 text-lg">𝕏</span>, color: "border-zinc-500/20 hover:border-zinc-500/40", activeColor: "border-zinc-500 bg-zinc-500/5" },
+  ollama: { icon: <Cpu className="w-4 h-4 text-stone-500" />, color: "border-stone-500/20 hover:border-stone-500/40", activeColor: "border-stone-500 bg-stone-500/5" },
+  "ollama-cloud": { icon: <Cloud className="w-4 h-4 text-violet-500" />, color: "border-violet-500/20 hover:border-violet-500/40", activeColor: "border-violet-500 bg-violet-500/5" },
 };
 
 const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistantModalProps) => {
@@ -116,8 +121,9 @@ const AiAssistantModal = ({ isOpen, onClose, note, onAppendBlocks }: AiAssistant
   };
 
   const handleRun = async () => {
-    const apiKey = keys[selectedProvider];
-    if (!apiKey) {
+    const apiKey = keys[selectedProvider] || "";
+    const p = AI_PROVIDERS.find((x) => x.id === selectedProvider)!;
+    if (p.requiresKey !== false && !apiKey) {
       toast({ title: "Add an API key", description: "Paste a key for the selected provider first." });
       return;
     }
@@ -389,7 +395,7 @@ const ExternalMode = ({
           <span className="text-[11px] font-medium uppercase tracking-wider">Open in</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {AI_PROVIDERS.map((p) => {
+          {AI_PROVIDERS.filter((p) => p.id !== "ollama" && p.id !== "ollama-cloud").map((p) => {
             const meta = providerMeta[p.id];
             return (
               <button
@@ -444,7 +450,17 @@ const ByokMode = ({
 }) => {
   const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
+  const isOllama = selectedProvider === "ollama" || selectedProvider === "ollama-cloud";
+  const requiresKey = provider.requiresKey !== false;
   const hasKey = !!activeKey;
+  const canRun = requiresKey ? hasKey : true;
+
+  const [ollamaCfg, setOllamaCfg] = useState<OllamaConfig>(() => loadOllamaConfig());
+  const updateOllama = (patch: Partial<OllamaConfig>) => {
+    const next = { ...ollamaCfg, ...patch };
+    setOllamaCfg(next);
+    saveOllamaConfig(next);
+  };
 
   useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
 
@@ -456,11 +472,11 @@ const ByokMode = ({
           <Zap className="w-3.5 h-3.5" />
           <span className="text-[11px] font-medium uppercase tracking-wider">Provider</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {AI_PROVIDERS.map((p) => {
             const meta = providerMeta[p.id];
             const active = selectedProvider === p.id;
-            const saved = !!keys[p.id];
+            const saved = !!keys[p.id] || (p.id === "ollama");
             return (
               <button
                 key={p.id}
@@ -470,8 +486,8 @@ const ByokMode = ({
                 }`}
               >
                 {meta.icon}
-                <span className="text-[11px] font-medium">{p.name}</span>
-                {saved && (
+                <span className="text-[10.5px] font-medium leading-tight text-center">{p.name}</span>
+                {saved && p.id !== "ollama" && (
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                 )}
               </button>
@@ -480,48 +496,126 @@ const ByokMode = ({
         </div>
       </div>
 
-      {/* API Key */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Lock className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
+      {/* API Key / Ollama config */}
+      {selectedProvider === "ollama" ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Server className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium uppercase tracking-wider">Local Ollama</span>
+            </div>
+            <span className="text-[10px] text-emerald-600 font-medium">100% offline</span>
           </div>
-          <button
-            onClick={onOpenManager}
-            className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
-          >
-            <Settings2 className="w-3 h-3" /> Manage all keys
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
+          <div className="grid grid-cols-2 gap-2">
             <input
-              type={showKey ? "text" : "password"}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => onSaveKey(selectedProvider, draft)}
-              placeholder={provider.keyHint}
-              className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
+              value={ollamaCfg.localBaseUrl}
+              onChange={(e) => updateOllama({ localBaseUrl: e.target.value })}
+              placeholder="http://localhost:11434"
+              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
             />
+            <input
+              value={ollamaCfg.localModel}
+              onChange={(e) => updateOllama({ localModel: e.target.value })}
+              placeholder="llama3.2"
+              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            Install Ollama and run <code className="px-1 rounded bg-muted">ollama pull {ollamaCfg.localModel}</code>.
+            For browser access set <code className="px-1 rounded bg-muted">OLLAMA_ORIGINS=*</code> before starting it.
+          </p>
+        </div>
+      ) : selectedProvider === "ollama-cloud" ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Cloud className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium uppercase tracking-wider">Ollama Cloud</span>
+            </div>
             <button
-              onClick={() => setShowKey(!showKey)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-              type="button"
+              onClick={onOpenManager}
+              className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
             >
-              {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <Settings2 className="w-3 h-3" /> Manage
             </button>
           </div>
-          {activeKey && (
-            <button
-              onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
-              className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <input
+                type={showKey ? "text" : "password"}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={() => onSaveKey(selectedProvider, draft)}
+                placeholder="Paste your Ollama Cloud key"
+                className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
+              />
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
+                type="button"
+              >
+                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            {activeKey && (
+              <button
+                onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
+                className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <input
+            value={ollamaCfg.cloudModel}
+            onChange={(e) => updateOllama({ cloudModel: e.target.value })}
+            placeholder="gpt-oss:120b"
+            className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+          />
         </div>
-      </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Lock className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
+            </div>
+            <button
+              onClick={onOpenManager}
+              className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
+            >
+              <Settings2 className="w-3 h-3" /> Manage all keys
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <input
+                type={showKey ? "text" : "password"}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={() => onSaveKey(selectedProvider, draft)}
+                placeholder={provider.keyHint}
+                className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
+              />
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
+                type="button"
+              >
+                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            {activeKey && (
+              <button
+                onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
+                className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Task picker */}
       <div className="space-y-2">
@@ -569,9 +663,9 @@ const ByokMode = ({
       {/* Run */}
       <motion.button
         onClick={onRun}
-        disabled={running || !hasKey}
-        whileHover={!running && hasKey ? { scale: 1.01 } : {}}
-        whileTap={!running && hasKey ? { scale: 0.99 } : {}}
+        disabled={running || !canRun}
+        whileHover={!running && canRun ? { scale: 1.01 } : {}}
+        whileTap={!running && canRun ? { scale: 0.99 } : {}}
         className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       >
         {running ? (

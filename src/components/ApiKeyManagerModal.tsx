@@ -7,6 +7,7 @@ import {
 import {
   AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
   maskKey, looksValidKey, validateKey,
+  loadOllamaConfig, saveOllamaConfig, OllamaConfig,
 } from "@/lib/aiProviders";
 import { toast } from "@/hooks/use-toast";
 
@@ -24,6 +25,8 @@ const providerDot: Record<AiProviderId, string> = {
   deepseek: "bg-blue-500",
   groq: "bg-rose-500",
   xai: "bg-zinc-400",
+  ollama: "bg-stone-500",
+  "ollama-cloud": "bg-violet-500",
 };
 
 interface KeyGuide {
@@ -107,6 +110,31 @@ const KEY_GUIDES: Record<AiProviderId, KeyGuide> = {
     ],
     pricing: "Pay-as-you-go · Credits required",
   },
+  ollama: {
+    consoleUrl: "https://ollama.com/download",
+    signupUrl: "https://ollama.com/",
+    steps: [
+      "Install Ollama from ollama.com/download",
+      "Pull a model — e.g. `ollama pull llama3.2`",
+      "Start with `OLLAMA_ORIGINS=* ollama serve` so the browser can reach it",
+      "Open the AI Assistant and pick ‘Ollama Local’ — no key needed",
+    ],
+    pricing: "Free · Runs on your machine",
+    freeTier: "100% offline · private by default",
+    tip: "Use any model you've pulled. Set the model name in the AI Assistant panel.",
+  },
+  "ollama-cloud": {
+    consoleUrl: "https://ollama.com/settings/keys",
+    signupUrl: "https://ollama.com/signup",
+    steps: [
+      "Sign up at ollama.com and subscribe to Cloud",
+      "Open Settings → API Keys",
+      "Create a new key and copy it",
+      "Paste it here — the model defaults to gpt-oss:120b",
+    ],
+    pricing: "Subscription · Hosted GPUs",
+    tip: "Run massive open-source models without local hardware.",
+  },
 };
 
 const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
@@ -116,6 +144,12 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
   const [status, setStatus] = useState<Record<AiProviderId, { state: Status; message?: string }>>({} as any);
   const [guideOpen, setGuideOpen] = useState<Record<AiProviderId, boolean>>({} as any);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [ollamaCfg, setOllamaCfg] = useState<OllamaConfig>(() => loadOllamaConfig());
+  const updateOllama = (patch: Partial<OllamaConfig>) => {
+    const next = { ...ollamaCfg, ...patch };
+    setOllamaCfg(next);
+    saveOllamaConfig(next);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -126,6 +160,7 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
       setStatus({} as any);
       setGuideOpen({} as any);
       setConfirmClear(false);
+      setOllamaCfg(loadOllamaConfig());
     }
   }, [isOpen]);
 
@@ -223,13 +258,18 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                   const dirty = draft.trim() !== (saved || "");
                   const formatOk = !draft || looksValidKey(p.id, draft.trim());
 
+                  const isLocalOllama = p.id === "ollama";
+
                   return (
                     <div key={p.id} className="rounded-2xl border border-border/50 bg-background/40 p-3.5">
                       <div className="flex items-center justify-between mb-2.5">
                         <div className="flex items-center gap-2.5">
-                          <span className={`w-2 h-2 rounded-full ${saved ? providerDot[p.id] : "bg-muted-foreground/30"}`} />
+                          <span className={`w-2 h-2 rounded-full ${(saved || isLocalOllama) ? providerDot[p.id] : "bg-muted-foreground/30"}`} />
                           <span className="text-[13.5px] font-medium">{p.name}</span>
-                          {saved && !dirty && (
+                          {isLocalOllama && (
+                            <span className="text-[10px] text-emerald-600 font-medium ml-1">no key needed</span>
+                          )}
+                          {!isLocalOllama && saved && !dirty && (
                             <span className="text-[10px] font-mono text-muted-foreground/70 ml-1">
                               {maskKey(saved)}
                             </span>
@@ -240,55 +280,83 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 relative">
-                          <input
-                            type={isRevealed ? "text" : "password"}
-                            value={draft}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setDrafts((d) => ({ ...d, [p.id]: v }));
-                              setStatus((s) => ({ ...s, [p.id]: { state: "idle" } }));
-                            }}
-                            placeholder={p.keyHint}
-                            className={`w-full pl-3 pr-9 py-2 rounded-xl bg-muted/40 border text-sm font-mono focus:outline-none transition-colors ${
-                              !formatOk ? "border-amber-500/50" : "border-border/60 focus:border-primary/50"
-                            }`}
-                          />
+                      {isLocalOllama ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              value={ollamaCfg.localBaseUrl}
+                              onChange={(e) => updateOllama({ localBaseUrl: e.target.value })}
+                              placeholder="http://localhost:11434"
+                              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+                            />
+                            <input
+                              value={ollamaCfg.localModel}
+                              onChange={(e) => updateOllama({ localModel: e.target.value })}
+                              placeholder="llama3.2"
+                              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+                            />
+                          </div>
                           <button
-                            type="button"
-                            onClick={() => setReveal((r) => ({ ...r, [p.id]: !r[p.id] }))}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
+                            onClick={() => handleValidate(p.id)}
+                            disabled={st.state === "checking"}
+                            className="px-3 py-1.5 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-[11px] font-medium disabled:opacity-40"
                           >
-                            {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {st.state === "checking" ? (
+                              <span className="inline-flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" /> Testing…</span>
+                            ) : "Test connection"}
                           </button>
                         </div>
-                        <button
-                          onClick={() => handleValidate(p.id)}
-                          disabled={!draft.trim() || st.state === "checking"}
-                          className="px-2.5 py-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-[11px] font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-                          title="Test against provider"
-                        >
-                          {st.state === "checking" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Test"}
-                        </button>
-                        <button
-                          onClick={() => handleSave(p.id)}
-                          disabled={!dirty}
-                          className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          title="Save"
-                        >
-                          <Save className="w-3.5 h-3.5" />
-                        </button>
-                        {saved && (
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type={isRevealed ? "text" : "password"}
+                              value={draft}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setDrafts((d) => ({ ...d, [p.id]: v }));
+                                setStatus((s) => ({ ...s, [p.id]: { state: "idle" } }));
+                              }}
+                              placeholder={p.keyHint}
+                              className={`w-full pl-3 pr-9 py-2 rounded-xl bg-muted/40 border text-sm font-mono focus:outline-none transition-colors ${
+                                !formatOk ? "border-amber-500/50" : "border-border/60 focus:border-primary/50"
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setReveal((r) => ({ ...r, [p.id]: !r[p.id] }))}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
+                            >
+                              {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                           <button
-                            onClick={() => handleDelete(p.id)}
-                            className="p-2 rounded-xl border border-border/60 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="Delete saved key"
+                            onClick={() => handleValidate(p.id)}
+                            disabled={!draft.trim() || st.state === "checking"}
+                            className="px-2.5 py-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-[11px] font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Test against provider"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {st.state === "checking" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Test"}
                           </button>
-                        )}
-                      </div>
+                          <button
+                            onClick={() => handleSave(p.id)}
+                            disabled={!dirty}
+                            className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            title="Save"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                          </button>
+                          {saved && (
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              className="p-2 rounded-xl border border-border/60 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Delete saved key"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
 
                       <div className="mt-2 flex items-center justify-between">
                         {!formatOk ? (
