@@ -109,6 +109,38 @@ const KEY_GUIDES: Record<AiProviderId, KeyGuide> = {
     ],
     pricing: "Pay-as-you-go · Credits required",
   },
+  ollama: {
+    consoleUrl: "https://ollama.com/download",
+    signupUrl: "https://ollama.com/",
+    steps: [
+      "Install Ollama from ollama.com/download",
+      "Pull a model — e.g. `ollama pull llama3.2`",
+      "Start with `OLLAMA_ORIGINS=* ollama serve` so the browser can reach it",
+      "Open the AI Assistant and pick ‘Ollama Local’ — no key needed",
+    ],
+    pricing: "Free · Runs on your machine",
+    freeTier: "100% offline · private by default",
+    tip: "Use any model you've pulled. Set the model name in the AI Assistant panel.",
+  },
+  "ollama-cloud": {
+    consoleUrl: "https://ollama.com/settings/keys",
+    signupUrl: "https://ollama.com/signup",
+    steps: [
+      "Sign up at ollama.com and subscribe to Cloud",
+      "Open Settings → API Keys",
+      "Create a new key and copy it",
+      "Paste it here — the model defaults to gpt-oss:120b",
+    ],
+    pricing: "Subscription · Hosted GPUs",
+    tip: "Run massive open-source models without local hardware.",
+  },
+      "Sign in at console.x.ai with your X account",
+      "Open API Keys in the left sidebar",
+      "Click ‘Create API Key’ and copy the xai-… token",
+      "Add credit under Billing to enable requests",
+    ],
+    pricing: "Pay-as-you-go · Credits required",
+  },
 };
 
 const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
