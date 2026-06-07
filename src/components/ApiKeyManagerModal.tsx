@@ -7,6 +7,7 @@ import {
 import {
   AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
   maskKey, looksValidKey, validateKey,
+  loadOllamaConfig, saveOllamaConfig, OllamaConfig,
 } from "@/lib/aiProviders";
 import { toast } from "@/hooks/use-toast";
 
