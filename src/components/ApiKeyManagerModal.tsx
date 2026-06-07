@@ -134,13 +134,6 @@ const KEY_GUIDES: Record<AiProviderId, KeyGuide> = {
     pricing: "Subscription · Hosted GPUs",
     tip: "Run massive open-source models without local hardware.",
   },
-      "Sign in at console.x.ai with your X account",
-      "Open API Keys in the left sidebar",
-      "Click ‘Create API Key’ and copy the xai-… token",
-      "Add credit under Billing to enable requests",
-    ],
-    pricing: "Pay-as-you-go · Credits required",
-  },
 };
 
 const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
