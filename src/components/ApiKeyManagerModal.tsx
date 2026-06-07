@@ -144,6 +144,12 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
   const [status, setStatus] = useState<Record<AiProviderId, { state: Status; message?: string }>>({} as any);
   const [guideOpen, setGuideOpen] = useState<Record<AiProviderId, boolean>>({} as any);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [ollamaCfg, setOllamaCfg] = useState<OllamaConfig>(() => loadOllamaConfig());
+  const updateOllama = (patch: Partial<OllamaConfig>) => {
+    const next = { ...ollamaCfg, ...patch };
+    setOllamaCfg(next);
+    saveOllamaConfig(next);
+  };
 
   useEffect(() => {
     if (isOpen) {
