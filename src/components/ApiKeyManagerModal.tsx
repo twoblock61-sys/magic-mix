@@ -24,6 +24,8 @@ const providerDot: Record<AiProviderId, string> = {
   deepseek: "bg-blue-500",
   groq: "bg-rose-500",
   xai: "bg-zinc-400",
+  ollama: "bg-stone-500",
+  "ollama-cloud": "bg-violet-500",
 };
 
 interface KeyGuide {
