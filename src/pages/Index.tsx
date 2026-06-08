@@ -72,9 +72,3 @@ const Index = () => {
 };
 
 export default Index;
-      </div>
-    </NotesProvider>
-  );
-};
-
-export default Index;
