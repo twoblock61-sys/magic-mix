@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Download, FileText, FileCode, FileType, Wand2 } from "lucide-react";
+import { X, Plus, MoreHorizontal, Star, Share2, Clock, Focus, Minimize2, BookOpen, Sparkles, Undo2, Redo2, Download, FileText, FileCode, FileType, Wand2, Users } from "lucide-react";
 import NotionEditor from "./NotionEditor";
 import FloatingToolbar from "./FloatingToolbar";
 import FindReplaceBar from "./FindReplaceBar";
 import TemplatesModal from "./TemplatesModal";
 import AiAssistantModal from "./AiAssistantModal";
+import CollaborateModal from "./CollaborateModal";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { useHeadingIndex } from "@/hooks/useHeadingIndex";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useNoteExport } from "@/hooks/useNoteExport";
+import { useCollabSession } from "@/hooks/useCollabSession";
 import { Template } from "@/data/templates";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -38,6 +40,8 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAi, setShowAi] = useState(false);
+  const [showCollab, setShowCollab] = useState(false);
+  const [collab, setCollab] = useState<{ roomId: string; password: string } | null>(null);
 
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
@@ -134,6 +138,35 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const handleBlocksChange = (blocks: NoteBlock[]) => {
     pushState(blocks); // Track state for undo/redo
     onUpdate({ blocks });
+  };
+
+  // ---- Collaboration: auto-join sessions stashed on the note via invite link ----
+  const stashedCollab = useMemo(() => {
+    const r = note.tags.find((t) => t.id === "collab-room")?.label.replace(/^__collab:/, "");
+    const k = note.tags.find((t) => t.id === "collab-key")?.label.replace(/^__key:/, "");
+    return r && k ? { roomId: r, password: k } : null;
+  }, [note.tags]);
+
+  useEffect(() => {
+    if (stashedCollab && !collab) setCollab(stashedCollab);
+  }, [stashedCollab, collab]);
+
+  const { peers, connected, renameSelf } = useCollabSession({
+    active: !!collab,
+    roomId: collab?.roomId ?? null,
+    password: collab?.password ?? null,
+    blocks: note.blocks,
+    title: note.title,
+    onRemote: (updates) => onUpdate(updates),
+  });
+
+  const startCollab = (roomId: string, password: string) => {
+    setCollab({ roomId, password });
+  };
+  const stopCollab = () => {
+    setCollab(null);
+    // strip stashed invite tags so we don't auto-rejoin
+    onUpdate({ tags: note.tags.filter((t) => t.id !== "collab-room" && t.id !== "collab-key") });
   };
 
   const getTagStyle = (colorName: string) => {
@@ -362,13 +395,50 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             </AnimatePresence>
           </div>
 
-          <motion.button
-            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Share2 className="w-4 h-4" />
-          </motion.button>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  onClick={() => setShowCollab(true)}
+                  className={`relative p-2 rounded-lg transition-colors ${
+                    collab ? "text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/15" : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Users className="w-4 h-4" />
+                  {collab && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                  )}
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {collab ? `Live · ${peers.length + 1} in session` : "Collaborate live"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {collab && peers.length > 0 && (
+            <div className="flex -space-x-1.5">
+              {peers.slice(0, 3).map((p, i) => (
+                <div
+                  key={i}
+                  title={p.name}
+                  className="w-6 h-6 rounded-full ring-2 ring-background flex items-center justify-center text-[10px] font-semibold text-white"
+                  style={{ backgroundColor: p.color }}
+                >
+                  {p.name.slice(0, 1).toUpperCase()}
+                </div>
+              ))}
+              {peers.length > 3 && (
+                <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted text-[10px] font-medium flex items-center justify-center text-muted-foreground">
+                  +{peers.length - 3}
+                </div>
+              )}
+            </div>
+          )}
           <motion.button
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             whileHover={{ scale: 1.1 }}
@@ -399,6 +469,22 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         note={note}
         onAppendBlocks={handleAppendAiBlocks}
       />
+
+      {/* Collaboration Modal */}
+      <CollaborateModal
+        isOpen={showCollab}
+        onClose={() => setShowCollab(false)}
+        noteTitle={note.title}
+        active={!!collab}
+        roomId={collab?.roomId ?? null}
+        password={collab?.password ?? null}
+        peers={peers}
+        connected={connected}
+        onStart={startCollab}
+        onStop={stopCollab}
+        onRenameSelf={renameSelf}
+      />
+
 
 
       {/* Index Dropdown Menu */}

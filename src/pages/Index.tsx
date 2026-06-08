@@ -10,6 +10,7 @@ import GraphPage from "@/pages/GraphPage";
 import FlashcardsPage from "@/pages/FlashcardsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SharedPage from "@/pages/SharedPage";
+import CollabInviteListener from "@/components/CollabInviteListener";
 
 const Index = () => {
   const [activeNav, setActiveNav] = useState("home");
@@ -62,6 +63,9 @@ const Index = () => {
             {renderPage()}
           </main>
         </motion.div>
+        <CollabInviteListener
+          onOpenNote={(noteId) => handleNavigate("ideas", noteId)}
+        />
       </div>
     </NotesProvider>
   );
