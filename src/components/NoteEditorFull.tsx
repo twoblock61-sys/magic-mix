@@ -140,6 +140,35 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
     onUpdate({ blocks });
   };
 
+  // ---- Collaboration: auto-join sessions stashed on the note via invite link ----
+  const stashedCollab = useMemo(() => {
+    const r = note.tags.find((t) => t.id === "collab-room")?.label.replace(/^__collab:/, "");
+    const k = note.tags.find((t) => t.id === "collab-key")?.label.replace(/^__key:/, "");
+    return r && k ? { roomId: r, password: k } : null;
+  }, [note.tags]);
+
+  useEffect(() => {
+    if (stashedCollab && !collab) setCollab(stashedCollab);
+  }, [stashedCollab, collab]);
+
+  const { peers, connected, renameSelf } = useCollabSession({
+    active: !!collab,
+    roomId: collab?.roomId ?? null,
+    password: collab?.password ?? null,
+    blocks: note.blocks,
+    title: note.title,
+    onRemote: (updates) => onUpdate(updates),
+  });
+
+  const startCollab = (roomId: string, password: string) => {
+    setCollab({ roomId, password });
+  };
+  const stopCollab = () => {
+    setCollab(null);
+    // strip stashed invite tags so we don't auto-rejoin
+    onUpdate({ tags: note.tags.filter((t) => t.id !== "collab-room" && t.id !== "collab-key") });
+  };
+
   const getTagStyle = (colorName: string) => {
     const color = tagColors.find((c) => c.name === colorName) || tagColors[5];
     return `${color.bg} ${color.text} ${color.border}`;
