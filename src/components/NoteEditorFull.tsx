@@ -395,13 +395,50 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
             </AnimatePresence>
           </div>
 
-          <motion.button
-            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Share2 className="w-4 h-4" />
-          </motion.button>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  onClick={() => setShowCollab(true)}
+                  className={`relative p-2 rounded-lg transition-colors ${
+                    collab ? "text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/15" : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Users className="w-4 h-4" />
+                  {collab && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                  )}
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {collab ? `Live · ${peers.length + 1} in session` : "Collaborate live"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {collab && peers.length > 0 && (
+            <div className="flex -space-x-1.5">
+              {peers.slice(0, 3).map((p, i) => (
+                <div
+                  key={i}
+                  title={p.name}
+                  className="w-6 h-6 rounded-full ring-2 ring-background flex items-center justify-center text-[10px] font-semibold text-white"
+                  style={{ backgroundColor: p.color }}
+                >
+                  {p.name.slice(0, 1).toUpperCase()}
+                </div>
+              ))}
+              {peers.length > 3 && (
+                <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted text-[10px] font-medium flex items-center justify-center text-muted-foreground">
+                  +{peers.length - 3}
+                </div>
+              )}
+            </div>
+          )}
           <motion.button
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             whileHover={{ scale: 1.1 }}
