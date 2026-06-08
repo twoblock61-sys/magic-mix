@@ -470,6 +470,22 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
         onAppendBlocks={handleAppendAiBlocks}
       />
 
+      {/* Collaboration Modal */}
+      <CollaborateModal
+        isOpen={showCollab}
+        onClose={() => setShowCollab(false)}
+        noteTitle={note.title}
+        active={!!collab}
+        roomId={collab?.roomId ?? null}
+        password={collab?.password ?? null}
+        peers={peers}
+        connected={connected}
+        onStart={startCollab}
+        onStop={stopCollab}
+        onRenameSelf={renameSelf}
+      />
+
+
 
       {/* Index Dropdown Menu */}
       <AnimatePresence>
