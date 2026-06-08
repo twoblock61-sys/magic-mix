@@ -63,6 +63,15 @@ const Index = () => {
             {renderPage()}
           </main>
         </motion.div>
+        <CollabInviteListener
+          onOpenNote={(noteId) => handleNavigate("ideas", noteId)}
+        />
+      </div>
+    </NotesProvider>
+  );
+};
+
+export default Index;
       </div>
     </NotesProvider>
   );
