@@ -40,6 +40,8 @@ const NoteEditorFull = ({ note, onUpdate, focusMode = false, onToggleFocusMode }
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAi, setShowAi] = useState(false);
+  const [showCollab, setShowCollab] = useState(false);
+  const [collab, setCollab] = useState<{ roomId: string; password: string } | null>(null);
 
   // Index functionality
   const { index, scrollToHeading } = useHeadingIndex(note.blocks);
