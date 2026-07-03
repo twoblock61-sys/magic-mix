@@ -269,9 +269,12 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
                       <h3 className="font-medium text-foreground truncate mb-2">
                         {note.title || "Untitled"}
                       </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {note.blocks.find((b) => b.content)?.content || "No content"}
                       </p>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FolderPicker noteId={note.id} currentFolderId={note.folderId} trigger="chip" />
+                      </div>
                     </motion.div>
                   ))}
                 </div>
