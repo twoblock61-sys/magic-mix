@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Trash2, Search, Paperclip, Plus, X } from "lucide-react";
 import { Note } from "@/contexts/NotesContext";
 import { formatDistanceToNow } from "date-fns";
+import FolderPicker from "@/components/FolderPicker";
 
 interface NotesListPanelProps {
   title: string;
