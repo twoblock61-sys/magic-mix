@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Folder, Plus, Trash2, FolderOpen, StickyNote, X, FolderInput, Check, Search } from "lucide-react";
 import { useNotesContext } from "@/contexts/NotesContext";
+import FolderPicker from "@/components/FolderPicker";
 
 interface FolderPageProps {
   onNavigate: (nav: string, noteId?: string) => void;
