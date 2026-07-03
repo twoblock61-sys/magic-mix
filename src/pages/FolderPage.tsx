@@ -1,17 +1,30 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Folder, Plus, Trash2, FolderOpen, StickyNote, X } from "lucide-react";
+import { Folder, Plus, Trash2, FolderOpen, StickyNote, X, FolderInput, Check, Search } from "lucide-react";
 import { useNotesContext } from "@/contexts/NotesContext";
+import FolderPicker from "@/components/FolderPicker";
 
 interface FolderPageProps {
   onNavigate: (nav: string, noteId?: string) => void;
 }
 
 const FolderPage = ({ onNavigate }: FolderPageProps) => {
-  const { folders, notes, createFolder, deleteFolder, createNote } = useNotesContext();
+  const { folders, notes, createFolder, deleteFolder, createNote, updateNote } = useNotesContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQuery, setAddQuery] = useState("");
+  const addRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!addOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (addRef.current && !addRef.current.contains(e.target as Node)) setAddOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [addOpen]);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
@@ -153,18 +166,96 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-foreground">Notes</h3>
-                  <motion.button
-                    onClick={() => {
-                      const note = createNote(selectedFolder.id);
-                      onNavigate("ideas", note.id);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Note
-                  </motion.button>
+                  <div className="flex items-center gap-2">
+                    <div className="relative" ref={addRef}>
+                      <motion.button
+                        onClick={() => setAddOpen((v) => !v)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-medium text-sm"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <FolderInput className="w-4 h-4" />
+                        Add existing
+                      </motion.button>
+                      <AnimatePresence>
+                        {addOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                            transition={{ duration: 0.12 }}
+                            className="absolute right-0 mt-2 w-80 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+                          >
+                            <div className="p-2 border-b border-border/60">
+                              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted">
+                                <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                                <input
+                                  autoFocus
+                                  value={addQuery}
+                                  onChange={(e) => setAddQuery(e.target.value)}
+                                  placeholder="Search notes to add..."
+                                  className="flex-1 bg-transparent outline-none text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="max-h-72 overflow-y-auto scrollbar-thin py-1">
+                              {(() => {
+                                const candidates = notes
+                                  .filter((n) => n.folderId !== selectedFolder.id)
+                                  .filter((n) =>
+                                    addQuery
+                                      ? (n.title || "Untitled")
+                                          .toLowerCase()
+                                          .includes(addQuery.toLowerCase())
+                                      : true
+                                  );
+                                if (candidates.length === 0) {
+                                  return (
+                                    <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+                                      No notes available
+                                    </p>
+                                  );
+                                }
+                                return candidates.map((n) => {
+                                  const currentFolder = folders.find((f) => f.id === n.folderId);
+                                  return (
+                                    <button
+                                      key={n.id}
+                                      onClick={() => {
+                                        updateNote(n.id, { folderId: selectedFolder.id });
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-left"
+                                    >
+                                      <StickyNote className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm truncate">{n.title || "Untitled"}</p>
+                                        <p className="text-[11px] text-muted-foreground truncate">
+                                          {currentFolder ? `in ${currentFolder.name}` : "Unfiled"}
+                                        </p>
+                                      </div>
+                                      <Check className="w-4 h-4 text-primary opacity-0" />
+                                    </button>
+                                  );
+                                });
+                              })()}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <motion.button
+                      onClick={() => {
+                        const note = createNote(selectedFolder.id);
+                        onNavigate("ideas", note.id);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Note
+                    </motion.button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {folderNotes.map((note, index) => (
@@ -179,9 +270,12 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
                       <h3 className="font-medium text-foreground truncate mb-2">
                         {note.title || "Untitled"}
                       </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {note.blocks.find((b) => b.content)?.content || "No content"}
                       </p>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FolderPicker noteId={note.id} currentFolderId={note.folderId} trigger="chip" />
+                      </div>
                     </motion.div>
                   ))}
                 </div>

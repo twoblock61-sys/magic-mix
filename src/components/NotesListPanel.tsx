@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Trash2, Search, Paperclip, Plus, X } from "lucide-react";
 import { Note } from "@/contexts/NotesContext";
 import { formatDistanceToNow } from "date-fns";
+import FolderPicker from "@/components/FolderPicker";
 
 interface NotesListPanelProps {
   title: string;
@@ -117,9 +118,12 @@ const NotesListPanel = ({
                   <h3 className="font-medium text-foreground truncate mb-1">
                     {note.title || "Untitled"}
                   </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
+                  <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
                     {getPreview(note)}
                   </p>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <FolderPicker noteId={note.id} currentFolderId={note.folderId} trigger="chip" />
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
