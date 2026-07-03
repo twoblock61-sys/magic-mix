@@ -8,10 +8,22 @@ interface FolderPageProps {
 }
 
 const FolderPage = ({ onNavigate }: FolderPageProps) => {
-  const { folders, notes, createFolder, deleteFolder, createNote } = useNotesContext();
+  const { folders, notes, createFolder, deleteFolder, createNote, updateNote } = useNotesContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQuery, setAddQuery] = useState("");
+  const addRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!addOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (addRef.current && !addRef.current.contains(e.target as Node)) setAddOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [addOpen]);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
