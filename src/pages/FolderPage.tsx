@@ -165,18 +165,96 @@ const FolderPage = ({ onNavigate }: FolderPageProps) => {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-foreground">Notes</h3>
-                  <motion.button
-                    onClick={() => {
-                      const note = createNote(selectedFolder.id);
-                      onNavigate("ideas", note.id);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Note
-                  </motion.button>
+                  <div className="flex items-center gap-2">
+                    <div className="relative" ref={addRef}>
+                      <motion.button
+                        onClick={() => setAddOpen((v) => !v)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-medium text-sm"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <FolderInput className="w-4 h-4" />
+                        Add existing
+                      </motion.button>
+                      <AnimatePresence>
+                        {addOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                            transition={{ duration: 0.12 }}
+                            className="absolute right-0 mt-2 w-80 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+                          >
+                            <div className="p-2 border-b border-border/60">
+                              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted">
+                                <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                                <input
+                                  autoFocus
+                                  value={addQuery}
+                                  onChange={(e) => setAddQuery(e.target.value)}
+                                  placeholder="Search notes to add..."
+                                  className="flex-1 bg-transparent outline-none text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="max-h-72 overflow-y-auto scrollbar-thin py-1">
+                              {(() => {
+                                const candidates = notes
+                                  .filter((n) => n.folderId !== selectedFolder.id)
+                                  .filter((n) =>
+                                    addQuery
+                                      ? (n.title || "Untitled")
+                                          .toLowerCase()
+                                          .includes(addQuery.toLowerCase())
+                                      : true
+                                  );
+                                if (candidates.length === 0) {
+                                  return (
+                                    <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+                                      No notes available
+                                    </p>
+                                  );
+                                }
+                                return candidates.map((n) => {
+                                  const currentFolder = folders.find((f) => f.id === n.folderId);
+                                  return (
+                                    <button
+                                      key={n.id}
+                                      onClick={() => {
+                                        updateNote(n.id, { folderId: selectedFolder.id });
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-left"
+                                    >
+                                      <StickyNote className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm truncate">{n.title || "Untitled"}</p>
+                                        <p className="text-[11px] text-muted-foreground truncate">
+                                          {currentFolder ? `in ${currentFolder.name}` : "Unfiled"}
+                                        </p>
+                                      </div>
+                                      <Check className="w-4 h-4 text-primary opacity-0" />
+                                    </button>
+                                  );
+                                });
+                              })()}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <motion.button
+                      onClick={() => {
+                        const note = createNote(selectedFolder.id);
+                        onNavigate("ideas", note.id);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Note
+                    </motion.button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {folderNotes.map((note, index) => (
