@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Folder, Plus, Trash2, FolderOpen, StickyNote, X } from "lucide-react";
+import { Folder, Plus, Trash2, FolderOpen, StickyNote, X, FolderInput, Check, Search } from "lucide-react";
 import { useNotesContext } from "@/contexts/NotesContext";
 
 interface FolderPageProps {
