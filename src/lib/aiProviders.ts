@@ -27,6 +27,12 @@ export interface AiProvider {
   icon: string;
   /** When false, the provider doesn't need an API key (e.g. local Ollama). */
   requiresKey?: boolean;
+  /** A handful of popular/known model IDs for quick pick. */
+  popularModels: string[];
+  /** Where to find the full, up-to-date model list for this provider. */
+  modelsDocUrl: string;
+  /** Short human-friendly hint about where to look for model names. */
+  modelsHint: string;
 }
 
 export const AI_PROVIDERS: AiProvider[] = [
@@ -39,6 +45,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-",
     accent: "from-emerald-500 to-teal-500",
     icon: "✦",
+    popularModels: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1", "o3-mini", "o4-mini"],
+    modelsDocUrl: "https://platform.openai.com/docs/models",
+    modelsHint: "See platform.openai.com/docs/models for the full list.",
   },
   {
     id: "gemini",
@@ -49,6 +58,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "AIza",
     accent: "from-sky-500 to-indigo-500",
     icon: "✺",
+    popularModels: ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-2.5-pro"],
+    modelsDocUrl: "https://ai.google.dev/gemini-api/docs/models",
+    modelsHint: "See ai.google.dev/gemini-api/docs/models.",
   },
   {
     id: "anthropic",
@@ -59,6 +71,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-ant-",
     accent: "from-orange-500 to-amber-500",
     icon: "✶",
+    popularModels: ["claude-3-5-haiku-latest", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest", "claude-sonnet-4-5", "claude-opus-4-1"],
+    modelsDocUrl: "https://docs.anthropic.com/en/docs/about-claude/models",
+    modelsHint: "See docs.anthropic.com/en/docs/about-claude/models.",
   },
   {
     id: "deepseek",
@@ -69,6 +84,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-",
     accent: "from-blue-500 to-cyan-500",
     icon: "◈",
+    popularModels: ["deepseek-chat", "deepseek-reasoner"],
+    modelsDocUrl: "https://api-docs.deepseek.com/quick_start/pricing",
+    modelsHint: "See api-docs.deepseek.com — model IDs like deepseek-chat, deepseek-reasoner.",
   },
   {
     id: "groq",
@@ -79,6 +97,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "gsk_",
     accent: "from-rose-500 to-pink-500",
     icon: "⚡",
+    popularModels: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it", "qwen-2.5-32b"],
+    modelsDocUrl: "https://console.groq.com/docs/models",
+    modelsHint: "See console.groq.com/docs/models for supported IDs.",
   },
   {
     id: "xai",
@@ -89,6 +110,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "xai-",
     accent: "from-zinc-700 to-zinc-900",
     icon: "𝕏",
+    popularModels: ["grok-2-latest", "grok-2-mini", "grok-3", "grok-3-mini", "grok-4"],
+    modelsDocUrl: "https://docs.x.ai/docs/models",
+    modelsHint: "See docs.x.ai/docs/models.",
   },
   {
     id: "ollama",
@@ -100,6 +124,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     accent: "from-stone-500 to-stone-700",
     icon: "◉",
     requiresKey: false,
+    popularModels: ["llama3.2", "llama3.1", "qwen2.5", "mistral", "phi3", "gemma2", "deepseek-r1"],
+    modelsDocUrl: "https://ollama.com/library",
+    modelsHint: "Any model you've pulled via `ollama pull`. Browse ollama.com/library.",
   },
   {
     id: "ollama-cloud",
@@ -110,6 +137,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "",
     accent: "from-violet-500 to-fuchsia-500",
     icon: "☁",
+    popularModels: ["gpt-oss:120b", "gpt-oss:20b", "llama3.3:70b", "qwen2.5:72b", "deepseek-r1:70b"],
+    modelsDocUrl: "https://ollama.com/library",
+    modelsHint: "Cloud-hosted variants from ollama.com/library.",
   },
 ];
 
@@ -147,6 +177,39 @@ export const loadOllamaConfig = (): OllamaConfig => {
 export const saveOllamaConfig = (cfg: Partial<OllamaConfig>) => {
   const merged = { ...loadOllamaConfig(), ...cfg };
   localStorage.setItem(OLLAMA_CFG, JSON.stringify(merged));
+};
+
+/* ---------------------------- Per-provider model --------------------------- */
+// Users pick which model to hit for each provider. Ollama models keep living
+// in OllamaConfig so URL + model stay together for that provider family.
+
+const MODELS_STORAGE = "elephant.ai.models.v1";
+
+export const loadModels = (): Partial<Record<AiProviderId, string>> => {
+  try {
+    const raw = localStorage.getItem(MODELS_STORAGE);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveModel = (provider: AiProviderId, model: string) => {
+  if (provider === "ollama") return saveOllamaConfig({ localModel: model });
+  if (provider === "ollama-cloud") return saveOllamaConfig({ cloudModel: model });
+  const all = loadModels();
+  const trimmed = model.trim();
+  if (trimmed) all[provider] = trimmed;
+  else delete all[provider];
+  localStorage.setItem(MODELS_STORAGE, JSON.stringify(all));
+};
+
+export const getActiveModel = (provider: AiProviderId): string => {
+  if (provider === "ollama") return loadOllamaConfig().localModel;
+  if (provider === "ollama-cloud") return loadOllamaConfig().cloudModel;
+  const stored = loadModels()[provider];
+  if (stored) return stored;
+  return AI_PROVIDERS.find((p) => p.id === provider)!.defaultModel;
 };
 
 /* --------------------------- Obfuscated storage --------------------------- */
@@ -346,7 +409,7 @@ export const callAi = async (
   userPrompt: string,
 ): Promise<string> => {
   const p = AI_PROVIDERS.find((x) => x.id === provider)!;
-  const model = p.defaultModel;
+  const model = getActiveModel(provider);
 
   if (provider === "ollama" || provider === "ollama-cloud") {
     const cfg = loadOllamaConfig();

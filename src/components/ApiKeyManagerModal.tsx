@@ -5,9 +5,10 @@ import {
   Loader2, ShieldCheck, Save, ShieldAlert, HelpCircle, ExternalLink, CreditCard, Sparkles,
 } from "lucide-react";
 import {
-  AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
+  AI_PROVIDERS, AiProvider, AiProviderId, loadKeys, saveKey, clearAllKeys,
   maskKey, looksValidKey, validateKey,
   loadOllamaConfig, saveOllamaConfig, OllamaConfig,
+  getActiveModel, saveModel,
 } from "@/lib/aiProviders";
 import { toast } from "@/hooks/use-toast";
 
@@ -358,7 +359,10 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                         </div>
                       )}
 
+                      {!isLocalOllama && <ProviderModelRow provider={p} />}
+
                       <div className="mt-2 flex items-center justify-between">
+
                         {!formatOk ? (
                           <p className="text-[10.5px] text-amber-600 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
@@ -497,6 +501,80 @@ function KeyGuidePanel({ providerId, providerName }: { providerId: AiProviderId;
   );
 }
 
+
+function ProviderModelRow({ provider }: { provider: AiProvider }) {
+  const [model, setModel] = useState<string>(() => getActiveModel(provider.id));
+  const [open, setOpen] = useState(false);
+
+  const commit = (v: string) => {
+    const next = v.trim() || provider.defaultModel;
+    setModel(next);
+    saveModel(provider.id, next);
+  };
+
+  const isDefault = model === provider.defaultModel;
+
+  return (
+    <div className="mt-3 rounded-xl border border-border/40 bg-muted/20 p-2.5">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Model</span>
+        <div className="flex items-center gap-1">
+          {!isDefault && (
+            <button
+              onClick={() => commit(provider.defaultModel)}
+              className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
+            >
+              Reset
+            </button>
+          )}
+          <a
+            href={provider.modelsDocUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={provider.modelsHint}
+            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
+          >
+            <ExternalLink className="w-2.5 h-2.5" /> Model list
+          </a>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
+          >
+            {open ? "Hide" : "Presets"}
+          </button>
+        </div>
+      </div>
+      <input
+        value={model}
+        onChange={(e) => setModel(e.target.value)}
+        onBlur={() => commit(model)}
+        onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+        placeholder={provider.defaultModel}
+        className="w-full px-2.5 py-1.5 rounded-lg bg-background/60 border border-border/60 focus:border-primary/50 focus:outline-none text-[11.5px] font-mono"
+      />
+      {open && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {provider.popularModels.map((m) => {
+            const active = m === model;
+            return (
+              <button
+                key={m}
+                onClick={() => commit(m)}
+                className={`px-1.5 py-0.5 rounded border text-[10px] font-mono transition-colors ${
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {m}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StatusBadge({ st }: { st: { state: Status; message?: string } }) {
   if (st.state === "valid")
