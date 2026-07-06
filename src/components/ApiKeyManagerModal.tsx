@@ -5,9 +5,10 @@ import {
   Loader2, ShieldCheck, Save, ShieldAlert, HelpCircle, ExternalLink, CreditCard, Sparkles,
 } from "lucide-react";
 import {
-  AI_PROVIDERS, AiProviderId, loadKeys, saveKey, clearAllKeys,
+  AI_PROVIDERS, AiProvider, AiProviderId, loadKeys, saveKey, clearAllKeys,
   maskKey, looksValidKey, validateKey,
   loadOllamaConfig, saveOllamaConfig, OllamaConfig,
+  getActiveModel, saveModel,
 } from "@/lib/aiProviders";
 import { toast } from "@/hooks/use-toast";
 
