@@ -34,6 +34,8 @@ import {
   loadOllamaConfig,
   saveOllamaConfig,
   OllamaConfig,
+  getActiveModel,
+  saveModel,
 } from "@/lib/aiProviders";
 import ApiKeyManagerModal from "./ApiKeyManagerModal";
 import { Settings2, Server, Cloud, Cpu } from "lucide-react";
