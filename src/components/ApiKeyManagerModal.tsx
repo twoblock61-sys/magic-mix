@@ -359,7 +359,10 @@ const ApiKeyManagerModal = ({ isOpen, onClose }: Props) => {
                         </div>
                       )}
 
+                      {!isLocalOllama && <ProviderModelRow provider={p} />}
+
                       <div className="mt-2 flex items-center justify-between">
+
                         {!formatOk ? (
                           <p className="text-[10.5px] text-amber-600 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
