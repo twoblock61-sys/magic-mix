@@ -593,8 +593,8 @@ const ByokMode = ({
           </div>
         )}
 
-        {/* Model picker */}
-        <ModelPickerRow provider={provider} />
+        {/* Model picker (hidden for Ollama Local since model is set above) */}
+        {!isLocalOllama && <ModelPickerRow provider={provider} />}
       </div>
 
       {/* Task picker */}
