@@ -619,6 +619,10 @@ const ByokMode = ({
         </div>
       )}
 
+      {/* Model picker (all providers) */}
+      <ModelPickerRow provider={provider} />
+
+
       {/* Task picker */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-muted-foreground">
