@@ -45,6 +45,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-",
     accent: "from-emerald-500 to-teal-500",
     icon: "✦",
+    popularModels: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1", "o3-mini", "o4-mini"],
+    modelsDocUrl: "https://platform.openai.com/docs/models",
+    modelsHint: "See platform.openai.com/docs/models for the full list.",
   },
   {
     id: "gemini",
@@ -55,6 +58,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "AIza",
     accent: "from-sky-500 to-indigo-500",
     icon: "✺",
+    popularModels: ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-2.5-pro"],
+    modelsDocUrl: "https://ai.google.dev/gemini-api/docs/models",
+    modelsHint: "See ai.google.dev/gemini-api/docs/models.",
   },
   {
     id: "anthropic",
@@ -65,6 +71,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-ant-",
     accent: "from-orange-500 to-amber-500",
     icon: "✶",
+    popularModels: ["claude-3-5-haiku-latest", "claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest", "claude-sonnet-4-5", "claude-opus-4-1"],
+    modelsDocUrl: "https://docs.anthropic.com/en/docs/about-claude/models",
+    modelsHint: "See docs.anthropic.com/en/docs/about-claude/models.",
   },
   {
     id: "deepseek",
@@ -75,6 +84,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "sk-",
     accent: "from-blue-500 to-cyan-500",
     icon: "◈",
+    popularModels: ["deepseek-chat", "deepseek-reasoner"],
+    modelsDocUrl: "https://api-docs.deepseek.com/quick_start/pricing",
+    modelsHint: "See api-docs.deepseek.com — model IDs like deepseek-chat, deepseek-reasoner.",
   },
   {
     id: "groq",
@@ -85,6 +97,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "gsk_",
     accent: "from-rose-500 to-pink-500",
     icon: "⚡",
+    popularModels: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it", "qwen-2.5-32b"],
+    modelsDocUrl: "https://console.groq.com/docs/models",
+    modelsHint: "See console.groq.com/docs/models for supported IDs.",
   },
   {
     id: "xai",
@@ -95,6 +110,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "xai-",
     accent: "from-zinc-700 to-zinc-900",
     icon: "𝕏",
+    popularModels: ["grok-2-latest", "grok-2-mini", "grok-3", "grok-3-mini", "grok-4"],
+    modelsDocUrl: "https://docs.x.ai/docs/models",
+    modelsHint: "See docs.x.ai/docs/models.",
   },
   {
     id: "ollama",
@@ -106,6 +124,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     accent: "from-stone-500 to-stone-700",
     icon: "◉",
     requiresKey: false,
+    popularModels: ["llama3.2", "llama3.1", "qwen2.5", "mistral", "phi3", "gemma2", "deepseek-r1"],
+    modelsDocUrl: "https://ollama.com/library",
+    modelsHint: "Any model you've pulled via `ollama pull`. Browse ollama.com/library.",
   },
   {
     id: "ollama-cloud",
@@ -116,6 +137,9 @@ export const AI_PROVIDERS: AiProvider[] = [
     keyPrefix: "",
     accent: "from-violet-500 to-fuchsia-500",
     icon: "☁",
+    popularModels: ["gpt-oss:120b", "gpt-oss:20b", "llama3.3:70b", "qwen2.5:72b", "deepseek-r1:70b"],
+    modelsDocUrl: "https://ollama.com/library",
+    modelsHint: "Cloud-hosted variants from ollama.com/library.",
   },
 ];
 
