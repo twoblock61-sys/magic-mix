@@ -576,7 +576,7 @@ function ProviderModelRow({ provider }: { provider: AiProvider }) {
   );
 }
 
-
+function StatusBadge({ st }: { st: { state: Status; message?: string } }) {
   if (st.state === "valid")
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-medium">
