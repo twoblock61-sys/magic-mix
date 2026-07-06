@@ -27,6 +27,12 @@ export interface AiProvider {
   icon: string;
   /** When false, the provider doesn't need an API key (e.g. local Ollama). */
   requiresKey?: boolean;
+  /** A handful of popular/known model IDs for quick pick. */
+  popularModels: string[];
+  /** Where to find the full, up-to-date model list for this provider. */
+  modelsDocUrl: string;
+  /** Short human-friendly hint about where to look for model names. */
+  modelsHint: string;
 }
 
 export const AI_PROVIDERS: AiProvider[] = [
