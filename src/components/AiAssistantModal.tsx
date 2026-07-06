@@ -619,8 +619,9 @@ const ByokMode = ({
         </div>
       )}
 
-      {/* Model picker (all providers) */}
-      <ModelPickerRow provider={provider} />
+      {/* Model picker (for non-Ollama; Ollama models live with the base URL above) */}
+      {!isOllama && <ModelPickerRow provider={provider} />}
+
 
 
       {/* Task picker */}
