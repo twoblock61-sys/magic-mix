@@ -179,6 +179,39 @@ export const saveOllamaConfig = (cfg: Partial<OllamaConfig>) => {
   localStorage.setItem(OLLAMA_CFG, JSON.stringify(merged));
 };
 
+/* ---------------------------- Per-provider model --------------------------- */
+// Users pick which model to hit for each provider. Ollama models keep living
+// in OllamaConfig so URL + model stay together for that provider family.
+
+const MODELS_STORAGE = "elephant.ai.models.v1";
+
+export const loadModels = (): Partial<Record<AiProviderId, string>> => {
+  try {
+    const raw = localStorage.getItem(MODELS_STORAGE);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveModel = (provider: AiProviderId, model: string) => {
+  if (provider === "ollama") return saveOllamaConfig({ localModel: model });
+  if (provider === "ollama-cloud") return saveOllamaConfig({ cloudModel: model });
+  const all = loadModels();
+  const trimmed = model.trim();
+  if (trimmed) all[provider] = trimmed;
+  else delete all[provider];
+  localStorage.setItem(MODELS_STORAGE, JSON.stringify(all));
+};
+
+export const getActiveModel = (provider: AiProviderId): string => {
+  if (provider === "ollama") return loadOllamaConfig().localModel;
+  if (provider === "ollama-cloud") return loadOllamaConfig().cloudModel;
+  const stored = loadModels()[provider];
+  if (stored) return stored;
+  return AI_PROVIDERS.find((p) => p.id === provider)!.defaultModel;
+};
+
 /* --------------------------- Obfuscated storage --------------------------- */
 // Device-bound obfuscation. The salt is generated once per browser and combined
 // with navigator.userAgent to derive a XOR key. This stops casual plaintext
