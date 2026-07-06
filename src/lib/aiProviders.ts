@@ -409,7 +409,7 @@ export const callAi = async (
   userPrompt: string,
 ): Promise<string> => {
   const p = AI_PROVIDERS.find((x) => x.id === provider)!;
-  const model = p.defaultModel;
+  const model = getActiveModel(provider);
 
   if (provider === "ollama" || provider === "ollama-cloud") {
     const cfg = loadOllamaConfig();
