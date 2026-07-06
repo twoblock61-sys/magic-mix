@@ -21,6 +21,10 @@ import {
   MessageSquare,
   Zap,
   Lock,
+  Server,
+  Cloud,
+  Cpu,
+  Settings2,
 } from "lucide-react";
 import { Note, NoteBlock } from "@/contexts/NotesContext";
 import { noteToMarkdown } from "@/lib/noteToMarkdown";
@@ -38,7 +42,6 @@ import {
   saveModel,
 } from "@/lib/aiProviders";
 import ApiKeyManagerModal from "./ApiKeyManagerModal";
-import { Settings2, Server, Cloud, Cpu } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AiAssistantModalProps {
@@ -419,6 +422,17 @@ const ExternalMode = ({
 
 /* -------------------------------- BYOK mode ------------------------------- */
 
+const providerColor: Record<AiProviderId, string> = {
+  openai: "bg-emerald-500",
+  gemini: "bg-sky-500",
+  anthropic: "bg-orange-500",
+  deepseek: "bg-blue-500",
+  groq: "bg-rose-500",
+  xai: "bg-zinc-400",
+  ollama: "bg-stone-500",
+  "ollama-cloud": "bg-violet-500",
+};
+
 const ByokMode = ({
   keys,
   activeKey,
@@ -452,7 +466,9 @@ const ByokMode = ({
 }) => {
   const [draft, setDraft] = useState(activeKey);
   const provider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
-  const isOllama = selectedProvider === "ollama" || selectedProvider === "ollama-cloud";
+  const isLocalOllama = selectedProvider === "ollama";
+  const isCloudOllama = selectedProvider === "ollama-cloud";
+  const isOllama = isLocalOllama || isCloudOllama;
   const requiresKey = provider.requiresKey !== false;
   const hasKey = !!activeKey;
   const canRun = requiresKey ? hasKey : true;
@@ -467,80 +483,87 @@ const ByokMode = ({
   useEffect(() => setDraft(activeKey), [activeKey, selectedProvider]);
 
   return (
-    <div className="space-y-4">
-      {/* Provider picker */}
+    <div className="space-y-5">
+      {/* Provider strip */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Zap className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium uppercase tracking-wider">Provider</span>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</span>
+          <button
+            onClick={onOpenManager}
+            className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
+          >
+            <Settings2 className="w-3 h-3" /> Manage keys
+          </button>
         </div>
-        <div className="grid grid-cols-4 gap-2">
+      <div className="relative">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
           {AI_PROVIDERS.map((p) => {
             const meta = providerMeta[p.id];
             const active = selectedProvider === p.id;
-            const saved = !!keys[p.id] || (p.id === "ollama");
+            const saved = !!keys[p.id] || p.id === "ollama";
             return (
               <button
                 key={p.id}
                 onClick={() => setSelectedProvider(p.id)}
-                className={`relative flex flex-col items-center gap-1 rounded-xl border p-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                  active ? meta.activeColor : meta.color
+                className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border whitespace-nowrap transition-all ${
+                  active
+                    ? "bg-card border-primary/30 shadow-sm"
+                    : "bg-muted/30 border-transparent hover:bg-muted/60 hover:border-border/40"
                 }`}
               >
-                {meta.icon}
-                <span className="text-[10.5px] font-medium leading-tight text-center">{p.name}</span>
+                {active && (
+                  <span className={`absolute inset-x-0 top-0 h-[2px] rounded-t-xl ${providerColor[p.id]}`} />
+                )}
+                <span className="relative scale-90">{meta.icon}</span>
+                <span className="text-[11px] font-medium relative">{p.name}</span>
                 {saved && p.id !== "ollama" && (
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+                  <span className="relative w-1 h-1 rounded-full bg-emerald-500" />
                 )}
               </button>
             );
           })}
         </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />
+      </div>
       </div>
 
-      {/* API Key / Ollama config */}
-      {selectedProvider === "ollama" ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Server className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium uppercase tracking-wider">Local Ollama</span>
-            </div>
-            <span className="text-[10px] text-emerald-600 font-medium">100% offline</span>
+      {/* Connection card */}
+      <div className="rounded-2xl border border-border/50 bg-muted/20 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${providerColor[selectedProvider]}`} />
+            <span className="text-[13px] font-medium">{provider.name}</span>
+            {isLocalOllama && (
+              <span className="text-[10px] font-medium text-emerald-600">no key needed</span>
+            )}
           </div>
+          {isLocalOllama ? (
+            <span className="text-[10px] text-emerald-600 font-medium">100% offline</span>
+          ) : requiresKey && hasKey ? (
+            <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+              <Check className="w-3 h-3" /> Ready
+            </span>
+          ) : requiresKey ? (
+            <span className="text-[10px] text-amber-600 font-medium">Key required</span>
+          ) : null}
+        </div>
+
+        {isLocalOllama ? (
           <div className="grid grid-cols-2 gap-2">
             <input
               value={ollamaCfg.localBaseUrl}
               onChange={(e) => updateOllama({ localBaseUrl: e.target.value })}
               placeholder="http://localhost:11434"
-              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+              className="px-3 py-2 rounded-xl bg-background/60 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
             />
             <input
               value={ollamaCfg.localModel}
               onChange={(e) => updateOllama({ localModel: e.target.value })}
               placeholder="llama3.2"
-              className="px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
+              className="px-3 py-2 rounded-xl bg-background/60 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
             />
           </div>
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Install Ollama and run <code className="px-1 rounded bg-muted">ollama pull {ollamaCfg.localModel}</code>.
-            For browser access set <code className="px-1 rounded bg-muted">OLLAMA_ORIGINS=*</code> before starting it.
-          </p>
-        </div>
-      ) : selectedProvider === "ollama-cloud" ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Cloud className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium uppercase tracking-wider">Ollama Cloud</span>
-            </div>
-            <button
-              onClick={onOpenManager}
-              className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
-            >
-              <Settings2 className="w-3 h-3" /> Manage
-            </button>
-          </div>
+        ) : (
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
               <input
@@ -548,8 +571,8 @@ const ByokMode = ({
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onBlur={() => onSaveKey(selectedProvider, draft)}
-                placeholder="Paste your Ollama Cloud key"
-                className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
+                placeholder={isCloudOllama ? "Paste your Ollama Cloud key" : provider.keyHint}
+                className="w-full pl-3 pr-9 py-2 rounded-xl bg-background/60 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
               />
               <button
                 onClick={() => setShowKey(!showKey)}
@@ -562,74 +585,21 @@ const ByokMode = ({
             {activeKey && (
               <button
                 onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
-                className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                className="p-2 rounded-xl border border-border/60 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
-          <input
-            value={ollamaCfg.cloudModel}
-            onChange={(e) => updateOllama({ cloudModel: e.target.value })}
-            placeholder="gpt-oss:120b"
-            className="w-full px-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12px] font-mono"
-          />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Lock className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium uppercase tracking-wider">{provider.name} Key</span>
-            </div>
-            <button
-              onClick={onOpenManager}
-              className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
-            >
-              <Settings2 className="w-3 h-3" /> Manage all keys
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <input
-                type={showKey ? "text" : "password"}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={() => onSaveKey(selectedProvider, draft)}
-                placeholder={provider.keyHint}
-                className="w-full pl-3 pr-10 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-sm font-mono"
-              />
-              <button
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted text-muted-foreground"
-                type="button"
-              >
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-            {activeKey && (
-              <button
-                onClick={() => { onSaveKey(selectedProvider, ""); setDraft(""); }}
-                className="p-2 rounded-xl border border-border/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Model picker (for non-Ollama; Ollama models live with the base URL above) */}
-      {!isOllama && <ModelPickerRow provider={provider} />}
-
-
+        {/* Model picker (hidden for Ollama Local since model is set above) */}
+        {!isLocalOllama && <ModelPickerRow provider={provider} />}
+      </div>
 
       {/* Task picker */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Wand2 className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium uppercase tracking-wider">Generate</span>
-        </div>
+        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Generate</span>
         <div className="grid grid-cols-3 gap-2">
           {TASKS.map((t) => {
             const Icon = t.icon;
@@ -638,13 +608,13 @@ const ByokMode = ({
               <button
                 key={t.id}
                 onClick={() => setTask(t.id)}
-                className={`flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                className={`flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   active
                     ? "border-primary bg-primary/5 shadow-sm"
                     : "border-border/60 hover:border-border/80 hover:bg-muted/30"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <Icon className={`w-4 h-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
                 <span className="text-[12px] font-medium">{t.label}</span>
               </button>
             );
@@ -652,12 +622,9 @@ const ByokMode = ({
         </div>
       </div>
 
-      {/* Extra prompt */}
+      {/* Instructions */}
       <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium uppercase tracking-wider">Instructions</span>
-        </div>
+        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Instructions</span>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -668,28 +635,30 @@ const ByokMode = ({
       </div>
 
       {/* Run */}
-      <motion.button
-        onClick={onRun}
-        disabled={running || !canRun}
-        whileHover={!running && canRun ? { scale: 1.01 } : {}}
-        whileTap={!running && canRun ? { scale: 0.99 } : {}}
-        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-      >
-        {running ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Generating…
-          </>
-        ) : (
-          <>
-            <Wand2 className="w-4 h-4" />
-            Generate & append
-          </>
-        )}
-      </motion.button>
-      <p className="text-[10px] text-center text-muted-foreground/40">
-        Direct from browser to {provider.name}. No servers involved.
-      </p>
+      <div className="space-y-2">
+        <motion.button
+          onClick={onRun}
+          disabled={running || !canRun}
+          whileHover={!running && canRun ? { scale: 1.01 } : {}}
+          whileTap={!running && canRun ? { scale: 0.99 } : {}}
+          className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium shadow-lg shadow-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        >
+          {running ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating…
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-4 h-4" />
+              Generate & append
+            </>
+          )}
+        </motion.button>
+        <p className="text-[10px] text-center text-muted-foreground/40">
+          Direct from browser to {provider.name}. No servers involved.
+        </p>
+      </div>
     </div>
   );
 };
@@ -705,75 +674,72 @@ function ModelPickerRow({ provider }: { provider: typeof AI_PROVIDERS[number] })
   }, [provider.id]);
 
   const commit = (v: string) => {
-    setModel(v);
-    saveModel(provider.id, v);
+    const next = v.trim() || provider.defaultModel;
+    setModel(next);
+    saveModel(provider.id, next);
   };
 
   const isDefault = model === provider.defaultModel;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pt-1">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Cpu className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium uppercase tracking-wider">Model</span>
-        </div>
-        <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Model</span>
+        <div className="flex items-center gap-1">
           {!isDefault && (
             <button
               onClick={() => commit(provider.defaultModel)}
-              className="text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
+              className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
               title={`Reset to ${provider.defaultModel}`}
             >
               Reset
             </button>
           )}
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
+          >
+            <BookOpen className="w-3 h-3" /> {open ? "Hide" : "Presets"}
+          </button>
+        </div>
+      </div>
+
+      <input
+        value={model}
+        onChange={(e) => setModel(e.target.value)}
+        onBlur={() => commit(model)}
+        placeholder={provider.defaultModel}
+        className="w-full px-3 py-2 rounded-xl bg-background/60 border border-border/60 focus:border-primary/50 focus:outline-none text-[12.5px] font-mono"
+      />
+
+      {open && (
+        <div className="flex flex-wrap gap-1.5">
+          {provider.popularModels.map((m) => {
+            const active = m === model;
+            return (
+              <button
+                key={m}
+                onClick={() => commit(m)}
+                className={`px-2 py-0.5 rounded-md border text-[10.5px] font-mono transition-colors ${
+                  active
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {m}
+              </button>
+            );
+          })}
           <a
             href={provider.modelsDocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-md hover:bg-muted transition-colors"
-            title={provider.modelsHint}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border/60 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <BookOpen className="w-3 h-3" /> Model docs
+            <ExternalLink className="w-2.5 h-2.5" /> Docs
           </a>
         </div>
-      </div>
-
-      <div className="relative">
-        <input
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          onBlur={() => commit(model.trim() || provider.defaultModel)}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); setOpen(false); } }}
-          placeholder={provider.defaultModel}
-          className="w-full pl-3 pr-3 py-2 rounded-xl bg-muted/40 border border-border/60 focus:border-primary/50 focus:outline-none text-[12.5px] font-mono"
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {provider.popularModels.map((m) => {
-          const active = m === model;
-          return (
-            <button
-              key={m}
-              onClick={() => commit(m)}
-              className={`px-2 py-0.5 rounded-md border text-[10.5px] font-mono transition-colors ${
-                active
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {m}
-              {m === provider.defaultModel && (
-                <span className="ml-1 text-[9px] uppercase tracking-wide opacity-60">default</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-[10px] text-muted-foreground/70 leading-relaxed">{provider.modelsHint}</p>
+      )}
     </div>
   );
 }
