@@ -11,7 +11,8 @@ import {
   ChevronUp,
   ChevronDown,
   Network,
-  Layers
+  Layers,
+  Puzzle
 } from "lucide-react";
 
 interface AppSidebarProps {
