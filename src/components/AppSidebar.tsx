@@ -28,6 +28,7 @@ const AppSidebar = ({ activeNav, onNavChange }: AppSidebarProps) => {
     { id: "calendar", icon: Calendar, label: "Calendar" },
     { id: "flashcards", icon: Layers, label: "Flashcards" },
     { id: "graph", icon: Network, label: "Graph View" },
+    { id: "plugins", icon: Puzzle, label: "Plugins" },
   ];
 
   const noteSubItems = [

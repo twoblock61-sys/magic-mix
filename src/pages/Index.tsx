@@ -10,6 +10,7 @@ import GraphPage from "@/pages/GraphPage";
 import FlashcardsPage from "@/pages/FlashcardsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import SharedPage from "@/pages/SharedPage";
+import PluginsPage from "@/pages/PluginsPage";
 import CollabInviteListener from "@/components/CollabInviteListener";
 
 const Index = () => {
@@ -39,6 +40,8 @@ const Index = () => {
         return <GraphPage onNavigate={handleNavigate} />;
       case "shared":
         return <SharedPage onNavigate={handleNavigate} />;
+      case "plugins":
+        return <PluginsPage />;
       case "setting":
         return <SettingsPage />;
       default:
