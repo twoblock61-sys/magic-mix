@@ -158,6 +158,10 @@ export interface NoteBlock {
   // Accordion Group
   accordionItems?: { id: string; title: string; content: string }[];
   accordionStyle?: string;
+  calendarEvents?: { id: string; title: string; date: string; time?: string }[];
+  calendarView?: "month" | "week" | "day";
+  trackerItems?: { id: string; name: string; checkins: Record<string, boolean> }[];
+  trackerView?: "day" | "week" | "month";
   // Legacy support
   chartData?: { id: string; label: string; value: number; color: string }[];
 }
