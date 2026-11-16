@@ -99,6 +99,8 @@ import TestimonialBlock from "./TestimonialBlock";
 import ImageTextBlock from "./ImageTextBlock";
 import AccordionGroupBlock from "./AccordionGroupBlock";
 import FileBlock from "./FileBlock";
+import CalendarNoteBlock from "./CalendarNoteBlock";
+import TrackerNoteBlock from "./TrackerNoteBlock";
 
 interface NotionEditorProps {
   blocks: NoteBlock[];
@@ -137,6 +139,8 @@ const blockTypes = [
   { type: "mindmap" as const, icon: Share2, label: "Mind Map", description: "Interactive mind map", category: "advanced" },
   { type: "flashcard" as const, icon: Lightbulb, label: "Flashcards", description: "Quick revision cards", category: "advanced" },
   { type: "chart" as const, icon: BarChart3, label: "Chart", description: "Data visualization charts", category: "advanced" },
+  { type: "calendar" as const, icon: Calendar, label: "Calendar", description: "Plan events by day, week, or month", category: "advanced" },
+  { type: "tracker" as const, icon: Footprints, label: "Habit tracker", description: "Build daily, weekly, and monthly rhythms", category: "advanced" },
   { type: "tabs" as const, icon: Layers, label: "Tabs", description: "Tabbed content sections", category: "advanced" },
   { type: "poll" as const, icon: BarChart2, label: "Poll", description: "Create interactive polls", category: "advanced" },
   { type: "proscons" as const, icon: Scale, label: "Pros & Cons", description: "Compare pros and cons", category: "advanced" },
@@ -636,6 +640,10 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
         { id: crypto.randomUUID(), title: "", content: "" },
       ] : undefined,
       accordionStyle: type === "accordionGroup" ? "clean" : undefined,
+      calendarEvents: type === "calendar" ? [] : undefined,
+      calendarView: type === "calendar" ? "month" : undefined,
+      trackerItems: type === "tracker" ? [] : undefined,
+      trackerView: type === "tracker" ? "week" : undefined,
     };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
@@ -2129,6 +2137,26 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
           </div>
         );
 
+      case "calendar":
+        return (
+          <CalendarNoteBlock
+            title={block.content || "Calendar"}
+            events={block.calendarEvents || []}
+            view={block.calendarView || "month"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
+      case "tracker":
+        return (
+          <TrackerNoteBlock
+            title={block.content || "Habit tracker"}
+            items={block.trackerItems || []}
+            view={block.trackerView || "week"}
+            onUpdate={(updates) => updateBlock(block.id, updates)}
+          />
+        );
+
       case "tabs":
         return (
           <div className="py-2">
@@ -2625,6 +2653,12 @@ const NotionEditor = ({ blocks, onChange }: NotionEditorProps) => {
                                 } else if (bt.type === "accordionGroup") {
                                   baseUpdate.accordionItems = [{ id: crypto.randomUUID(), title: "", content: "" }, { id: crypto.randomUUID(), title: "", content: "" }];
                                   baseUpdate.accordionStyle = "clean";
+                                } else if (bt.type === "calendar") {
+                                  baseUpdate.calendarEvents = [];
+                                  baseUpdate.calendarView = "month";
+                                } else if (bt.type === "tracker") {
+                                  baseUpdate.trackerItems = [];
+                                  baseUpdate.trackerView = "week";
                                 }
                                 
                                 updateBlock(block.id, baseUpdate);
