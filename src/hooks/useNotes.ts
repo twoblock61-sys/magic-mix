@@ -28,7 +28,8 @@ export interface NoteBlock {
     // New premium blocks
     | "comparisonTable" | "featureCard" | "gradientCard" | "numberTicker"
     // Layout & article blocks
-    | "changelog" | "testimonial" | "imageText" | "accordionGroup";
+    | "changelog" | "testimonial" | "imageText" | "accordionGroup"
+    | "calendar" | "tracker";
   content: string;
   checked?: boolean;
   tableData?: string[][];
