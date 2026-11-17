@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getCalendarMonthGrid,
+  getCalendarWeekLabel,
   getTrackerDates,
   getTrackerMonthLeadingDays,
   getTrackerStreak,
@@ -21,6 +22,10 @@ describe("calendar and tracker date helpers", () => {
     expect(grid.length % 7).toBe(0);
     expect(grid[0].getDay()).toBe(0);
     expect(grid.at(-1)?.getDay()).toBe(6);
+  });
+
+  it("labels the week containing the selected date with its full date range", () => {
+    expect(getCalendarWeekLabel(referenceDate)).toBe("Nov 15–21, 2026");
   });
 
   it("keys check-ins by local calendar date and counts consecutive days", () => {

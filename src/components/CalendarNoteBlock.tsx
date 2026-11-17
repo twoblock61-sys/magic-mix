@@ -15,7 +15,7 @@ import { ArrowLeft, ArrowRight, CalendarDays, Clock3, Plus, Trash2 } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getCalendarMonthGrid, toTrackerDateKey } from "@/lib/calendarTrackerUtils";
+import { getCalendarMonthGrid, getCalendarWeekLabel, toTrackerDateKey } from "@/lib/calendarTrackerUtils";
 import type { NoteBlock } from "@/contexts/NotesContext";
 
 type CalendarEventItem = NonNullable<NoteBlock["calendarEvents"]>[number];
@@ -66,7 +66,7 @@ const CalendarNoteBlock = ({ title, events, view, onUpdate }: CalendarNoteBlockP
   const headerDate = view === "month"
     ? format(visibleDate, "MMMM yyyy")
     : view === "week"
-      ? `${format(days.find((day) => toTrackerDateKey(day) <= toTrackerDateKey(visibleDate)) || visibleDate, "MMM d")} · Week`
+      ? getCalendarWeekLabel(visibleDate)
       : format(selectedDate, "EEEE, MMM d");
   const displayDays = view === "day" ? [selectedDate] : view === "week" ? days.slice(0, 7).map((_, index) => addDays(visibleDate, index - visibleDate.getDay())) : days;
 

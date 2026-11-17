@@ -51,7 +51,7 @@ const TrackerNoteBlock = ({ title, items, view, onUpdate }: TrackerNoteBlockProp
     <section className="my-3 overflow-hidden rounded-xl border border-border/70 bg-card" aria-label="Habit tracker block">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><Target className="size-4" /></span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Target className="size-4" /></span>
           <div className="min-w-0">
             <Input aria-label="Tracker title" value={title} onChange={(event) => onUpdate({ content: event.target.value })} className="h-6 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus-visible:ring-0" />
             <p className="text-xs text-muted-foreground">Small steps, visible progress</p>
@@ -69,7 +69,7 @@ const TrackerNoteBlock = ({ title, items, view, onUpdate }: TrackerNoteBlockProp
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 sm:px-5">
         <div className="flex items-baseline gap-2"><span className="text-2xl font-semibold tabular-nums">{completion}%</span><span className="text-xs text-muted-foreground">period completion</span></div>
-        <div className="h-1.5 min-w-24 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500 transition-[width]" style={{ width: `${completion}%` }} /></div>
+        <div className="h-1.5 min-w-24 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${completion}%` }} /></div>
         <span className="text-xs text-muted-foreground">{items.length} {items.length === 1 ? "habit" : "habits"}</span>
       </div>
 
@@ -90,9 +90,9 @@ const TrackerNoteBlock = ({ title, items, view, onUpdate }: TrackerNoteBlockProp
                 <div className="flex min-w-0 items-center gap-2 px-4"><span className="truncate text-xs font-medium">{item.name}</span><Button variant="ghost" size="icon" className="ml-auto size-6 shrink-0 opacity-70 sm:opacity-0 sm:group-hover/row:opacity-100" aria-label={`Delete ${item.name}`} onClick={() => updateItems(items.filter((current) => current.id !== item.id))}><Trash2 className="size-3.5" /></Button></div>
                 {dates.map((date) => {
                   const checked = Boolean(item.checkins[toTrackerDateKey(date)]);
-                  return <div key={toTrackerDateKey(date)} className="grid place-items-center"><button type="button" aria-label={`${checked ? "Unmark" : "Mark"} ${item.name} for ${format(date, "MMM d")}`} aria-pressed={checked} onClick={() => toggleCheckin(item, date)} className={cn("grid size-6 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", checked ? "bg-emerald-500 text-white" : "bg-muted/70 text-transparent hover:bg-muted")}><Check className="size-3.5" /></button></div>;
+                  return <div key={toTrackerDateKey(date)} className="grid place-items-center"><button type="button" aria-label={`${checked ? "Unmark" : "Mark"} ${item.name} for ${format(date, "MMM d")}`} aria-pressed={checked} onClick={() => toggleCheckin(item, date)} className={cn("grid size-6 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", checked ? "bg-primary text-primary-foreground" : "bg-muted/70 text-transparent hover:bg-muted")}><Check className="size-3.5" /></button></div>;
                 })}
-                <div className="flex items-center justify-end gap-1 px-3 text-[10px] tabular-nums text-muted-foreground" title={`${completed} of ${dates.length} days completed`}><Flame className="size-3 text-orange-500" />{streak}</div>
+                <div className="flex items-center justify-end gap-1 px-3 text-[10px] tabular-nums text-muted-foreground" title={`${completed} of ${dates.length} days completed`}><Flame className="size-3 text-primary" />{streak}</div>
               </div>
             );
           })}

@@ -32,6 +32,15 @@ export const getCalendarMonthGrid = (date: Date): Date[] => {
 
 };
 
+export const getCalendarWeekLabel = (date: Date): string => {
+  const start = startOfWeek(date);
+  const end = endOfWeek(date);
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  return sameMonth
+    ? `${format(start, "MMM d")}–${format(end, "d, yyyy")}`
+    : `${format(start, "MMM d")}–${format(end, "MMM d, yyyy")}`;
+};
+
 export const getTrackerStreak = (
   checkins: Record<string, boolean>,
   fromDate: Date,
